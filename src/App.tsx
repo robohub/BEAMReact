@@ -19,7 +19,7 @@ import MenuExampleHeader from './components/menus/semanticui';
 
 import Headroom from 'react-headroom';
 
-import { ArrayPage } from './components/simpleForm/simpleForm';
+// import { ArrayPage } from './components/simpleForm/simpleForm';   preserved just as example
 
 const Home = () => (
   <div>
@@ -59,7 +59,7 @@ class App extends React.Component<{}, State> {
         <Route exact={true} path="/Admin" component={Admin} />
         <Route path="/Composer" component={Composer} />
         
-        <ArrayPage />
+        {/*<ArrayPage />*/}
       </div>
     );
   }

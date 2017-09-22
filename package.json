@@ -5,8 +5,9 @@
   "dependencies": {
     "@opuscapita/fsm-core": "0.0.1-beta.5",
     "@types/chart.js": "^2.6.1",
+    "@types/deep-diff": "0.0.31",
     "@types/jest": "^20.0.5",
-    "@types/jointjs": "^1.0.4",
+    "@types/jointjs": "^1.0.5",
     "@types/material-ui": "^0.18.0",
     "@types/node": "^8.0.19",
     "@types/react": "^16.0.0",
@@ -21,6 +22,7 @@
     "apollo-client": "^1.9.2",
     "bootstrap": "^4.0.0-alpha.6",
     "chart.js": "^2.6.0",
+    "deep-diff": "^0.3.4",
     "jointjs": "^1.1.0",
     "material-ui": "^0.19.1",
     "react": "^15.6.1",
