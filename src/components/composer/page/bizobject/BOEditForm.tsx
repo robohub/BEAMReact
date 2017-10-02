@@ -9,14 +9,10 @@ interface DropType {
 }
 
 export interface BOEditFormData {
-    'Attributes': {
-        key: string;
-        Value: string;
-    }[];
-    Relations: {
-        metaRelationId: string;
-        Value: string | string[];
-    }[];
+    // tslint:disable-next-line:no-any
+    bizAttributes: any;
+    // tslint:disable-next-line:no-any
+    bizRelations: any;
 }
 
 interface BOEditFormProps {
@@ -49,7 +45,7 @@ class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormPro
                                 <Form.Field>
                                     <label>{attr.name}</label>
                                     <Field
-                                        name={'Attributes[' + index + '].Value'}
+                                        name={'bizAttributes.' + attr.id + '.Value'}
                                         type="text"
                                         component="input"
                                     />
@@ -67,7 +63,7 @@ class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormPro
                                 <Form.Field key={rel.id} >
                                     <label>{rel.oppositeName}</label>
                                     <XFieldDropdown
-                                        name={'Relations[' + index + '].Value'}
+                                        name={'bizRelations.' + rel.id + '.Value'}
                                         component={BODropdownFormField}
                                         multiple={rel.multiplicity === 'Many'}
                                         options={rel.oppositeObject.businessObjects}
@@ -78,9 +74,8 @@ class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormPro
                     </Segment.Group>
                     :
                     <div>- No relations! -</div>
-                    
                 }
-                <Form.Button>Save</Form.Button>
+                <Form.Button size="small" color="blue">Save</Form.Button>
             </Form>
         );
     }

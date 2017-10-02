@@ -20,7 +20,7 @@ import { createClient } from './utils/apollo';
 import App from './App';
 
 // Create a new browser Apollo client
-const client = createClient();
+export const client = createClient();
 
 const rootReducer = combineReducers({
   // enthusiasm

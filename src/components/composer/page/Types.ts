@@ -13,11 +13,15 @@ export type BizRelationsType = {
     oppositeObject: {
         id: string;
         name: string;
+
     }
     metaRelation: {
         id: string;
         oppositeName: string;
         multiplicity: string;
+        oppositeRelation: {
+          id: string;
+        }
     }
 };
 

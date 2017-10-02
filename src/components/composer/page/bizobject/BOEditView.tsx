@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { graphql, gql, ChildProps, compose, MutationFunc } from 'react-apollo';
-import { allBOQuery } from './queries';
+import { allBOQuery, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject } from './queries';
 import BOEditForm, { BOEditFormData } from './BOEditForm';
-import { MOResponse, BizObjectsType, BOEditType } from './../Types';
+import { MOResponse, BizObjectsType, BOEditType, BizRelationsType } from './../Types';
+// import { client as apolloClient } from '../../../../index';
 // import * as diff from 'deep-diff';
 
 const createBizObject = gql`
@@ -46,74 +47,69 @@ mutation CreateBO (
             }
             metaRelation {
                 id
-                multiplicity
-                oppositeName
+                oppositeRelation {
+                    id
+                }
             }
         }
     }
 }
 `;
 
-const deleteBizRel = gql`
-mutation removeBR($bizRelId: ID!)  {
-    deleteBizRelation(id: $bizRelId )
-    {id}
+interface TEST {
+    createBusinessObject: BOEditType;
 }
-`;
 
-type RelType = { metaRelationId: string, Value: string | string[]};
-type AttrType = {key: string, Value: string };
-type FormRelPair = { metaRelationId: string, oppositeObjectId: string };
+type AttrType = { [x: string]: { Value: string }};
+type RelType = { [x: string]: { Value: string | string[] }};
 
-type BizMetaMapType = { bizkey: string, metaRelationId: string, oppositeObjectId: string};
+type BizRelPair = { metaRelationId: string, oppositeObjectId: string };
+type UpdateBizRelPair = { bizRelId: string, value: string };
 
-class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> {
+type BizRelMetaMapType = { bizkey: string, metaRelationId: string, oppositeObjectId: string};
+
+class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>> {
 
     private formInit: BOEditFormData;
-    private bizrelIdMappings: Array<BizMetaMapType>;  // Use this to find bizRelation-id for deleted <metaRelationId,Value>
-
+    private bizrelIdMappings: Array<BizRelMetaMapType>;  // Use this to find bizRelation-id for deleted <metaRelationId,Value>
+    
     fromBOToForm = (newObject: boolean) => {
         
         const { attributes: metaAttrs, outgoingRelations: metaRels } = this.props.metaobject.MetaObject;
-        var formAttrs = new Array<AttrType>(0);
-        var formRels = new Array<RelType>(0); 
+        var formAttrs: AttrType = {};
+        var formRels: RelType = {}; 
         
         if (newObject) {
-
             metaAttrs.map(ma => {
-                var attr = {key: ma.id, Value: ''};
-                formAttrs.push(attr);
+                formAttrs[ma.id] = { Value: ''};
             });
             metaRels.map(mr => {
-                var rel: RelType = { metaRelationId: mr.id, Value: ''};
+                let value: string | string[] = '';
                 if (mr.multiplicity === 'Many') {
-                    rel = { metaRelationId: mr.id, Value: []};
+                    value = [];
                 }
-                formRels.push(rel);
+                formRels[mr.id] = { Value: value};
             });
-
         } else {
             const { bizAttributes, outgoingRelations } = this.props.bizObject;
             
             // Attributes
             metaAttrs.map(ma => {
-                var attr = {key: ma.id, Value: ''};
+                let value: string = '';
                 for (let i = 0; i < bizAttributes.length; i++) {
                     if (ma.id === bizAttributes[i].metaAttribute.id) {
-                        attr.Value = bizAttributes[i].value;
+                        value = bizAttributes[i].value;
                         break;
                     }
                 }
-                formAttrs.push(attr);
+                formAttrs[ma.id] = { Value: value };
             });
 
             // Relations
-            this.bizrelIdMappings = new Array<BizMetaMapType>(0);
+            this.bizrelIdMappings = new Array<BizRelMetaMapType>(0);
             var relMap = new Map<string, { Value: string | string[] }>();
-            let undordedRels = new Array<RelType>(0);
             
             metaRels.map(mr => {
-                var rel = {metaRelationId: mr.id, Value: ''};
                 let found = false;
                 for (let i = 0; i < outgoingRelations.length; i++) {
                     if (mr.id === outgoingRelations[i].metaRelation.id) {
@@ -127,17 +123,15 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
                                 relMap[mr.id].push(value);
                             }
                         } else {
-                            rel.Value = value;
-                            undordedRels.push(rel);
+                            formRels[mr.id] = { Value: value };                    
                             break;
                         }
                     }
                 }
                 if (!found) {  // Metarelation has no outgoing relations for the business object, add []
-                    undordedRels.push({metaRelationId: mr.id, Value: []});
+                    formRels[mr.id] = { Value: [] };                    
                 }
             });
-
             // Fix rels with 'many' relations, map -> array
             for (var key in relMap) {
                 if (relMap[key] !== undefined) {  // TSLint requires this! Read on StackOverflow
@@ -145,26 +139,18 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
                     for (let i = 0; i < relMap[key].length; i++) {
                         relarr.push(relMap[key][i]);
                     }
-                    undordedRels.push({metaRelationId: key, Value: relarr});
+                    formRels[key] = { Value: relarr};
                 }
             }
-            // Fix to corresponding order in BOEditForm
-            metaRels.map(mr => {
-                for (let i = 0; i < undordedRels.length; i++) {
-                    if (mr.id === undordedRels[i].metaRelationId) {
-                        formRels.push(undordedRels[i]);
-                        break;
-                    }
-                }
-            }); 
         }
         this.formInit = {
-            Attributes: formAttrs,
-            Relations: formRels
+            bizAttributes: formAttrs,
+            bizRelations: formRels
         };
-        // tslint:disable-next-line:no-console
+/*        
+        tslint:disable-next-line:no-console
         console.log(`Your init:\n\n${JSON.stringify(this.formInit, null, 2)}`);
-                
+*/                
         return this.formInit;
     }
 
@@ -174,14 +160,84 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
                 await this.props.deleteBR({
                     variables: {
                         bizRelId: bizrels[i], 
-                    },
+                    }
                 });
             }
-            
-            // TODO: Loop through bizrels and delete from BizRelations from Store!
+
+            // TODO: delete corresponding opposite business relation !!!
 
         } catch (err) {
             alert('Error when deleting business relations...\n' + err);
+        }
+    }
+
+    addBizRels = async (added: BizRelPair[]) => {
+        let { bizObject } = this.props;
+        try {
+            for (let i = 0; i < added.length; i++) {
+                await this.props.createBR({
+                    variables: {
+                        incoming: bizObject.id,
+                        oppositeObj: added[i].oppositeObjectId,
+                        metarelation: added[i].metaRelationId
+                    }
+                });
+            }
+        } catch (err) {
+            alert('Error when creating business relations...\n' + err);
+        }
+    }
+
+    addOppositeBizRels =  async (boId: string, outgoingRels: BizRelationsType[], added: BizRelPair[]) => {
+        try {
+            for (let i = 0; i < added.length; i++) {
+                for (let j = 0; j < outgoingRels.length; j++) {
+                    if (added[i].metaRelationId === outgoingRels[j].metaRelation.id) {
+                        await this.props.createBR({
+                            variables: {
+                                oppositeObj: boId,
+                                incoming: added[i].oppositeObjectId,
+                                metarelation: outgoingRels[j].metaRelation.oppositeRelation.id
+                            }
+                        });
+                        break;
+                    }
+                }
+            }
+        } catch (err) {
+            alert('Error when creating business relations...\n' + err);
+        }
+    }
+
+    updateBizAttributes = async (relationPairs: UpdateBizRelPair[]) => {
+        try {
+            for (let i = 0; i < relationPairs.length; i++) {
+                await this.props.updateBA({
+                    variables: {
+                        id: relationPairs[i].bizRelId,
+                        value: relationPairs[i].value,
+                    }
+                });
+            }
+        } catch (e) {
+            alert('Error when updating business attribute: ' + e);
+        }
+    }
+
+    updateBizObject = async () => {
+        try {
+            await this.props.updateBO({
+                variables: {
+                    id: this.props.bizObject.id,
+                    name: this.props.bizObject.name,
+                },
+                refetchQueries: [{
+                    query: allBOQuery,
+                    variables: { repoFullName: 'apollographql/apollo-client' },
+                }],                
+            });
+        } catch (e) {
+            alert('Error when updating business object: ' + e);
         }
     }
 
@@ -189,16 +245,17 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
         try {
             if (this.props.newObject) {
                 // Fix attributes for save
-                const { Attributes, Relations } = values;
+                const { bizAttributes, bizRelations } = values;
                 var attrs = new Array<{metaAttributeId: string, value: string}>(0);
-                for (let i = 0; i < Attributes.length; i++) {
-                    attrs.push({metaAttributeId: Attributes[i].key, value: Attributes[i].Value});
-                }
-                var rels = this.relArrayToPairs(Relations);
-                
+
+                Object.keys(bizAttributes).forEach(metaId => {
+                    attrs.push({metaAttributeId: metaId, value: bizAttributes[metaId].Value});
+                });
                 // Fix relations for save
-                // const { mutate } = this.props;
-                await this.props.createBO({
+                var rels = this.relArrayToPairs(bizRelations);
+
+                /*await*/
+                this.props.createBO({
                     variables: {
                         id: this.props.metaobject.MetaObject.id, 
                         name: 'TEST for removal', 
@@ -206,85 +263,152 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
                         state: 'Created',
                         rels: rels
                     },
-                    update: (store, { data: { createBusinessObject /* same name as graphql operation name!!! */} }) => {
+                    /*refetchQueries: [{
+                        query: allBOQuery,
+                        // variables: { repoFullName: 'apollographql/apollo-client' },
+                    },
+                    {             
+                            query: gql`
+                        query updateCache {
+                            allMetaRelations {
+                                id
+                                oppositeName
+                                oppositeRelation {
+                                    id
+                                    oppositeName
+                                }
+                            }
+                        }`
+                    }],*/
+                    update: (store, { data: { createBusinessObject }}) => {
                         // Read the data from the cache for this query.
                         const data: BizObjectsType = store.readQuery({query: allBOQuery });
-                        // Add our channel from the mutation to the beginning.
+                        // Add our new BO from the mutation to the beginning.
                         data.allBusinessObjects.splice(0, 0, createBusinessObject);
                         // Write the data back to the cache.
                         store.writeQuery({ query: allBOQuery, data });
                     },
+                }).then((response) => {
+//                        setTimeout(() => {
+                            this.addOppositeBizRels(
+                                response.data.createBusinessObject.id, 
+                                response.data.createBusinessObject.outgoingRelations, 
+                                rels);      // Pick new BO first in list, see update above  
+//                        }, 
+//                                   5000);
+//                    });
                 });
+
+/*
+                // For the newly created object, create opposite relations!
+
+                // tslint:disable-next-line:no-console
+                console.log('new BO id: ' + newBO.allBusinessObjects[0].id);
+               
+                setTimeout(() => {
+                    const newBO: BizObjectsType = apolloClient.readQuery({query: allBOQuery });
+                    let len = newBO.allBusinessObjects.length - 1;
+                    this.addOppositeBizRels(newBO.allBusinessObjects[len].id, newBO.allBusinessObjects[len].outgoingRelations, rels);      // Pick new BO first in list, see update above
+                }, 
+                           5000);
+*/                
             } else {
+                // Check changed attributes
+                var changedAttributes = this.getUpdatedBizAttributes(values.bizAttributes, this.formInit.bizAttributes);
                 // Check if relations added/deleted
-                var valuesRels = this.relArrayToPairs(values.Relations);
-                var inputRels = this.relArrayToPairs(this.formInit.Relations);
-                var deleted = this.diffDeleted(inputRels, valuesRels);
-                var added = this.diffDeleted(valuesRels, inputRels);
+                const { forDeletion, added } = this.getRelationChanges(this.formInit.bizRelations, values.bizRelations);
+
+                // tslint:disable-next-line:no-console
+                console.log('Rob added: ' + JSON.stringify(added));
                 
-                let deleteBizRels = new Array<string>(0);
-                deleted.forEach(element => {
-                    for (let i = 0; i < this.bizrelIdMappings.length; i++) {
-                        if (
-                            element.metaRelationId === this.bizrelIdMappings[i].metaRelationId && 
-                            element.oppositeObjectId === this.bizrelIdMappings[i].oppositeObjectId) {
-                                deleteBizRels.push(this.bizrelIdMappings[i].bizkey);
-                        }
-                    }
-                });
-                await this.deleteBizRels(deleteBizRels);
-
-                alert('Check debug console!');
-                // tslint:disable-next-line:no-console
-                console.log(`OLD :\n${JSON.stringify(inputRels, null, 2)}`);      
-                // tslint:disable-next-line:no-console
-                console.log(`NEW :\n${JSON.stringify(valuesRels, null, 2)}`);      
-
-                // tslint:disable-next-line:no-console
-                console.log('Rob deleted ' + JSON.stringify(deleted) + '\n' + 'Rob added: ' + JSON.stringify(added));
-
                 // tslint:disable-next-line:no-console
                 console.log('Mapping array: ' + JSON.stringify(this.bizrelIdMappings));
                 // tslint:disable-next-line:no-console
-                console.log('Bizrelids to be deleted!! ' + JSON.stringify(deleteBizRels));
-                /*                
-                await this.props.deleteBR({
-                    variables: {
-                        bizRelId: deleteBizRels[0], 
-                    },
-                    update: (store, { data: { createBusinessObject } }) => {
-                        // Read the data from the cache for this query.
-                        const data: BizObjectsType = store.readQuery({query: allBOQuery });
-                        // Add our channel from the mutation to the beginning.
-                        data.allBusinessObjects.splice(0, 0, createBusinessObject);
-                        // Write the data back to the cache.
-                        store.writeQuery({ query: allBOQuery, data });
-                    },
-                });
-*/
+                console.log('Bizrelids to be deleted!! ' + JSON.stringify(forDeletion));
+
+                await this.updateBizAttributes(changedAttributes);
+                await this.addBizRels(added);
+                await this.deleteBizRels(forDeletion);
+                await this.updateBizObject();   // TODO: To get chache update! Only for prototyping!
+                // await apolloClient.query<BizObjectsType>({ query: allBOQuery });  // Uppdaterar inte cachen!
+                // TODO: OBS! updateBizObject() uppdaterar t.ex. inte ändrade attribut-texter som dyker upp i dropdowns!!!
+
+                // TODO: vissa object har outgoingrelations men inte incomingrelations!!! Missar dubbelriktning?!?!?!?!
+                // Måste jag själv skapa två BizRelations, för dubbelriktning!?
+
             }
         } catch (e) {
             alert('ONSAVE error: ' + e);
         }
     }
 
+    getUpdatedBizAttributes = (newAttrs: AttrType, oldAttrs: AttrType): UpdateBizRelPair[] => {
+        var updated = new Array<{metaId: string, value: string}>(0);
+        Object.keys(oldAttrs).forEach(metaId => {
+            if (oldAttrs[metaId].Value !== newAttrs[metaId].Value) {
+                updated.push({ metaId: metaId, value: newAttrs[metaId].Value});
+            }
+        });
+/*        // tslint:disable-next-line:no-console
+        console.log(`UPDATED attributes :\n${JSON.stringify(updated, null, 0)}`);  */    
+        let objAttrs = this.props.bizObject.bizAttributes;
+        let changedBizAttrs = new Array<UpdateBizRelPair>(0);
+        updated.forEach(metaRel => {
+            for (let i = 0; i < objAttrs.length; i++ ) {
+                if (metaRel.metaId === objAttrs[i].metaAttribute.id) {
+                    changedBizAttrs.push({ bizRelId: objAttrs[i].id, value: metaRel.value});
+                    break;
+                }
+            }
+        });
+        return changedBizAttrs;
+    }
+
+    getRelationChanges = (oldrels: RelType, newrels: RelType): { forDeletion: string[], added: BizRelPair[] } => {
+        var newRels = this.relArrayToPairs(newrels);
+        var oldRels = this.relArrayToPairs(oldrels);
+
+        var deleted = this.diffDeleted(oldRels, newRels);
+        var added = this.diffDeleted(newRels, oldRels);
+        
+        let deleteBizRels = new Array<string>(0);
+        deleted.forEach(element => {
+            for (let i = 0; i < this.bizrelIdMappings.length; i++) {
+                if (
+                    element.metaRelationId === this.bizrelIdMappings[i].metaRelationId && 
+                    element.oppositeObjectId === this.bizrelIdMappings[i].oppositeObjectId) {
+                        deleteBizRels.push(this.bizrelIdMappings[i].bizkey);
+                        break;
+                }
+            }
+        });
+/*
+        // tslint:disable-next-line:no-console
+        console.log(`OLD :\n${JSON.stringify(oldRels, null, 2)}`);      
+        // tslint:disable-next-line:no-console
+        console.log(`NEW :\n${JSON.stringify(newRels, null, 2)}`);      
+*/
+        return { forDeletion: deleteBizRels, added: added };
+    }
+        
     // from {metarelId, [objid]} -> [metarelId, objid}]
-    relArrayToPairs = (relArray: RelType[]): Array<FormRelPair> => {
-        var relPairs = new Array<FormRelPair>(0);
-        for (let i = 0; i < relArray.length; i++) {
-            if (relArray[i].Value !== null && Array.isArray(relArray[i].Value)) {
-                for (let e = 0; e < relArray[i].Value.length; e++) {
-                    relPairs.push({metaRelationId: relArray[i].metaRelationId, oppositeObjectId: relArray[i].Value[e]});
+    relArrayToPairs = (relations: RelType): Array<BizRelPair> => {
+        var relPairs = new Array<BizRelPair>(0);
+
+        Object.keys(relations).forEach(metaId => {
+            if (Array.isArray(relations[metaId].Value)) {
+                for (let e = 0; e < relations[metaId].Value.length; e++) {
+                    relPairs.push({metaRelationId: metaId, oppositeObjectId: relations[metaId].Value[e]});
                 }
             } else {
-                relPairs.push({metaRelationId: relArray[i].metaRelationId , oppositeObjectId: relArray[i].Value as string});
+                relPairs.push({metaRelationId: metaId, oppositeObjectId: relations[metaId].Value as string});
             }
-        }
+        });
         return relPairs;
     }
 
-    diffDeleted = (source: Array<FormRelPair>, compare: Array<FormRelPair>): Array<FormRelPair> => {
-        var deleted = new Array<FormRelPair>(0);
+    diffDeleted = (source: Array<BizRelPair>, compare: Array<BizRelPair>): Array<BizRelPair> => {
+        var deleted = new Array<BizRelPair>(0);
         source.forEach(el => {
             if (compare.findIndex(element => {return JSON.stringify(element) === JSON.stringify(el); }) === -1) {
                 deleted.push(el);
@@ -311,25 +435,24 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, {}>> 
         );
     }
 }
-/*
-interface MyResults {
-    bo: BizObjectsType;
-  }
-*/
+
 type MyProps = {
     newObject: boolean;
     metaobject: MOResponse;
     bizObject?: BOEditType; 
 };
 interface MyMutations {
+    updateBO: MutationFunc<{ id: string; }>;
+    updateBA: MutationFunc<{ id: string; }>;
+    createBR: MutationFunc<{ id: string; }>;
     deleteBR: MutationFunc<{ id: string; }>;
-    createBO: MutationFunc<BizObjectsType>;
+    createBO: MutationFunc<TEST>;
 }
 
-// type MyPropsType = ChildProps<MyProps & MyMutations, MOResponse>;
-
-// export default graphql<{}, MyProps>(createBizObject, { name: 'createBO'})(EditBOView);
 export default compose(
-    graphql<{}, MyProps>(deleteBizRel, { name: 'deleteBR' }),
-    graphql<{}, MyProps>(createBizObject, { name: 'createBO'}),    
+    graphql<{}, MyProps>(updateBizObject, { name: 'updateBO' }),
+    graphql<{}, MyProps>(updateBizAttribute, { name: 'updateBA' }),
+    graphql<{}, MyProps>(createBizRelation, { name: 'createBR' }),
+    graphql<{}, MyProps>(deleteBizRelation, { name: 'deleteBR' }),
+    graphql<{}, MyProps>(createBizObject, { name: 'createBO'})  
 )(EditBOView);

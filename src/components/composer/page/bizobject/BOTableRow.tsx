@@ -1,25 +1,51 @@
 import * as React from 'react';
 import BOEditContainer from './BOEditContainer';
 import { BOEditType } from './../Types';
+import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
+import { deleteBizObject, deleteBizRelation, deleteBizAttr, allBOQuery } from './queries';
 
-// import { Link } from 'react-router-dom';
 import { Table, Label, Icon, Button, Segment, Header } from 'semantic-ui-react';
 
 type Props = {
-    /* oid: string;
-    name: string;
-    state: string;
-    metaObject: {name: string};
-    bizAttributes: BizAttributeType[];
-    outgoingRelations: BizRelationsType[]*/
     bizObject: BOEditType;
 };
 
-export default class BOTableRow extends React.Component<Props> {
+class BOTableRow extends React.Component<ChildProps<Props & MyMutations, {}>> {
     state = { showEditForm: false };
 
     switchEditOnOff = () => {
         this.setState({ showEditForm: !this.state.showEditForm});
+    }
+
+    deleteBizObject = async () => {
+        let { bizObject } = this.props;
+        try {
+            for (let i = 0; i < bizObject.outgoingRelations.length; i++) {
+                await this.props.deleteBizRel({
+                    variables: {
+                        bizRelId: bizObject.outgoingRelations[i].id, 
+                    },
+                });
+            }
+            for (let i = 0; i < bizObject.bizAttributes.length; i++) {
+                await this.props.deleteBizAttr({
+                    variables: {
+                        bizAttrId: bizObject.bizAttributes[i].id, 
+                    },
+                });
+            }
+            await this.props.deleteBizObj({
+                variables: {
+                    id: bizObject.id,   
+                },
+                refetchQueries: [{   // TODO: Endast för protoyping... This will update the UI
+                    query: allBOQuery,
+                    variables: { repoFullName: 'apollographql/apollo-client' },
+                  }],
+            });
+        } catch (err) {
+            alert('Error when deleting business object/relations...\n' + err);
+        }
     }
     
     render() {
@@ -32,7 +58,10 @@ export default class BOTableRow extends React.Component<Props> {
                         <Header>{name}</Header>
                     </Segment>
                     <Button size="small" onClick={this.switchEditOnOff} primary={true}>
-                        <Icon name="pencil"/>Edit
+                        <Icon name="edit"/>Edit
+                    </Button>
+                    <Button size="small" color="red" onClick={this.deleteBizObject} >
+                        <Icon name="erase"/>Delete
                     </Button>
                 </Table.Cell>   
                 <Table.Cell verticalAlign="top">
@@ -83,3 +112,15 @@ export default class BOTableRow extends React.Component<Props> {
         );
     }
 }
+
+interface MyMutations {
+    deleteBizAttr: MutationFunc<{ id: string; }>;
+    deleteBizRel: MutationFunc<{ id: string; }>;
+    deleteBizObj: MutationFunc<{ id: string; }>;
+}
+
+export default compose(
+    graphql<{}, Props>(deleteBizAttr, { name: 'deleteBizAttr' }),
+    graphql<{}, Props>(deleteBizRelation, { name: 'deleteBizRel' }),
+    graphql<{}, Props>(deleteBizObject, { name: 'deleteBizObj'}),    
+)(BOTableRow);

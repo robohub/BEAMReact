@@ -25,6 +25,14 @@ query MOQuery($id: ID!) {
           multiplicity
         }
     }
+    allMetaRelations {
+        id
+        oppositeName
+        oppositeRelation {
+            id
+            oppositeName
+        }
+    }
 }
 `;
 

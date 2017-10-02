@@ -17,6 +17,7 @@ export function createClient() {
       {
       // reduxRootSelector: (state: ApolloStateSelector) => state.apollo,
         networkInterface,
+        // dataIdFromObject: (object: any) => object.id
       }
     )
   );
