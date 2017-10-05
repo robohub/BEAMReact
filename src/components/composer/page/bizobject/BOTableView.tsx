@@ -15,7 +15,7 @@ interface InputProps {
 class BOTableView extends React.Component<ChildProps<InputProps, Response>> {
 
     render() {
-      const { loading, allBusinessObjects, error } = this.props.data;
+      const { loading, businessObjects, error } = this.props.data;
 
       // const { link } = this.props;
 
@@ -38,7 +38,7 @@ class BOTableView extends React.Component<ChildProps<InputProps, Response>> {
                 </Table.Row>
             </Table.Header>
             <Table.Body>
-              {allBusinessObjects.map(o =>
+              {businessObjects.map(o =>
                   <BOTableRow 
                     key={o.id}
                     bizObject={o}

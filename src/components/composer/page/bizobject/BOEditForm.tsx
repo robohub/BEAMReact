@@ -35,12 +35,12 @@ reduxForm<BOEditFormData, BOEditFormProps>({
 })(
 class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormProps> {
     render() {
-        const { MetaObject } = this.props.metaObject;
+        const { metaObject } = this.props.metaObject;
         return (
             <Form onSubmit={this.props.handleSubmit}>
-                {MetaObject.attributes.length > 0 ?
+                {metaObject.attributes.length > 0 ?
                     <Segment.Group>
-                        {MetaObject.attributes.map((attr, index) => (
+                        {metaObject.attributes.map((attr, index) => (
                             <Segment key={index}>
                                 <Form.Field>
                                     <label>{attr.name}</label>
@@ -56,9 +56,9 @@ class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormPro
                     :
                     <div>- No attributes! -</div>
                 }
-                {MetaObject.outgoingRelations.length > 0 ?
+                {metaObject.outgoingRelations.length > 0 ?
                     <Segment.Group>
-                        {MetaObject.outgoingRelations.map((rel, index) => (
+                        {metaObject.outgoingRelations.map((rel, index) => (
                             <Segment key={index}>
                                 <Form.Field key={rel.id} >
                                     <label>{rel.oppositeName}</label>

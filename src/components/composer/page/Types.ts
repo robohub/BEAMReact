@@ -38,11 +38,11 @@ export type BOEditType = {
 };
 
 export type BizObjectsType = {
-    allBusinessObjects: BOEditType[];
+    businessObjects: BOEditType[];
 };
 
 export interface MOResponse {
-    MetaObject: { 
+    metaObject: { 
         id: string,
         name: string,
         attributes: {

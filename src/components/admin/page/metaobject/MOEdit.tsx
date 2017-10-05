@@ -6,7 +6,7 @@ import MOListRelations from './MOListRelations';
 import { Segment, Menu, Input, Button, Label } from 'semantic-ui-react';
 import EditAttributesModal from '../modals/attributeModal';
 
-export default function MOEdit ({ allMetaObjects }: MOEditType) {
+export default function MOEdit ({ metaObjects }: MOEditType) {
 
     return (
             <Segment.Group>
@@ -16,7 +16,7 @@ export default function MOEdit ({ allMetaObjects }: MOEditType) {
                     <Button disabled={true} >Add</Button>
                 </Segment>
                 <Segment>
-                    {allMetaObjects.map(obj =>
+                    {metaObjects.map(obj =>
                         <Segment key={obj.name} >
                             <Segment >
                                 <Menu secondary={true} size="small">

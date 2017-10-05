@@ -5,7 +5,7 @@ import { MOEditType } from './Types';
 
 const allMetaObjectsQuery = gql`
 query allMetaObjects {
-  allMetaObjects {
+  metaObjects {
     id
     name
     attributes {
@@ -27,7 +27,7 @@ type Response = MOEditType;
 
 const ManageMOView = graphql<Response>(allMetaObjectsQuery, {});
 
-export default ManageMOView(({ data: { loading, allMetaObjects, error } }) => { 
+export default ManageMOView(({ data: { loading, metaObjects, error } }) => { 
   if (loading) {
     return <div>Loading</div>;
   }
@@ -35,7 +35,7 @@ export default ManageMOView(({ data: { loading, allMetaObjects, error } }) => {
     return <h1>ERROR</h1>;
   } 
   return (
-    <MOEdit allMetaObjects={allMetaObjects}/>
+    <MOEdit metaObjects={metaObjects}/>
   );
 });
 

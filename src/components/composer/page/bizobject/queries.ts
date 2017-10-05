@@ -1,8 +1,8 @@
 import { gql } from 'react-apollo';
 
 export const allBOQuery = gql`
-query allBusinessObjects {
-    allBusinessObjects {
+query businessObjects {
+    businessObjects {
         id
         name
         state

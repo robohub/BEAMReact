@@ -11,44 +11,46 @@ mutation CreateBO (
     $id: ID!, 
     $name: String!, 
     $state: String!,
-    $attrs: [BusinessObjectbizAttributesBizAttribute!],
-    $rels: [BusinessObjectoutgoingRelationsBizRelation!]    
+    $attrs: [BizAttributeInput!],
+    $rels: [BizRelationInput!]    
 ) 
 {
-    createBusinessObject(
-        metaObjectId: $id,
+    createBusinessObject(input: {
+        metaObject: { id: $id },
         name: $name,
         state: $state,
         bizAttributes: $attrs,
         outgoingRelations: $rels
-    )
+    })
     {
-        id
-        name
-        state
-        metaObject {
+        businessObject {
             id
             name
-        }
-        bizAttributes {
-            id
-            metaAttribute
-            {
+            state
+            metaObject {
                 id
                 name
             }
-            value
-        }
-        outgoingRelations {
-            id
-            oppositeObject {
+            bizAttributes {
                 id
-                name
-            }
-            metaRelation {
-                id
-                oppositeRelation {
+                metaAttribute
+                {
                     id
+                    name
+                }
+                value
+            }
+            outgoingRelations {
+                id
+                oppositeObject {
+                    id
+                    name
+                }
+                metaRelation {
+                    id
+                    oppositeRelation {
+                        id
+                    }
                 }
             }
         }
@@ -63,7 +65,7 @@ interface TEST {
 type AttrType = { [x: string]: { Value: string }};
 type RelType = { [x: string]: { Value: string | string[] }};
 
-type BizRelPair = { metaRelationId: string, oppositeObjectId: string };
+type BizRelPair = { metaRelation: {id: string}, oppositeObject: {id: string} };
 type UpdateBizRelPair = { bizRelId: string, value: string };
 
 type BizRelMetaMapType = { bizkey: string, metaRelationId: string, oppositeObjectId: string};
@@ -75,7 +77,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
     
     fromBOToForm = (newObject: boolean) => {
         
-        const { attributes: metaAttrs, outgoingRelations: metaRels } = this.props.metaobject.MetaObject;
+        const { attributes: metaAttrs, outgoingRelations: metaRels } = this.props.metaobject.metaObject;
         var formAttrs: AttrType = {};
         var formRels: RelType = {}; 
         
@@ -178,8 +180,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                 await this.props.createBR({
                     variables: {
                         incoming: bizObject.id,
-                        oppositeObj: added[i].oppositeObjectId,
-                        metarelation: added[i].metaRelationId
+                        oppositeObj: added[i].oppositeObject.id,
+                        metarelation: added[i].metaRelation.id
                     }
                 });
             }
@@ -192,11 +194,11 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
         try {
             for (let i = 0; i < added.length; i++) {
                 for (let j = 0; j < outgoingRels.length; j++) {
-                    if (added[i].metaRelationId === outgoingRels[j].metaRelation.id) {
+                    if (added[i].metaRelation.id === outgoingRels[j].metaRelation.id) {
                         await this.props.createBR({
                             variables: {
                                 oppositeObj: boId,
-                                incoming: added[i].oppositeObjectId,
+                                incoming: added[i].oppositeObject.id,
                                 metarelation: outgoingRels[j].metaRelation.oppositeRelation.id
                             }
                         });
@@ -246,10 +248,10 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
             if (this.props.newObject) {
                 // Fix attributes for save
                 const { bizAttributes, bizRelations } = values;
-                var attrs = new Array<{metaAttributeId: string, value: string}>(0);
+                var attrs = new Array<{metaAttribute: {id: string}, value: string}>(0);
 
                 Object.keys(bizAttributes).forEach(metaId => {
-                    attrs.push({metaAttributeId: metaId, value: bizAttributes[metaId].Value});
+                    attrs.push({metaAttribute: {id: metaId}, value: bizAttributes[metaId].Value});
                 });
                 // Fix relations for save
                 var rels = this.relArrayToPairs(bizRelations);
@@ -257,7 +259,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                 /*await*/
                 this.props.createBO({
                     variables: {
-                        id: this.props.metaobject.MetaObject.id, 
+                        id: this.props.metaobject.metaObject.id, 
                         name: 'TEST for removal', 
                         attrs: attrs,
                         state: 'Created',
@@ -284,7 +286,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                         // Read the data from the cache for this query.
                         const data: BizObjectsType = store.readQuery({query: allBOQuery });
                         // Add our new BO from the mutation to the beginning.
-                        data.allBusinessObjects.splice(0, 0, createBusinessObject);
+                        data.businessObjects.splice(0, 0, createBusinessObject);
                         // Write the data back to the cache.
                         store.writeQuery({ query: allBOQuery, data });
                     },
@@ -375,8 +377,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
         deleted.forEach(element => {
             for (let i = 0; i < this.bizrelIdMappings.length; i++) {
                 if (
-                    element.metaRelationId === this.bizrelIdMappings[i].metaRelationId && 
-                    element.oppositeObjectId === this.bizrelIdMappings[i].oppositeObjectId) {
+                    element.metaRelation.id === this.bizrelIdMappings[i].metaRelationId && 
+                    element.oppositeObject.id === this.bizrelIdMappings[i].oppositeObjectId) {
                         deleteBizRels.push(this.bizrelIdMappings[i].bizkey);
                         break;
                 }
@@ -398,10 +400,10 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
         Object.keys(relations).forEach(metaId => {
             if (Array.isArray(relations[metaId].Value)) {
                 for (let e = 0; e < relations[metaId].Value.length; e++) {
-                    relPairs.push({metaRelationId: metaId, oppositeObjectId: relations[metaId].Value[e]});
+                    relPairs.push({metaRelation: {id: metaId}, oppositeObject: {id: relations[metaId].Value[e]}});
                 }
             } else {
-                relPairs.push({metaRelationId: metaId, oppositeObjectId: relations[metaId].Value as string});
+                relPairs.push({metaRelation: {id: metaId}, oppositeObject: {id: relations[metaId].Value as string}});
             }
         });
         return relPairs;

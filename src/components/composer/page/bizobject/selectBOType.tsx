@@ -4,8 +4,8 @@ import { Segment, Dropdown } from 'semantic-ui-react';
 import EditBOtModal from './editBOModal';
 
 const allMOQuery = gql`
-query allMetaObjects {
-  allMetaObjects {
+query metaObjects {
+  metaObjects {
     id
     name
   }
@@ -13,7 +13,7 @@ query allMetaObjects {
 `;
 
 interface Response {
-    allMetaObjects: { id: string, name: string }[];
+    metaObjects: { id: string, name: string }[];
 }
 
 type DropType = {
@@ -26,14 +26,14 @@ class SelectBOType extends React.Component<ChildProps<{}, Response>> {
     state = { selected: false, selectedId: '', boType: ''};
     
     render() {
-        const { loading, allMetaObjects } = this.props.data;
+        const { loading, metaObjects } = this.props.data;
         
         if (loading) {
             return <div>Loading</div>;
         }
 
         var objs = new Array<DropType>(0);
-        allMetaObjects.map(o => {
+        metaObjects.map(o => {
             objs.push({text: o.name, value: o.id});
         });
 

@@ -19,5 +19,5 @@ export type MOPropertiesType = {
 };
 
 export type MOEditType = {
-    allMetaObjects: MOPropertiesType[];
+    metaObjects: MOPropertiesType[];
 };
