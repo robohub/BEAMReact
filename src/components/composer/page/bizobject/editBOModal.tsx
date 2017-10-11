@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Icon, Modal } from 'semantic-ui-react';
+import { Button, /*Icon,*/ Modal } from 'semantic-ui-react';
 import BOEditContainer from './BOEditContainer';
 
 type InputProps = {
@@ -22,14 +22,14 @@ export default class EditBOtModal extends React.Component<InputProps> {
                             {selected ? <BOEditContainer newObject={true} metaID={metaID}/> : '...'}
                         </Modal.Description>
                     </Modal.Content>
-                    <Modal.Actions>
+                    {/*<Modal.Actions>
                         <Button basic={true} color="red">
                             <Icon name="remove" /> Cancel
                         </Button>
                         <Button color="green">
                             <Icon name="checkmark" /> Save
                         </Button>
-                    </Modal.Actions>
+                    </Modal.Actions>*/}
                 </Modal >
             );
         }
