@@ -18,6 +18,11 @@ query allMetaObjects {
             }
             multiplicity
             oneway
+            oppositeRelation {
+                id
+                oppositeName
+                multiplicity
+            }
         }
     }
     allMetaAttributes {

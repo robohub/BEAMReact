@@ -1,21 +1,13 @@
 import * as React from 'react';
 import { MORelationItemType, /*MOPropType*/ } from './Types';
-import { Icon, Label } from 'semantic-ui-react';
+import { Avatar, Chip, FontIcon } from 'react-md';
 
 export default function MOAttributeItem({ oppositeName, oppositeObject, multiplicity }: MORelationItemType) {
 
-  // let icon = (type === MOPropType.ATTRIBUTE) ? 'attach' : 'linkify';
-  let icon = 'linkify';
-  return (
-    <div>
-      <Icon name={icon}/>
-      {oppositeName} {' '}
-      <Label size="small">
-        {oppositeObject.name}
-      </Label>
-      <Label size="small">
-        {multiplicity}
-      </Label>
-    </div>
-  );
+    return (
+        <Chip
+            label={oppositeName + ': (' + oppositeObject.name + ', ' + multiplicity + ')'}
+            avatar={<Avatar><FontIcon>link</FontIcon></Avatar>}
+        />
+    );
 }

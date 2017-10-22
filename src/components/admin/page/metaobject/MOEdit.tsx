@@ -3,10 +3,10 @@ import { MOEditType, MOPropertiesType, MOAttributeItemType } from './Types';
 
 import MOListAttributes from './MOListAttributes';
 import MOListRelations from './MOListRelations';
-import { Segment, Menu, Input, Button, Label, InputOnChangeData } from 'semantic-ui-react';
+import { FontIcon, Divider, Button, TextField, /*FontIcon,*/ Grid, Cell, Snackbar } from 'react-md';
 
 import EditAttributesModal from './modals/attributeModal';
-import { MOEditRelsFormData } from './forms/EditMORelationsForm';
+import { MOEditFormData } from './forms/Types';
 
 import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
 import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMetaRelation } from './queries';
@@ -16,14 +16,25 @@ interface Props {
     allMetaAttributes: MOAttributeItemType[];
     // allMetaRelations: MORelationItemType[];
 }
-class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>> {
-        
+
+interface State {
+    showEditForm: boolean;
+    selectedMO: MOPropertiesType;
+    toasts: { text: React.ReactNode }[];
+}
+class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State> {
+    
     private moName = '';
     
-    handleInput = (event: React.KeyboardEvent<HTMLInputElement>, data: InputOnChangeData) => {
-        this.moName = data.value;
+    constructor(props: ChildProps<Props & MyMutations, {}>) {
+        super(props);
+        this.state = { showEditForm: false, selectedMO: null, toasts: []};
+    }    
+    
+    handleInput = (value: string) => {
+        this.moName = value;
     }
-    onCreateMO = async () => {
+    createMO = async () => {
         await this.props.createMO({
             variables: {
                 name: this.moName, 
@@ -38,7 +49,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>> {
         });
     }
 
-    onUpdateMOAttrs = async (moId: string, attrs: string[]) => {
+    updateMOAttrs = async (moId: string, attrs: string[]) => {
         await this.props.updateMOAttrs({
             variables: {
                 id: moId, 
@@ -57,7 +68,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>> {
         });
     }
 
-    onAddMORels = async (moId: string, newRelation: MOEditRelsFormData) => {
+    addMORels = async (moId: string, newRelation: MOEditFormData) => {
 
         // 1. Find NewRels
         // 2. Find DeletedRels
@@ -72,10 +83,10 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>> {
             await this.props.createMR({
                 variables: {
                     incomingid: moId, 
-                    oppositeId: newRelation.id,
-                    oppName: newRelation.name,
-                    multiplicity: newRelation.multiplicity,
-                    oneway: newRelation.oneway
+                    oppositeId: newRelation.relations[0].oppositeObject.id,
+                    oppName: newRelation.relations[0].oppositeName,
+                    multiplicity: newRelation.relations[0].multiplicity,
+                    oneway: newRelation.relations[0].oneway
                 },
                 refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
                     query: allMetaObjectsQuery,
@@ -92,48 +103,96 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>> {
             alert('Error in adding MORels: ' + e);
         }
     }
+    
+    formSaved = async (moId: string, values: MOEditFormData) => {   // ASYNC!
+        this.hideEditForm();
+        var attrs = new Array<string>(0);
+        values.attributes.map(a =>
+            attrs.push(a.id)
+        );
+        await this.updateMOAttrs(moId, attrs);
+        this.toastSaved();
+    }
+        
+    switchEditOnOff = (event: React.MouseEvent<HTMLElement>) => {
+        this.setState(
+            {
+                selectedMO: this.props.allMetaObjects[event.currentTarget.id], 
+                showEditForm: !this.state.showEditForm
+            });
+    }    
+    hideEditForm = () => {
+        this.setState({ showEditForm: false });
+    }
+
+    dismissToast = () => {
+        const [, ...toasts] = this.state.toasts;
+        this.setState({ toasts });    }
+    
+    toastSaved = () => {
+        this.addToast('Saved the Meta Object...');
+    }
+
+    addToast = (text: string) => {
+        this.setState((state) => {
+            const toasts = state.toasts.slice();
+            toasts.push({ text });
+            return { toasts };
+        });
+    }
 
     render() {
         return (
-            <Segment.Group>
-                <Segment>
-                    <Input icon="plus" iconPosition="left" placeholder="Add metaobject" onChange={this.handleInput}/>
-                    {' '}
-                    <Button disabled={false} onClick={this.onCreateMO}>Add</Button>
-                </Segment>
-                <Segment>
-                    {this.props.allMetaObjects.map(obj =>
-                        <Segment key={obj.name} >
-                            <Segment >
-                                <Menu secondary={true} size="small">
-                                    <Menu.Header><Label ribbon={true} size="big" color="yellow">{obj.name}</Label></Menu.Header>
-                                    <Menu.Item position="right">
-                                        <Input icon="search" placeholder="Search..." />
-                                    </Menu.Item>
-                                    <EditAttributesModal
-                                        metaObject={obj}
-                                        metaAttributes={this.props.allMetaAttributes}
-                                        metaObjects={this.props.allMetaObjects}
-                                        onSaveAttrs={this.onUpdateMOAttrs}
-                                        onAddRels={this.onAddMORels}
-                                    />
-                                    <Button circular={true} icon="setting"/>
-                                </Menu>        
-                            </Segment>
-                            { obj.attributes.length === 0 ?
-                                <Segment>No attributes</Segment>
-                                :
+            <div>
+                <Grid className="md-paper--1">
+                    <Cell size={2}>
+                        <TextField id="input" /*leftIcon={<FontIcon>plus</FontIcon>}*/ placeholder="Add Meta Object" /*onChange={this.handleInput}*//> 
+                    </Cell>
+                    <Cell align="middle" size={10}>
+                        <Button raised={true} primary={true} onClick={this.createMO}>Add</Button>
+                    </Cell>
+                </Grid>
+                {this.props.allMetaObjects.map((obj, index) =>
+                    <div key={obj.name}>
+                        <Grid className="md-block-centered">
+                            <Cell size={2}>
+                                <div className="md-title">{obj.name}</div>
+                                <Button 
+                                    id={index}
+                                    size="small"
+                                    onClick={this.switchEditOnOff}
+                                    primary={true}
+                                    flat={true}
+                                    iconEl={<FontIcon>create</FontIcon>}
+                                >
+                                    Edit
+                                </Button>
+                            </Cell>
+                            <Cell size={10}>
                                 <MOListAttributes name={obj.name} attributes={obj.attributes} />
-                            }
-                            { obj.outgoingRelations.length === 0 ?
-                                <Segment>No relations</Segment>
-                                :
+                                <Divider style={{marginTop: 10, marginBottom: 10}}/>
                                 <MOListRelations name={obj.name} outgoingRelations={obj.outgoingRelations}/>
-                            }
-                        </Segment>
-                    )}
-                </Segment>
-            </Segment.Group>
+                            </Cell>
+                        </Grid>        
+                        <Divider/>
+                    </div>
+                )}
+                <EditAttributesModal
+                    metaObject={this.state.selectedMO}
+                    metaAttributes={this.props.allMetaAttributes}
+                    metaObjects={this.props.allMetaObjects}
+                    onFormSave={this.formSaved}
+                    visible={this.state.showEditForm}
+                    hide={this.hideEditForm}
+                />
+                <Snackbar
+                    id="example-snackbar"
+                    toasts={this.state.toasts}
+                    autohide={true}
+                    onDismiss={this.dismissToast}
+                />
+            </div>
+
         );
     }
 }

@@ -1,4 +1,5 @@
 // import './css/bootstrap.css';    // v4 theme!
+import './index.css';
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -16,6 +17,7 @@ import { reducer as formReducer } from 'redux-form';
 // and handle injecting data down to any listening component
 import { ApolloProvider } from 'react-apollo';
 import { createClient } from './utils/apollo';
+import * as WebFontLoader from 'webfontloader';
 
 import App from './App';
 
@@ -28,6 +30,13 @@ const rootReducer = combineReducers({
 });
 
 const store = createStore(rootReducer);
+
+WebFontLoader.load({
+  google: {
+    // families: ['Roboto:300,400,500,700', 'Material Icons'],
+    families: ['Noto:300,400,500,600,700', 'Material Icons'],
+  },
+});
 
 ReactDOM.render(
   <ApolloProvider client={client}>

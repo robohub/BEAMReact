@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Chart } from 'chart.js';
-import { Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 class Example extends React.Component {
 
@@ -53,30 +52,7 @@ class Example extends React.Component {
 
     render() {
         return (
-            <div>
-                <canvas id="myChart" width="400" height="400"/>
-                <div>
-                    <Row>
-                        <Col sm="6">
-                            <Card block={true}>
-                                <CardTitle>Special Title Treatment</CardTitle>  
-                                <CardText>With supporting text below as a natural lead-in to additional content.</CardText>
-                                <Button>Go somewhere</Button>
-                            </Card>
-                        </Col>
-                    </Row>
-                    <Card block={true} className="text-center">
-                        <CardTitle>Special Title Treatment</CardTitle>
-                        <CardText>With supporting text below as a natural lead-in to additional content.</CardText>
-                        <Button>Go somewhere</Button>
-                    </Card>
-                    <Card block={true} className="text-right">
-                        <CardTitle>Special Title Treatment</CardTitle>
-                        <CardText>With supporting text below as a natural lead-in to additional content.</CardText>
-                        <Button>Go somewhere</Button>
-                    </Card>
-                </div>            
-            </div>
+            <canvas id="myChart" width="400" height="400"/>         
         );
     }
 }

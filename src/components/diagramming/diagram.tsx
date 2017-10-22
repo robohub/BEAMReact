@@ -5,7 +5,7 @@ import * as vis from 'vis';
 
 import { beam } from '../../utils/robShapes';
 
-import { Button, /*ButtonToolbar*/ } from 'semantic-ui-react';
+import { Button, /*ButtonToolbar*/ } from 'react-md';
 
 class Diagram extends React.Component {
     test: Number = 5;
@@ -125,10 +125,10 @@ class Diagram extends React.Component {
         return (
             <div> 
                 {/* Standard button */}
-                <Button onClick={this.addRect} primary={true}>Add rect</Button>{' '}
+                <Button onClick={this.addRect} raised={true} primary={true}>Add rect</Button>{' '}
 
-                <Button secondary={true}>secondary</Button>{' '}
-                <Button negative={true}>negative</Button>{' '}
+                <Button raised={true} secondary={true}>secondary</Button>{' '}
+                <Button raised={true} negative={true}>negative</Button>{' '}
                 <Button>ordinary</Button>{' '}
                 <div ref={(c) => this.placeholder = c as HTMLDivElement}/>
                 <div ref={(c) => this.visualization = c as HTMLDivElement}/>

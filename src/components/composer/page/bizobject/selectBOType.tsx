@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { gql, graphql, ChildProps } from 'react-apollo';
-import { Segment, Dropdown } from 'semantic-ui-react';
+// import { Segment, Dropdown } from 'semantic-ui-react';
 import EditBOtModal from './editBOModal';
+
+import {
+    SelectField, Grid, Cell, Button,
+} from 'react-md';
 
 const allMOQuery = gql`
 query allMetaObjects {
@@ -17,14 +21,22 @@ interface Response {
 }
 
 type DropType = {
-    text: string;
+    label: string;
     value: string;
 };
 
 class SelectBOType extends React.Component<ChildProps<{}, Response>> {
 
-    state = { selected: false, selectedId: '', boType: ''};
+    state = { selected: false, selectedId: '', boType: '', visible: false};
     
+    show = () => {
+        this.setState({ visible: true });
+      }
+    
+    hide = () => {
+        this.setState({ visible: false });
+    }
+       
     render() {
         const { loading, allMetaObjects } = this.props.data;
         
@@ -34,20 +46,36 @@ class SelectBOType extends React.Component<ChildProps<{}, Response>> {
 
         var objs = new Array<DropType>(0);
         allMetaObjects.map(o => {
-            objs.push({text: o.name, value: o.id});
+            objs.push({label: o.name, value: o.id});
         });
 
-        const changeSelected = ((event: React.ChangeEvent<HTMLSelectElement>, data: DropType) => {
-            var index = objs.findIndex((x => x.value === data.value));
-            this.setState({selected: true, selectedId: data.value, boType: objs[index].text});
+        const changeSelected = ((value: string, index: number, event: React.MouseEvent<HTMLElement>) => {
+            this.setState({selected: true, selectedId: value, boType: objs[index].label});
         });
 
         return (         
-            <Segment>
-                <Dropdown placeholder="Select Type" search={true} selection={true} options={objs} onChange={changeSelected}/>
-                {' '}
-                <EditBOtModal selected={this.state.selected} metaID={this.state.selectedId} boType={this.state.boType}/>
-            </Segment>
+            <Grid className="md-paper--1">
+                <Cell size={2}>
+                    <SelectField
+                        id="moSelect"
+                        value={this.state.selectedId}
+                        placeholder="Select Type"
+                        menuItems={objs}
+                        onChange={changeSelected}
+                        fullWidth={true}
+                    />
+                </Cell>
+                <Cell align="middle" size={10}>
+                    <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
+                    <EditBOtModal
+                        selected={this.state.selected}
+                        visible={this.state.visible}
+                        metaID={this.state.selectedId}
+                        boType={this.state.boType}
+                        hide={this.hide}
+                    />
+                </Cell>
+            </Grid>
         );
     }
 }

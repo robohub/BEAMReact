@@ -1,131 +1,217 @@
 import * as React from 'react';
-import { Field, reduxForm, InjectedFormProps, WrappedFieldProps, GenericField } from 'redux-form';
-import { Segment, Form, Dropdown } from 'semantic-ui-react';
-import { MOPropertiesType } from '../Types';
-
-interface DropType {
-    text: string;
-    value: string;
-}
-
-export interface MOEditRelsFormData {
-    name: string;
-    id: string;
-    multiplicity: string;
-    oneway: boolean;
-    correspondingName: string;
-}
+import { FieldArray, reduxForm, InjectedFormProps, WrappedFieldArrayProps, GenericFieldArray } from 'redux-form';
+import { 
+    SelectionControlGroup, Checkbox,
+    Divider, TextField, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader
+} from 'react-md';
+import { MOPropertiesType, MORelationItemType } from '../Types';
+import { MOEditFormData } from './Types';
 
 interface MOEditFormProps {
     metaObjects: MOPropertiesType[];    
 }
 
-interface DropDownRelationsProps {
-    options: MOPropertiesType[];    
-}
-
-const XFieldDropdown = Field as new () => GenericField<DropDownRelationsProps & React.SelectHTMLAttributes<HTMLSelectElement>>;
-
-type MOEditFormInjectedProps = InjectedFormProps<MOEditRelsFormData, MOEditFormProps>;
+type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
 
 interface State {
     showOppositeName: boolean;
 }
 
 export default 
-reduxForm<MOEditRelsFormData, MOEditFormProps>({
-    form: 'MOEditRelsForm',
+reduxForm<MOEditFormData, MOEditFormProps>({
+    form: 'MOEditForm',
 })(
 class MOEditRelationsForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps, State> {
-    
-    state = { showOppositeName: true };
+
+    render() {
+        const { metaObjects } = this.props;
+        return (
+            <form onSubmit={this.props.handleSubmit}>
+                <XFieldArray
+                    name="relations"
+                    component={RenderRelations}
+                    metaObjects={metaObjects}
+                />
+            </form>
+                
+        );
+    }
+});
+
+interface RelProps {
+    metaObjects: MOPropertiesType[];
+}
+
+const XFieldArray = FieldArray as new () => GenericFieldArray<MORelationItemType, RelProps>;
+
+class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationItemType> & RelProps> {
+
+    state = { showOppositeName: true, selectedBOId: '', selectedBOName: '', relName: '',
+              oneway: false, multi: 'One', corrMulti: 'One', corrRelName: '' };
     
     switchOnewWayOnOff = () => {
         this.setState({ showOppositeName: !this.state.showOppositeName});
     }
 
     render() {
-        const { metaObjects } = this.props;
+        const { metaObjects, fields } = this.props;
+        let multiplicityVals = [{
+            label: 'One', value: 'One',
+        }, {
+            label: 'Many', value: 'Many',
+        }];
+        
+        var dropList = new Array<{label: string, value: string}>(0);
+        metaObjects.map((o, index) => {
+            dropList.push({label: o.name, value: o.id});
+        });
+
         return (
-            <Form onSubmit={this.props.handleSubmit}>
-                <Segment.Group>
-                    <Segment>
-                        <Form.Field>
-                            <label>Relation Name</label>
-                            <Field
-                                name="name"
-                                type="text"
-                                component="input"
+            <div>
+                <Grid>
+                    <Cell size={6}>
+                        <TextField
+                            id="relName"
+                            value={this.state.relName}
+                            label="Relation Name"
+                            onChange={(value, event) => this.setState({relName: value})}
+                        />
+                    </Cell>
+                    <Cell size={6}>
+                        <SelectField
+                            id="boSelect"
+                            label="Related Object Type"
+                            value={this.state.selectedBOId}
+                            placeholder="Opposite Object Type"
+                            menuItems={dropList}
+                            onChange={(value, index, event) => {
+                                this.setState( {selectedBOId: value, selectedBOName: this.props.metaObjects[index].name});
+                            }}
+                            fullWidth={true}
+                        />
+                    </Cell>
+                    <Cell size={6} align="top">
+                        <Checkbox
+                            id="mrcb"
+                            name="mrcb"
+                            checked={this.state.oneway}
+                            label="Directed"
+                            onChange={(checked, event) => {
+                                this.setState({oneway: checked});
+                                this.switchOnewWayOnOff();
+                            }}
+                        />
+                    </Cell>
+                    <Cell size={6}>
+                        <SelectionControlGroup
+                            id={1}
+                            name="sel1"
+                            value={this.state.multi}
+                            inline={true}
+                            labelClassName="md-caption"
+                            type="radio"
+                            label="Multiplicity"
+                            defaultValue="One"
+                            controls={multiplicityVals}
+                            onChange={(value, event) => this.setState({multi: value})}
+                        />
+                    </Cell>
+                    <Cell size={6} align="top">
+                        {this.state.showOppositeName ?
+                            <TextField
+                                id="corrName"
+                                label="Corresponding Relation Name"
+                                value={this.state.corrRelName}
+                                onChange={(value, event) => this.setState({corrRelName: value})}
                             />
-                        </Form.Field>
-                    </Segment>
-                    <Segment>
-                        <Form.Field>
-                            <label>Opposite Object Type</label>
-                            <XFieldDropdown
-                                name="id"
-                                component={MODropdownFormField}
-                                multiple={false}
-                                options={metaObjects}
+                            :
+                            <div/>
+                        }                    
+                    </Cell>
+                    <Cell size={6}>
+                        {this.state.showOppositeName ?
+                            <SelectionControlGroup
+                                id={2}
+                                name="sel2"
+                                value={this.state.corrMulti}
+                                inline={true}
+                                labelClassName="md-caption"
+                                type="radio"
+                                label="Corresponding Multiplicity"
+                                defaultValue="One"
+                                controls={multiplicityVals}
+                                onChange={(value, event) => this.setState({corrMulti: value})}
                             />
-                        </Form.Field>
-                    </Segment>
-                    <Segment>
-                        <Form.Field>
-                            <label>Multiplicity</label>
-                            <Field name="multiplicity" component="select">
-                                <option />
-                                <option value="One">One</option>
-                                <option value="Many">Many</option>
-                            </Field>
-                        </Form.Field>
-                    </Segment>
-                    <Segment>
-                        <Form.Field>
-                            <label>One-way (directed)</label>
-                            <Field
-                                name="oneway"
-                                id="oneway"
-                                component="input"
-                                type="checkbox"
-                                onChange={this.switchOnewWayOnOff}
-                            />
-                        </Form.Field>
-                    </Segment>
-                    {this.state.showOppositeName ?
-                        <Segment>
-                            <Form.Field>
-                                <label>Opposite Relation Name</label>
-                                <Field
-                                    name="correspondingName"
-                                    type="text"
-                                    component="input"
-                                />
-                            </Form.Field>
-                        </Segment>
-                        :
-                        <div/>                        
-                    }
-                </Segment.Group>
-                <Form.Button size="small" color="blue">Add</Form.Button>
-            </Form>
+                            :
+                            <div/>
+                        }
+                    </Cell>
+                    <Cell size={12} align="top">
+                        <Button
+                            primary={true}
+                            raised={true}
+                            onClick={() => {
+                                let rel = {
+                                    oppositeName: this.state.relName,
+                                    oppositeObject: { id: this.state.selectedBOId, name: this.state.selectedBOName },
+                                    oppositeRelation: {
+                                        multiplicity: this.state.corrMulti,
+                                        oppositeName: this.state.corrRelName
+                                    },
+                                    multiplicity: this.state.multi,
+                                    oneway: this.state.oneway
+                                };
+                                fields.push(rel);
+                            }}
+                            disabled={
+                                this.state.oneway ?
+                                    this.state.relName === '' || this.state.selectedBOId === ''
+                                :
+                                    this.state.relName === '' || this.state.selectedBOId === '' || this.state.corrRelName === '' 
+                            }
+                        >
+                            Create Relation
+                        </Button>
+                    </Cell>
+                </Grid>
+
+                <Divider/>
+                
+                <DataTable plain={true}>
+                    <TableHeader>
+                        <TableRow>
+                            <TableColumn>Name</TableColumn>
+                            <TableColumn>Opposite Object</TableColumn>
+                            <TableColumn>Multiplicity</TableColumn>
+                            <TableColumn>Oneway</TableColumn>
+                            <TableColumn>Delete</TableColumn> 
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {fields.length !== 0 ?
+                            fields.map((name, index, r) =>
+                                <TableRow key={index}>
+                                    <TableColumn>{fields.get(index).oppositeName}</TableColumn>
+                                    <TableColumn>{fields.get(index).oppositeObject.name}</TableColumn>
+                                    <TableColumn>{fields.get(index).multiplicity}</TableColumn>
+                                    <TableColumn>{fields.get(index).oneway ? 'Yes' : 'No'}</TableColumn>
+                                    <TableColumn>
+                                        <Button onClick={() => fields.remove(index)} icon={true} primary={true} secondary={true}>delete_forever</Button>
+                                    </TableColumn>
+                                </TableRow>                            
+                            )
+                            :
+                            <TableRow>
+                                <TableColumn>
+                                    No relations defined...
+                                </TableColumn>
+                            </TableRow>
+
+                        }
+                    </TableBody>
+                </DataTable>
+
+            </div>
         );
     }
-});
-
-const MODropdownFormField = (field: (React.SelectHTMLAttributes<HTMLSelectElement> & WrappedFieldProps & DropDownRelationsProps)) => {
-    var dropList = new Array<DropType>(0);
-    field.options.map((r, index) => {
-        dropList.push({text: r.name, value: r.id});
-    });
-    return (
-        <Dropdown
-            search={true}
-            selection={true}
-            value={field.input.value}
-            onChange={(param, data) => field.input.onChange(data.value)}
-            multiple={field.multiple}
-            options={dropList}
-        />
-    );
-};
+}

@@ -1,36 +1,46 @@
 import * as React from 'react';
-import { Button, /*Icon,*/ Modal } from 'semantic-ui-react';
 import BOEditContainer from './BOEditContainer';
+import { DialogContainer } from 'react-md';
 
 type InputProps = {
     selected: boolean;
+    visible: boolean;
     metaID: string;
     boType: string;
+    hide: () => void;
 };
 
 export default class EditBOtModal extends React.Component<InputProps> {
            
         render() {
                     
-            const { metaID, selected, boType } = this.props;
-                    
-            return (     
-                <Modal trigger={<Button disabled={!selected}>Create BO</Button>} size="small">
-                    <Modal.Header>Add Business Object: {' '} {boType}</Modal.Header>
-                    <Modal.Content scrolling={true}>
-                        <Modal.Description>
-                            {selected ? <BOEditContainer newObject={true} metaID={metaID}/> : '...'}
-                        </Modal.Description>
-                    </Modal.Content>
-                    {/*<Modal.Actions>
-                        <Button basic={true} color="red">
-                            <Icon name="remove" /> Cancel
-                        </Button>
-                        <Button color="green">
-                            <Icon name="checkmark" /> Save
-                        </Button>
-                    </Modal.Actions>*/}
-                </Modal >
+            const { selected, metaID, visible, boType, hide } = this.props;
+        
+            let actions = [{
+                id: 'dialog-cancel',
+                secondary: true,
+                children: 'Cancel',
+                onClick: hide,
+            }, {
+                id: 'dialog-ok',
+                primary: true,
+                children: 'Ok',
+                onClick: hide,
+            }];
+
+            return (
+                <DialogContainer
+                    id="createBODialog"
+                    visible={visible}
+                    onHide={hide}
+                    actions={actions}
+                    title={'Add Business Object: ' + boType}
+                    focusOnMount={false}
+                    width={480}
+                >
+                    {selected ? <BOEditContainer newObject={true} metaID={metaID}/> : '...'}
+
+                </DialogContainer >
             );
         }
 }   

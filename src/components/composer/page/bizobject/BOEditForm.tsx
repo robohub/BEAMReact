@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Field, reduxForm, InjectedFormProps, WrappedFieldProps, GenericField, /*GenericFieldArray, FormSection*/ } from 'redux-form';
-import { Segment, Form, Dropdown } from 'semantic-ui-react';
 import { BOEditType , MOResponse } from './../Types';
 
+import { SelectField, Paper, TextField, Button } from 'react-md';
+
 interface DropType {
-    text: string;
+    label: string;
     value: string;
 }
 
@@ -20,13 +21,7 @@ interface BOEditFormProps {
     metaObject: MOResponse;
     bizObject?: BOEditType;
 }
-interface BODropDownProps {
-    options: {
-        id: string;
-        name: string
-    }[];
-}
-const XFieldDropdown = Field as new () => GenericField<BODropDownProps & React.SelectHTMLAttributes<HTMLSelectElement>>;
+
 type BOEditFormInjectedProps = InjectedFormProps<BOEditFormData, BOEditFormProps>;
 
 export default 
@@ -37,62 +32,88 @@ class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormPro
     render() {
         const { MetaObject } = this.props.metaObject;
         return (
-            <Form onSubmit={this.props.handleSubmit}>
+            <form onSubmit={this.props.handleSubmit}>
                 {MetaObject.attributes.length > 0 ?
-                    <Segment.Group>
+                    <Paper zDepth={0}>
                         {MetaObject.attributes.map((attr, index) => (
-                            <Segment key={index}>
-                                <Form.Field>
-                                    <label>{attr.name}</label>
-                                    <Field
-                                        name={'bizAttributes.' + attr.id + '.Value'}
-                                        type="text"
-                                        component="input"
-                                    />
-                                </Form.Field>
-                            </Segment>
+                            <Paper zDepth={0} key={index}>
+                                <XTextField
+                                    name={'bizAttributes.' + attr.id + '.Value'}
+                                    component={renderTextField}
+                                    label={attr.name}
+                                />
+                            </Paper>
                         ))}
-                    </Segment.Group>
+                    </Paper>
                     :
                     <div>- No attributes! -</div>
                 }
                 {MetaObject.outgoingRelations.length > 0 ?
-                    <Segment.Group>
+                    <Paper zDepth={0}>
                         {MetaObject.outgoingRelations.map((rel, index) => (
-                            <Segment key={index}>
-                                <Form.Field key={rel.id} >
-                                    <label>{rel.oppositeName}</label>
-                                    <XFieldDropdown
-                                        name={'bizRelations.' + rel.id + '.Value'}
-                                        component={BODropdownFormField}
-                                        multiple={rel.multiplicity === 'Many'}
-                                        options={rel.oppositeObject.businessObjects}
-                                    />
-                                </Form.Field>
-                            </Segment>
+                            <Paper zDepth={0} key={index}>
+                                <XFieldDropdown
+                                    name={'bizRelations.' + rel.id + '.Value'}
+                                    component={BODropdownFormField}
+                                    multiple={rel.multiplicity === 'Many'}
+                                    options={rel.oppositeObject.businessObjects}
+                                    label={rel.oppositeName}
+                                />
+                            </Paper>
                         ))}
-                    </Segment.Group>
+                    </Paper>
                     :
                     <div>- No relations! -</div>
                 }
-                <Form.Button size="small" color="blue">Save</Form.Button>
-            </Form>
+                <Button type="submit" primary={true} raised={true}>Save</Button>
+            </form>
         );
     }
 });
 
+interface BODropDownProps {
+    label: string;
+    options: {
+        id: string;
+        name: string
+    }[];
+}
+
+const XFieldDropdown = Field as new () => GenericField<BODropDownProps & React.SelectHTMLAttributes<HTMLSelectElement>>;
+
 const BODropdownFormField = (field: (React.SelectHTMLAttributes<HTMLSelectElement> & WrappedFieldProps & BODropDownProps)) => {
     var dropList = new Array<DropType>(0);
     field.options.map((o, index) => {
-        dropList.push({text: o.name, value: o.id});
+        dropList.push({label: o.name, value: o.id});
     });
     return (
-        <Dropdown
-            selection={true}
+        <SelectField
+            id="moSelect"
+            label={field.label}
             value={field.input.value}
-            onChange={(param, data) => field.input.onChange(data.value)}
-            multiple={field.multiple}
-            options={dropList}
+            placeholder="Select Type"
+            menuItems={dropList}
+            onChange={(value, index, event) => field.input.onChange(value)}
+            fullWidth={true}
+            // position={SelectField.Positions.BOTTOM_RIGHT}
+        />
+    );
+};
+
+interface TextFieldProps {
+    label: string;
+}
+
+const XTextField = Field as new () => GenericField<TextFieldProps & React.InputHTMLAttributes<HTMLInputElement>>;
+
+const renderTextField = (field: (React.InputHTMLAttributes<HTMLInputElement> & WrappedFieldProps & TextFieldProps)) => {
+    return (
+        <TextField
+            id="boEdit"
+            label={field.label}
+            placeholder={field.label}
+            {...field.input}
+            // errorText={touched && error}
         />
     );
 };

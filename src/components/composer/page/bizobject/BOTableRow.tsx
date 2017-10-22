@@ -1,21 +1,23 @@
+import './../page.css';
+
 import * as React from 'react';
-import BOEditContainer from './BOEditContainer';
 import { BOEditType } from './../Types';
 import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
 import { deleteBizObject, deleteBizRelation, deleteBizAttr, allBOQuery } from './queries';
 
-import { Table, Label, Icon, Button, Segment, Header } from 'semantic-ui-react';
+import {
+    Button, FontIcon, Paper, Chip, Avatar,
+    TableRow,
+    TableColumn,
+} from 'react-md';
 
 type Props = {
     bizObject: BOEditType;
+    showEditForm: ( event: React.MouseEvent<HTMLElement>) => void;
+    index: number;
 };
 
 class BOTableRow extends React.Component<ChildProps<Props & MyMutations, {}>> {
-    state = { showEditForm: false };
-
-    switchEditOnOff = () => {
-        this.setState({ showEditForm: !this.state.showEditForm});
-    }
 
     deleteBizObject = async () => {
         let { bizObject } = this.props;
@@ -52,63 +54,66 @@ class BOTableRow extends React.Component<ChildProps<Props & MyMutations, {}>> {
         const { name, state, metaObject, bizAttributes, outgoingRelations} = this.props.bizObject;
         
         return (
-            <Table.Row>
-                <Table.Cell verticalAlign="top">
-                    <Segment>
-                        <Header>{name}</Header>
-                    </Segment>
-                    <Button size="small" onClick={this.switchEditOnOff} primary={true}>
-                        <Icon name="edit"/>Edit
+            <TableRow selectable={false} /*className="md-btn--text"*/>
+                <TableColumn >
+                    <Paper className="md-title" zDepth={0}>
+                        {name}
+                    </Paper>
+                </TableColumn >
+                <TableColumn >
+                    <Button 
+                        id={this.props.index}
+                        size="small"
+                        onClick={this.props.showEditForm}
+                        primary={true}
+                        flat={true}
+                        iconEl={<FontIcon>create</FontIcon>}
+                    >
+                        Edit
                     </Button>
-                    <Button size="small" color="red" onClick={this.deleteBizObject} >
-                        <Icon name="erase"/>Delete
+                    <Button size="small" onClick={this.deleteBizObject} secondary={true} flat={true} iconEl={<FontIcon>delete_forever</FontIcon>}>
+                        Delete
                     </Button>
-                </Table.Cell>   
-                <Table.Cell verticalAlign="top">
+                </TableColumn>   
+                <TableColumn >
                     {metaObject.name}
-                </Table.Cell>     
-                <Table.Cell verticalAlign="top">
-                    <Button size="large">{state}</Button>
-                </Table.Cell>     
-                <Table.Cell verticalAlign="top">
-                    {this.state.showEditForm ? 
-                        <BOEditContainer 
-                            newObject={false} 
-                            metaID={this.props.bizObject.metaObject.id}
-                            bizObject={this.props.bizObject}
-                        />
-                        :
-                        <span>
-                            <Segment>
-                                {bizAttributes.length > 0 ?
-                                    <span>                
-                                        {bizAttributes.map(a =>
-                                            <Label key={a.id}>
-                                                <Icon name="attach"/>{a.metaAttribute.name} = {a.value}
-                                            </Label>
-                                        )}
-                                    </span>
-                                    :
-                                    <span>- No attributes -</span>
-                                }
-                            </Segment>
-                            <Segment>
-                                {outgoingRelations.length > 0 ?
-                                    <span>                
-                                        {outgoingRelations.map(r =>
-                                            <Label key={r.id}>
-                                                <Icon name="linkify"/>{r.metaRelation.oppositeName} = {r.oppositeObject.name}
-                                            </Label>
-                                        )}
-                                    </span>
-                                    :
-                                    <span>- No relations -</span>
-                                }
-                            </Segment>
-                        </span>
-                    }
-                </Table.Cell>
-            </Table.Row>
+                </TableColumn>     
+                <TableColumn >
+                    <Button flat={true} size="large">{state}</Button>
+                </TableColumn>     
+                <TableColumn >
+                    <Paper zDepth={0}>
+                        {bizAttributes.length > 0 ?
+                            <span>                
+                                {bizAttributes.map(a =>
+                                    <Chip 
+                                        key={a.id}
+                                        label={a.metaAttribute.name + ' = ' + a.value}
+                                        avatar={<Avatar><FontIcon>attachment</FontIcon></Avatar>}
+                                    />
+                                )}
+                            </span>
+                            :
+                            <span className="robchip">- No attributes -</span>
+                        }
+                    </Paper>
+                    <Paper zDepth={0}>
+                        {outgoingRelations.length > 0 ?
+                            <span>                
+                                {outgoingRelations.map(r =>
+                                    <Chip 
+                                        key={r.id}
+                                        label={r.metaRelation.oppositeName + ' = ' + r.oppositeObject.name}
+                                        avatar={<Avatar><FontIcon>link</FontIcon></Avatar>}
+                                    />
+                                )}
+                            </span>
+                            :
+                            <span>- No relations -</span>
+                        }
+                    </Paper>
+                </TableColumn>
+            </TableRow>
         );
     }
 }

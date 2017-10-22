@@ -1,18 +1,14 @@
 import * as React from 'react';
 import { MOAttributeItemType, /*MOPropType*/ } from './Types';
-import { Icon, Label } from 'semantic-ui-react';
+import { Avatar, Chip, FontIcon } from 'react-md';
 
 export default function MOAttributeItem({ name, type }: MOAttributeItemType) {
 
-  // let icon = (type === MOPropType.ATTRIBUTE) ? 'attach' : 'linkify';
-  let icon = 'attach';
-  return (
-    <div>
-      <Icon name={icon}/>
-      {name} {' '}
-      <Label size="small">
-        {type}
-      </Label>
-    </div>
+    // let icon = (type === MOPropType.ATTRIBUTE) ? 'attach' : 'linkify';
+    return (
+        <Chip
+            label={name + ': ' + type}
+            avatar={<Avatar><FontIcon>attachment</FontIcon></Avatar>}
+        />
   );
 }

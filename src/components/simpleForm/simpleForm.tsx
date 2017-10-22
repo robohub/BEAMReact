@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Field, reduxForm, InjectedFormProps, WrappedFieldProps } from 'redux-form';
-import { Button, Segment, Form } from 'semantic-ui-react';
 
 import { FieldArray, WrappedFieldArrayProps } from 'redux-form';
 // import validate from './validate';
@@ -31,27 +30,23 @@ class RenderHobbies extends React.Component<WrappedFieldArrayProps<string>> {
         const { fields, meta: { error }} = this.props;
         return (
             <div>
-                <Button type="button" onClick={() => fields.push('')}>Add Hobby</Button>
-                <Segment.Group>         
+                <button type="button" onClick={() => fields.push('')}>Add Hobby</button>
+                <div>         
                     {fields.map((hobby, index) => (
-                        <Segment key={index}>
-                            <Button
-                                primary={true}
-                                icon="trash"
+                        <div key={index}>
+                            <button
                                 onClick={() => fields.remove(index)}
                             />
-                            <Form.Field>
                                 <label>{`Hobby #${index + 1}`}</label>
                                 <Field
                                     name={hobby}
                                     type="text"
                                     component={renderField}
                                 />
-                            </Form.Field>
-                        </Segment>
+                        </div>
                     ))}
                     {error && <li className="error">{error}</li>}
-                </Segment.Group>
+                </div>
             </div>
         );
     }
@@ -62,37 +57,31 @@ class RenderMembers extends React.Component<WrappedFieldArrayProps<string>> {
         const { fields, meta: { dirty, error }} = this.props;
         return (
             <div>
-                <Button type="button" onClick={() => fields.push('')}>Add Member</Button>
+                <button type="button" onClick={() => fields.push('')}>Add Member</button>
                 {(dirty) && error && <span>{error}</span>}
-                <Segment.Group>
+                <div>
                     {fields.map((member, index) => (
-                        <Segment key={index}>
-                            <Button
-                                primary={true}
-                                icon="trash"
+                        <div key={index}>
+                            <button
                                 onClick={() => fields.remove(index)}
                             />
                             <h4>Member #{index + 1}</h4>
-                            <Form.Field>
                                 <label>First Name</label>
                                 <Field
                                     name={`${member}.firstName`}
                                     type="text"
                                     component={renderField}
                                 />
-                            </Form.Field>
-                            <Form.Field>
                                 <label>Last Name</label>
                                 <Field
                                     name={`${member}.lastName`}
                                     type="text"
                                     component={renderField}
                                 />
-                            </Form.Field>
                             <FieldArray name={`${member}.hobbies`} component={RenderHobbies} />
-                        </Segment>
+                        </div>
                 ))}
-                </Segment.Group>
+                </div>
             </div>
         );
     }
@@ -110,25 +99,23 @@ export interface FieldArraysFormData {
 const FieldArraysForm = (props: InjectedFormProps) => {
     const { handleSubmit,  pristine, reset } = props;
     return (
-        <Form onSubmit={handleSubmit}>
-            <Segment>
-                <Form.Field>
+        <form onSubmit={handleSubmit}>
+            <div>
                     <label>Club Name</label>
                     <Field
                         name="clubName"
                         type="text"
                         component={renderField}
                     />
-                </Form.Field>
                 <FieldArray name="members" component={RenderMembers}/>
                 <div>
-                    <Button type="submit">Submit</Button>
-                    <Button type="button" disabled={pristine} onClick={reset}>
+                    <button type="submit">Submit</button>
+                    <button type="button" disabled={pristine} onClick={reset}>
                         Clear Values
-                    </Button>
+                    </button>
                 </div>
-            </Segment>
-        </Form>
+            </div>
+        </form>
     );
 };
 

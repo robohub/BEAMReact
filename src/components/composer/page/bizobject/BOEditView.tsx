@@ -427,7 +427,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
         return (
             <BOEditForm
                 newObject={this.props.newObject}
-                onSubmit={this.onSave}
+                // onSubmit={this.onSave}
+                onSubmit={this.showResults}
                 metaObject={this.props.metaobject}
                 bizObject={this.props.newObject ? null : this.props.bizObject}
                 initialValues={this.fromBOToForm(this.props.newObject)}
