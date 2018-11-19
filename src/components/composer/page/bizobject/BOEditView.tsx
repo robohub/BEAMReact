@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { graphql, gql, ChildProps, compose, MutationFunc } from 'react-apollo';
+import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
+import gql from 'graphql-tag';
 import { allBOQuery, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject } from './queries';
 import BOEditForm, { BOEditFormData } from './BOEditForm';
 import { MOResponse, BizObjectsType, BOEditType, BizRelationsType } from './../Types';
@@ -74,22 +75,25 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
     private bizrelIdMappings: Array<BizRelMetaMapType>;  // Use this to find bizRelation-id for deleted <metaRelationId,Value>
     
     fromBOToForm = (newObject: boolean) => {
-        
+    
         const { attributes: metaAttrs, outgoingRelations: metaRels } = this.props.metaobject.MetaObject;
-        var formAttrs: AttrType = {};
-        var formRels: RelType = {}; 
+        var formAttrs = new Array<{bizattrid: string, bizattrval: string}>(0);
+        var formRels = new Array<{bizrelid: string, bizrelbizobjs = new Array<{bizobjid: string}>(0)}>(0);
         
         if (newObject) {
-            metaAttrs.map(ma => {
-                formAttrs[ma.id] = { Value: ''};
+
+            metaAttrs.map((ma => {
+                formInit.bizAttributes.
+                formAttrs[index] = { bizattrid: ma.id, bizattrval: ''};
             });
-            metaRels.map(mr => {
+            metaRels.map((mr, index) => {
                 let value: string | string[] = '';
                 if (mr.multiplicity === 'Many') {
                     value = [];
                 }
-                formRels[mr.id] = { Value: value};
+                formRels[index] = { bizrelid: mr.id, bizrelval: value};
             });
+            
         } else {
             const { bizAttributes, outgoingRelations } = this.props.bizObject;
             
@@ -132,6 +136,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                     formRels[mr.id] = { Value: [] };                    
                 }
             });
+            /*
             // Fix rels with 'many' relations, map -> array
             for (var key in relMap) {
                 if (relMap[key] !== undefined) {  // TSLint requires this! Read on StackOverflow
@@ -142,15 +147,17 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                     formRels[key] = { Value: relarr};
                 }
             }
+            */
         }
+
         this.formInit = {
             bizAttributes: formAttrs,
             bizRelations: formRels
         };
-/*        
-        tslint:disable-next-line:no-console
+        
+        // tslint:disable-next-line:no-console
         console.log(`Your init:\n\n${JSON.stringify(this.formInit, null, 2)}`);
-*/                
+              
         return this.formInit;
     }
 
@@ -431,7 +438,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                 onSubmit={this.showResults}
                 metaObject={this.props.metaobject}
                 bizObject={this.props.newObject ? null : this.props.bizObject}
-                initialValues={this.fromBOToForm(this.props.newObject)}
+                // initialValues={this.fromBOToForm(this.props.newObject)}
             />
         );
     }

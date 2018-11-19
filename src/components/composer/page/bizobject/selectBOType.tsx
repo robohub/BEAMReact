@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { gql, graphql, ChildProps } from 'react-apollo';
+import { Query, ChildProps } from 'react-apollo';
 // import { Segment, Dropdown } from 'semantic-ui-react';
+import gql from 'graphql-tag';
 import EditBOtModal from './editBOModal';
 
 import {
@@ -16,8 +17,12 @@ query allMetaObjects {
 }
 `;
 
+interface RObject {
+    id: string; name: string;
+}
+
 interface Response {
-    allMetaObjects: { id: string, name: string }[];
+    allMetaObjects: RObject[];
 }
 
 type DropType = {
@@ -25,9 +30,9 @@ type DropType = {
     value: string;
 };
 
-class SelectBOType extends React.Component<ChildProps<{}, Response>> {
+export default class SelectBOType extends React.Component<ChildProps<{}, Response>> {
 
-    state = { selected: false, selectedId: '', boType: '', visible: false};
+    state = { selected: false, selectedId: '', boType: '', visible: false };
     
     show = () => {
         this.setState({ visible: true });
@@ -36,48 +41,53 @@ class SelectBOType extends React.Component<ChildProps<{}, Response>> {
     hide = () => {
         this.setState({ visible: false });
     }
-       
+
     render() {
-        const { loading, allMetaObjects } = this.props.data;
-        
-        if (loading) {
-            return <div>Loading</div>;
-        }
-
-        var objs = new Array<DropType>(0);
-        allMetaObjects.map(o => {
-            objs.push({label: o.name, value: o.id});
-        });
-
-        const changeSelected = ((value: string, index: number, event: React.MouseEvent<HTMLElement>) => {
-            this.setState({selected: true, selectedId: value, boType: objs[index].label});
-        });
-
-        return (         
-            <Grid className="md-paper--1">
-                <Cell size={2}>
-                    <SelectField
-                        id="moSelect"
-                        value={this.state.selectedId}
-                        placeholder="Select Type"
-                        menuItems={objs}
-                        onChange={changeSelected}
-                        fullWidth={true}
-                    />
-                </Cell>
-                <Cell align="middle" size={10}>
-                    <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
-                    <EditBOtModal
-                        selected={this.state.selected}
-                        visible={this.state.visible}
-                        metaID={this.state.selectedId}
-                        boType={this.state.boType}
-                        hide={this.hide}
-                    />
-                </Cell>
-            </Grid>
+        return (
+            <Query query={allMOQuery}>
+                {({ loading, data: { allMetaObjects }, error }) => {
+                    if (loading) {
+                        return <div>Loading</div>;
+                    }
+                    if (error) {
+                        return <h1>ERROR</h1>;
+                    } 
+                      
+                    var objs = new Array<DropType>(0);
+                    allMetaObjects.map((o: RObject) => {
+                        objs.push({label: o.name, value: o.id});
+                    });
+                    
+                    const changeSelected = ((value: string, index: number, event: React.MouseEvent<HTMLElement>) => {
+                        this.setState({selected: true, selectedId: value, boType: objs[index].label});
+                    });
+                    
+                    return (
+                        <Grid className="md-paper--1">
+                            <Cell size={2}>
+                                <SelectField
+                                    id="moSelect"
+                                    value={this.state.selectedId}
+                                    placeholder="Select Type"
+                                    menuItems={objs}
+                                    onChange={changeSelected}
+                                    fullWidth={true}
+                                />
+                            </Cell>
+                            <Cell align="middle" size={10}>
+                                <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
+                                <EditBOtModal
+                                    selected={this.state.selected}
+                                    visible={this.state.visible}
+                                    metaID={this.state.selectedId}
+                                    boType={this.state.boType}
+                                    hide={this.hide}
+                                />
+                            </Cell>
+                        </Grid>
+                    );
+                }}
+            </Query>
         );
     }
 }
-
-export default graphql<Response>(allMOQuery)(SelectBOType);

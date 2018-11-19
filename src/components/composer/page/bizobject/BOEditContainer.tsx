@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { gql, graphql, ChildProps } from 'react-apollo';
+import { ChildProps, Query } from 'react-apollo';
+import gql from 'graphql-tag';
 import EditBOView from './BOEditView';
 import { MOResponse, BOEditType } from './../Types';
 
@@ -42,22 +43,27 @@ type InputProps = {
     bizObject?: BOEditType;
 };
 
-class BOEditView extends React.Component<ChildProps<InputProps, MOResponse>> {
+export default class BOEditView extends React.Component<ChildProps<InputProps, MOResponse>> {
 
     render() {
-        const { loading } = this.props.data;
-
-        if (loading) { return <div>Loading</div>; }
-       
+        let id = this.props.metaID;
         return (
-            <EditBOView 
-                newObject={this.props.newObject} /*metaID={this.props.metaID}*/ 
-                metaobject={this.props.data} 
-                bizObject={this.props.bizObject}
-            />
+            <Query query={MOQuery} variables={{ id: id}}>
+                {({ data, loading, error }) => {
+    
+                    if (loading) { return <div>Loading</div>; }
+                    
+                    if (error) { return <h1>ERROR</h1>; }             
+                    
+                    return (
+                        <EditBOView 
+                            newObject={this.props.newObject} 
+                            metaobject={data as MOResponse} 
+                            bizObject={this.props.bizObject}
+                        />
+                    );
+                }}
+            </Query>
         );
     }
 }
-
-export default graphql<MOResponse, InputProps>(MOQuery, {
-    options: (props) => ({variables: { id: props.metaID } })})(BOEditView);

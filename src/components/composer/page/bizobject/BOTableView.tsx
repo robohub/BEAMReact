@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { graphql, ChildProps, /*QueryProps*/ } from 'react-apollo';
+import { Query, ChildProps, /*QueryProps*/ } from 'react-apollo';
 import BOTableRow from './BOTableRow';
 import { BizObjectsType, BOEditType } from './../Types';
 // import { Table } from 'semantic-ui-react';
@@ -24,20 +24,21 @@ interface InputProps {
 interface State {
     showEditForm: boolean;
     selectedBO: BOEditType;
+    allBusinessObjects: BizObjectsType;
 }
 
-class BOTableView extends React.Component<ChildProps<InputProps, Response>, State> {
+export default class BOTableView extends React.Component<ChildProps<InputProps, Response>, State> {
     
     constructor(props: InputProps) {
         super(props);
-        this.state = { showEditForm: false, selectedBO: null };
+        this.state = { showEditForm: false, selectedBO: null, allBusinessObjects: null };
     }
 
     switchEditOnOff = (event: React.MouseEvent<HTMLElement>) => {
         this.setState(
             {
-                selectedBO: this.props.data.allBusinessObjects[event.currentTarget.id], 
-                showEditForm: !this.state.showEditForm
+                selectedBO: this.state.allBusinessObjects[event.currentTarget.id], 
+                showEditForm: !this.state.showEditForm,
             });
     }
 
@@ -45,42 +46,54 @@ class BOTableView extends React.Component<ChildProps<InputProps, Response>, Stat
         this.setState({ showEditForm });
     }
 
+    robsetobjs = (objs: BizObjectsType) => {
+        this.setState({allBusinessObjects: objs});
+    }
+    
     render() {
-        const { loading, allBusinessObjects, error } = this.props.data;
+          return (
+            <Query
+                query={allBOQuery}
+                onCompleted={data => { this.robsetobjs(data.allBusinessObjects); }}
+                fetchPolicy={'cache-and-network'} 
+            >
+              {({ loading, data: {allBusinessObjects}, error }) => {
+                if (loading) {
+                  return <div>Loading</div>;
+                }
+                if (error) {
+                    return <h1>ERROR</h1>;
+                }
 
-        if (loading) {
-            return <div>Loading</div>;
-        }
-        if (error) {
-            return <h1>ERROR</h1>;
-        } 
-        return (
-            <div>
-                <SelectBOType />
-                <DataTable plain={true}>
-                    <TableHeader>
-                        <TableRow>
-                            <TableColumn>Object Name</TableColumn>
-                            <TableColumn>Actions</TableColumn>
-                            <TableColumn>Type</TableColumn>
-                            <TableColumn>State</TableColumn>
-                            <TableColumn>Properties</TableColumn>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {allBusinessObjects.map((o, index) =>
-                            <BOTableRow
-                                key={o.id}
-                                bizObject={o}
-                                showEditForm={this.switchEditOnOff}
-                                index={index}
-                            />
-                        )}
-                    </TableBody>
-                </DataTable>
-                <EditDrawer visible={this.state.showEditForm} handleVisibility={this.handleVisibility} bizObject={this.state.selectedBO}/>
-            </div>
-        );
+                return (
+                    <div>
+                        <SelectBOType />
+                        <DataTable plain={true}>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableColumn>Object Name</TableColumn>
+                                    <TableColumn>Actions</TableColumn>
+                                    <TableColumn>Type</TableColumn>
+                                    <TableColumn>State</TableColumn>
+                                    <TableColumn>Properties</TableColumn>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {allBusinessObjects.map((o: BOEditType, index: number) =>
+                                    <BOTableRow
+                                        key={o.id}
+                                        bizObject={o}
+                                        showEditForm={this.switchEditOnOff}
+                                        index={index}
+                                    />
+                                )}
+                            </TableBody>
+                        </DataTable>
+                        <EditDrawer visible={this.state.showEditForm} handleVisibility={this.handleVisibility} bizObject={this.state.selectedBO}/>
+                    </div>
+                );
+              }}
+            </Query>
+          );
     }
 }
-export default graphql<Response, InputProps>(allBOQuery)(BOTableView);

@@ -1,4 +1,4 @@
-import { gql } from 'react-apollo';
+import gql from 'graphql-tag';
 
 export const allMetaObjectsQuery = gql`
 query allMetaObjects {
@@ -18,11 +18,6 @@ query allMetaObjects {
             }
             multiplicity
             oneway
-            oppositeRelation {
-                id
-                oppositeName
-                multiplicity
-            }
         }
     }
     allMetaAttributes {
