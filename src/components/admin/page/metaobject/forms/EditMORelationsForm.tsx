@@ -7,37 +7,6 @@ import {
 import { MOPropertiesType, MORelationItemType } from '../Types';
 import { MOEditFormData } from './Types';
 
-interface MOEditFormProps {
-    metaObjects: MOPropertiesType[];    
-}
-
-type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
-
-interface State {
-    showOppositeName: boolean;
-}
-
-export default 
-reduxForm<MOEditFormData, MOEditFormProps>({
-    form: 'MOEditForm',
-})(
-class MOEditRelationsForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps, State> {
-
-    render() {
-        const { metaObjects } = this.props;
-        return (
-            <form onSubmit={this.props.handleSubmit}>
-                <XFieldArray
-                    name="relations"
-                    component={RenderRelations}
-                    metaObjects={metaObjects}
-                />
-            </form>
-                
-        );
-    }
-});
-
 interface RelProps {
     metaObjects: MOPropertiesType[];
 }
@@ -215,3 +184,34 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
         );
     }
 }
+
+interface MOEditFormProps {
+    metaObjects: MOPropertiesType[];    
+}
+
+type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
+
+interface State {
+    showOppositeName: boolean;
+}
+
+export default 
+reduxForm<MOEditFormData, MOEditFormProps>({
+    form: 'MOEditForm',
+})(
+class MOEditRelationsForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps, State> {
+
+    render() {
+        const { metaObjects } = this.props;
+        return (
+            <form onSubmit={this.props.handleSubmit}>
+                <XFieldArray
+                    name="relations"
+                    component={RenderRelations}
+                    metaObjects={metaObjects}
+                />
+            </form>
+                
+        );
+    }
+});

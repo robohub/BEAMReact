@@ -253,7 +253,7 @@ html {
   min-width: 100%; }
 
 body {
-  font-family: "Noto", sans-serif;
+  font-family: "roboto", sans-serif;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   font-weight: 400;
@@ -293,7 +293,7 @@ button,
 input,
 textarea,
 html {
-  font-family: "Noto", sans-serif; }
+  font-family: "roboto", sans-serif; }
 
 .md-text-container {
   max-width: 640px;

@@ -2,120 +2,58 @@ import * as React from 'react';
 // import { Field, reduxForm, InjectedFormProps, WrappedFieldProps, GenericField, /*GenericFieldArray, FormSection*/ } from 'redux-form';
 import { BOEditType , MOResponse } from './../Types';
 
-import { SelectField, Paper, TextField, Button } from 'react-md';
+import { Paper, Button, /* SelectField, TextField, */ } from 'react-md';
+import MDInputField from '../../../shared/MDInputField';
+import MDSelectField from '../../../shared/MDSelectField';
 
-import { withFormik, FormikProps } from 'formik';
+import { withFormik, FormikProps, Field, FieldArray, Form } from 'formik';
 
-interface DropType {
-    label: string;
-    value: string;
-}
-/*
-export interface BOEditFormData {
-    // tslint:disable-next-line:no-any
-    bizAttributes: any;
-    // tslint:disable-next-line:no-any
-    bizRelations: any;
-}
-*/
 interface FormAttributes {
-    bizattrid: string;
+    name: string;
+    maid: string;
     bizattrval: string;
 }
 
 interface FormRelations {
+    name: string;
     bizrelid: string;
     bizrelbizobjs: string | string[];
 }
 
-export interface BOEditFormData {
-    bizAttributes: formAttributes[];
-    bizRelations: formRelations[]; 
+export interface FormValues {
+    bizAttributes: FormAttributes[];
+    bizRelations: FormRelations[]; 
 }
 
 interface BOEditFormProps {
     newObject: boolean;
     metaObject: MOResponse;
     bizObject?: BOEditType;
-    onSubmit: (values: BOEditFormData) => void;
-    // initialValues: BOEditFormData;
+    onSubmit: (values: FormValues) => void;
 }
-/*
-type BOEditFormInjectedProps = InjectedFormProps<BOEditFormData, BOEditFormProps>;
 
-export default 
-reduxForm<BOEditFormData, BOEditFormProps>({
-    form: 'BOEditForm', // TODO: sätt namn för varje BO vid runtime --> unik för varje BO i global Store!?
-})(
-class BOEditForm extends React.Component<BOEditFormInjectedProps & BOEditFormProps> {
-    render() {
-        const { MetaObject } = this.props.metaObject;
-        return (
-            <form onSubmit={this.props.handleSubmit}>
-                {MetaObject.attributes.length > 0 ?
-                    <Paper zDepth={0}>
-                        {MetaObject.attributes.map((attr, index) => (
-                            <Paper zDepth={0} key={index}>
-                                <XTextField
-                                    name={'bizAttributes.' + attr.id + '.Value'}
-                                    component={renderTextField}
-                                    label={attr.name}
-                                />
-                            </Paper>
-                        ))}
-                    </Paper>
-                    :
-                    <div>- No attributes! -</div>
-                }
-                {MetaObject.outgoingRelations.length > 0 ?
-                    <Paper zDepth={0}>
-                        {MetaObject.outgoingRelations.map((rel, index) => (
-                            <Paper zDepth={0} key={index}>
-                                <XFieldDropdown
-                                    name={'bizRelations.' + rel.id + '.Value'}
-                                    component={BODropdownFormField}
-                                    multiple={rel.multiplicity === 'Many'}
-                                    options={rel.oppositeObject.businessObjects}
-                                    label={rel.oppositeName}
-                                />
-                            </Paper>
-                        ))}
-                    </Paper>
-                    :
-                    <div>- No relations! -</div>
-                }
-                <Button type="submit" primary={true} raised={true}>Save</Button>
-            </form>
-        );
-    }
-});
-*/
-
-const formikEnhancer = withFormik<BOEditFormProps, BOEditFormData>({
-    mapPropsToValues: props => ({
-        // bizAttributes: props.initialValues.bizAttributes,
-        // bizRelations: props.initialValues.bizRelations,
-    
-        const { attributes: metaAttrs, outgoingRelations: metaRels } = props.metaobject.MetaObject;
+const formikEnhancer = withFormik<BOEditFormProps, FormValues>({
+    mapPropsToValues: props => {
+        const { attributes: metaAttrs, outgoingRelations: metaRels } = props.metaObject.MetaObject;
         var formAttrs = new Array<FormAttributes>(0);
         var formRels = new Array<FormRelations>(0);
         
-        if (newObject) {
-
-            metaAttrs.map((ma => {
-                formAttrs.push({ bizattrid: ma.id, bizattrval: ''});
+        if (props.newObject) {
+            metaAttrs.map(ma => {
+                formAttrs.push({ maid: ma.id, bizattrval: '', name: ma.name});
             });
-            metaRels.map((mr => {
-                let value = (mr.multiplicity === 'Many') ? [] : '';
-//                let value: string | string[] = '';
-//                if (mr.multiplicity === 'Many') {
-//                    value = [];
-//                }
-                formRels.push({ bizrelid: mr.id, bizrelobjs: value});
+            metaRels.map(mr => {
+//                let value = (mr.multiplicity === 'Many') ? [] : '';
+                let value: string | string[] = '';
+                if (mr.multiplicity === 'Many') {
+                    value = 'Many relation - not implemented!!';
+                }
+                formRels.push({ name: mr.oppositeName, bizrelid: mr.id, bizrelbizobjs: value});
             });
-            
         } else {
-            const { bizAttributes, outgoingRelations } = this.props.bizObject;
+            // tslint:disable-next-line:no-console
+            console.log(`Editing:\n-----------------\n${props.bizObject.name}: ${props.bizObject.metaObject.name}`);
+            const { bizAttributes, outgoingRelations } = props.bizObject;
             
             // Attributes
             metaAttrs.map(ma => {
@@ -126,11 +64,11 @@ const formikEnhancer = withFormik<BOEditFormProps, BOEditFormData>({
                         break;
                     }
                 }
-                formAttrs[ma.id] = { Value: value };
+                formAttrs.push({ maid: ma.id, bizattrval: value, name: ma.name});
             });
 
             // Relations
-            this.bizrelIdMappings = new Array<BizRelMetaMapType>(0);
+            // -------- var bizrelIdMappings = new Array<BizRelMetaMapType>(0);
             var relMap = new Map<string, { Value: string | string[] }>();
             
             metaRels.map(mr => {
@@ -139,7 +77,7 @@ const formikEnhancer = withFormik<BOEditFormProps, BOEditFormData>({
                     if (mr.id === outgoingRelations[i].metaRelation.id) {
                         found = true;
                         let value = outgoingRelations[i].oppositeObject.id;
-                        this.bizrelIdMappings.push({bizkey: outgoingRelations[i].id, metaRelationId: mr.id, oppositeObjectId: value});
+                        // -------- bizrelIdMappings.push({bizkey: outgoingRelations[i].id, metaRelationId: mr.id, oppositeObjectId: value});
                         if (mr.multiplicity === 'Many') {
                             if (relMap[mr.id] === undefined) {
                                 relMap[mr.id] = [value];
@@ -147,13 +85,13 @@ const formikEnhancer = withFormik<BOEditFormProps, BOEditFormData>({
                                 relMap[mr.id].push(value);
                             }
                         } else {
-                            formRels[mr.id] = { Value: value };                    
+                            formRels.push({ name: mr.oppositeName, bizrelid: mr.id, bizrelbizobjs: value});
                             break;
                         }
                     }
                 }
-                if (!found) {  // Metarelation has no outgoing relations for the business object, add []
-                    formRels[mr.id] = { Value: [] };                    
+                if (!found) {  // Metarelation has no outgoing relations for the business object, add empty string
+                    formRels.push({ name: mr.oppositeName, bizrelid: mr.id, bizrelbizobjs: ''});
                 }
             });
             /*
@@ -171,34 +109,73 @@ const formikEnhancer = withFormik<BOEditFormProps, BOEditFormData>({
         }
         
         // tslint:disable-next-line:no-console
-        console.log(`Your init:\n\n${JSON.stringify(this.formInit, null, 2)}`);
+        console.log(`Your init attrs:\n\n${JSON.stringify(formAttrs, null, 2)}`);
+        // tslint:disable-next-line:no-console
+        console.log(`Your init rels:\n\n${JSON.stringify(formRels, null, 2)}`);
+        return {
+            bizAttributes: formAttrs,
+            bizRelations: formRels,
+        };
 
-    }),
-    handleSubmit: (values: BOEditFormData, { props, setSubmitting }) => {
+    },
+    handleSubmit: (values: FormValues, { props, setSubmitting }) => {   // async?  Se fullstack-graphql-airbnb-clone/packages/web/src/modules/register/ui/RegisterView.tsx
         setSubmitting(false);
         props.onSubmit(values);
     },
     displayName: 'Roberts BO Edit Form',
 });
 
-const InnerForm : React.SFC<BOEditFormData & FormikProps<BOEditFormProps>> = (props) => (
-    <form onSubmit={props.handleSubmit}>
-        {props.metaObject.MetaObject.attributes.length > 0 ?
-            <Paper zDepth={0}>
-                {props.metaObject.MetaObject.attributes.map((attr, index) => (
-                    <Paper zDepth={0} key={index}>
-                        <XTextField
-                            name={'bizAttributes.' + attr.id + '.Value'}
-                            component={renderTextField}
-                            label={attr.name}
-                        />
-                    </Paper>
-                ))}
-            </Paper>
-            :
-            <div>- No attributes! -</div>
-        }
-        {props.metaObject.MetaObject.outgoingRelations.length > 0 ?
+const InnerForm: React.SFC<BOEditFormProps & FormikProps<FormValues>> = (props) => (
+    // <form onSubmit={props.handleSubmit}>
+    <Form>
+        <FieldArray
+            name="bizAttributes"
+            render={() => (
+                <div>
+                    {props.values.bizAttributes.length > 0 ?
+                        <Paper zDepth={0}>
+                            {props.values.bizAttributes.map((attr, index) => (
+                                <Paper zDepth={0} key={index}>
+                                    <Field
+                                        name={`bizAttributes.${index}.bizattrval`}
+                                        type="text"
+                                        component={MDInputField}
+                                        label={attr.name}
+                                    />
+                                </Paper>
+                            ))}
+                        </Paper>
+                        :
+                        <div>- No attributes! -</div>
+                    }
+                </div>
+            )}
+        />
+        <FieldArray
+            name="bizRelations"
+            render={() => (
+                <div>
+                    {props.metaObject.MetaObject.outgoingRelations.length > 0 ?
+                        <Paper zDepth={0}>
+                            {props.metaObject.MetaObject.outgoingRelations.map((rel, index) => (
+                                <Paper zDepth={0} key={index}>
+                                    <Field
+                                        name={`bizRelations.${index}.bizrelbizobjs`}
+                                        component={MDSelectField}
+                                        options={rel.oppositeObject.businessObjects}
+                                        label={rel.oppositeName}
+                                    />
+                                </Paper>
+                            ))}
+                        </Paper>
+                        :
+                        <div>- No relation! -</div>
+                    }
+                </div>
+            )}
+        />
+
+{/*        {props.metaObject.MetaObject.outgoingRelations.length > 0 ?
             <Paper zDepth={0}>
                 {props.metaObject.MetaObject.outgoingRelations.map((rel, index) => (
                     <Paper zDepth={0} key={index}>
@@ -222,13 +199,14 @@ const InnerForm : React.SFC<BOEditFormData & FormikProps<BOEditFormProps>> = (pr
             :
             <div>- No relations! -</div>
         }
+*/}
         <Button type="submit" primary={true} raised={true}>Save</Button>
-    </form>
+    </Form>
 );
 
-const BOEditForm = formikEnhancer(InnerForm);
-export default BOEditForm;
+export const BOEditForm = formikEnhancer(InnerForm);
 
+/*
 interface BODropDownProps {
     label: string;
     options: {
@@ -236,7 +214,6 @@ interface BODropDownProps {
         name: string
     }[];
 }
-
 const XFieldDropdown = Field as new () => GenericField<BODropDownProps & React.SelectHTMLAttributes<HTMLSelectElement>>;
 
 const BODropdownFormField = (field: (React.SelectHTMLAttributes<HTMLSelectElement> & WrappedFieldProps & BODropDownProps)) => {
@@ -255,163 +232,6 @@ const BODropdownFormField = (field: (React.SelectHTMLAttributes<HTMLSelectElemen
             fullWidth={true}
             // position={SelectField.Positions.BOTTOM_RIGHT}
         />
-    );
-};
-
-
-interface MySelectProps {
-  value: Array<DropType>;
-  onChange: Function;
-  onBlur: Function;
-  error: string;
-  touched: boolean;
-}
-
-class MySelect extends React.Component<MySelectProps, any> {
-  handleChange = (value: Array<string>) => {
-    // this is going to call setFieldValue and manually update values.topcis
-    this.props.onChange('topics', value);
-  };
-
-  handleBlur = () => {
-    // this is going to call setFieldTouched and manually update touched.topcis
-    this.props.onBlur('topics', true);
-  };
-
-  render() {
-    var dropList = new Array<DropType>(0);
-    field.options.map((o, index) => {
-        dropList.push({label: o.name, value: o.id});
-    });
-    return (
-        <SelectField
-            id="moSelect"
-            label={field.label}
-            value={field.input.value}
-            placeholder="Select Type"
-            menuItems={dropList}
-            onChange={(value, index, event) => field.input.onChange(value)}
-            fullWidth={true}
-            // position={SelectField.Positions.BOTTOM_RIGHT}
-        />
-        <Select
-          id="color"
-          options={options}
-          multi={true}
-          onChange={this.handleChange}
-          onBlur={this.handleBlur}
-          value={this.props.value}
-        />
-    );
-  }
-}
-
-interface TextFieldProps {
-    label: string;
-}
-
-const XTextField = Field as new () => GenericField<TextFieldProps & React.InputHTMLAttributes<HTMLInputElement>>;
-
-const renderTextField = (field: (React.InputHTMLAttributes<HTMLInputElement> & WrappedFieldProps & TextFieldProps)) => {
-    return (
-        <TextField
-            id="boEdit"
-            label={field.label}
-            placeholder={field.label}
-            {...field.input}
-            // errorText={touched && error}
-        />
-    );
-};
-/*
-
-            // Code snippet for custom FieldArrays...
-            <Form onSubmit={this.props.handleSubmit}>
-                    {MetaObject.attributes.length > 0 ?
-                        <FieldArrayAttrs name="attributes" component={RenderAttributes} attrs={MetaObject.attributes}/>
-                        :
-                        <div>- No attributes! -</div>
-                    }
-                    {MetaObject.outgoingRelations.length > 0 ?
-                        <FieldArrayRelations name="relations" component={RenderRelations} rels={MetaObject.outgoingRelations}/>
-                        :
-                        <div>- No relations! -</div>
-                    }
-                <Form.Button>Save</Form.Button>
-            </Form>
-
-interface BORelsProps {
-    rels: {
-        id: string;
-        oppositeName: string;
-        oppositeObject: {
-            name: string;
-            businessObjects: {
-                id: string;
-                name: string
-            }[]
-        }
-        multiplicity: string
-    }[];
-}
-
-interface BOFormFieldValue {   // TODO: hur relaterar detta med formData?
-    vaxlue: string;
-}
-interface BOAttrsProps {
-    attrs: {
-        id: string;
-        name: string;
-    }[];
-}
-
-const FieldArrayAttrs = FieldArray as new () => GenericFieldArray<BOFormFieldValue, BOAttrsProps>;
-type FieldArrayAttrsCompProps = BOAttrsProps & WrappedFieldArrayProps<BOFormFieldValue>;
-
-const FieldArrayRelations = FieldArray as new () => GenericFieldArray<BOFormFieldValue, BORelsProps>;
-type FieldArrayRelsCompProps = BORelsProps & WrappedFieldArrayProps<BOFormFieldValue>;
-
-class RenderAttributes extends React.Component<FieldArrayAttrsCompProps> {
-    render() {
-        const { attrs } = this.props;
-        return (
-            <Segment.Group>
-                {attrs.map((attr, index) => (
-                    <Segment key={index}>
-                        <Form.Field>
-                            <label>{attr.name}</label>
-                            <Field
-                                // name={attr.id}
-                                name={'Attributes[' + index + '].Value'}
-                                type="text"
-                                component="input"
-                            />
-                        </Form.Field>
-                    </Segment>
-                ))}
-            </Segment.Group>
-        );
-    }
-}
-
-const RenderRelations: React.StatelessComponent<FieldArrayRelsCompProps> = ({ fields, rels }) => {
-    return (
-        <Segment.Group>
-            {rels.map((rel, index) => (
-                <Segment key={index}>
-                    <Form.Field key={rel.id} >
-                        <label>{rel.oppositeName}</label>
-                        <XFieldDropdown
-                            // name={rel.id}
-                            name={'Relations[' + index + '].test.Value'}
-                            component={BODropdownFormField}
-                            multiple={rel.multiplicity === 'Many'}
-                            options={rel.oppositeObject.businessObjects}
-                        />
-                    </Form.Field>
-                </Segment>
-            ))}
-        </Segment.Group>
     );
 };
 */

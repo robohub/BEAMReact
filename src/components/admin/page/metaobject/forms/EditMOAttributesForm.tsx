@@ -4,37 +4,9 @@ import { FontIcon, Divider, SelectField, Button, Grid, Cell, DataTable, TableBod
 import { MOAttributeItemType } from '../Types';
 import { MOEditFormData } from './Types';
 
-interface MOEditFormProps {
-    metaAttributes: MOAttributeItemType[];    
-}
-
-type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
-
-export default 
-reduxForm<MOEditFormData, MOEditFormProps>({
-    form: 'MOEditForm',
-})(
-class MOEditAttributesForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps> {
-
-    render() {
-        const { metaAttributes } = this.props;
-        return (
-            <form onSubmit={this.props.handleSubmit}>
-                <XFieldArray
-                    name="attributes"
-                    component={RenderAttributes}
-                    metaAttributes={metaAttributes}
-                />
-            </form>
-        );
-    }
-});
-
 interface AttrProps {
     metaAttributes: MOAttributeItemType[];
 }
-
-const XFieldArray = FieldArray as new () => GenericFieldArray<MOAttributeItemType, AttrProps>;
 
 class RenderAttributes extends React.Component<WrappedFieldArrayProps<MOAttributeItemType> & AttrProps> {
 
@@ -117,3 +89,31 @@ class RenderAttributes extends React.Component<WrappedFieldArrayProps<MOAttribut
         );
     }
 }
+
+interface MOEditFormProps {
+    metaAttributes: MOAttributeItemType[];    
+}
+
+const XFieldArray = FieldArray as new () => GenericFieldArray<MOAttributeItemType, AttrProps>;
+
+type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
+
+export default 
+reduxForm<MOEditFormData, MOEditFormProps>({
+    form: 'MOEditForm',
+})(
+class MOEditAttributesForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps> {
+
+    render() {
+        const { metaAttributes } = this.props;
+        return (
+            <form onSubmit={this.props.handleSubmit}>
+                <XFieldArray
+                    name="attributes"
+                    component={RenderAttributes}
+                    metaAttributes={metaAttributes}
+                />
+            </form>
+        );
+    }
+});

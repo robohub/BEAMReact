@@ -1,5 +1,12 @@
-/// <reference path="./robtypings/reactHeadroom.d.ts" />
 import './App.css';
+
+// RAPPID CSS
+import './vendor/rappid.css';
+import './css/style.css';
+// import './css/style.dark.css';
+// import './css/style.material.css';
+import './css/style.modern.css';
+
 import '../node_modules/vis/dist/vis.css';
 
 import * as React from 'react';
@@ -10,13 +17,13 @@ import {
     // Switch,
 } from 'react-router-dom';
 
-// import Hello from './containers/Hello';
 import Example from './components/charting/chartsample';
-import Diagram from './components/diagramming/diagram';
 import Admin from './components/admin/page/AdminPage';
 import Composer from './components/composer/page/ComposerPage';
+import Navigation from './components/navigation/navigationPage';
+import NavLink from '@material-ui/icons/Navigation';
 
-// import Headroom from 'react-headroom';
+import Diagram from './components/diagramming/Rappid/rappid';
 
 import { Button, Grid, Cell, ListItem, FontIcon, NavigationDrawer, SelectionControl,
     DataTable, 
@@ -27,8 +34,6 @@ import { Button, Grid, Cell, ListItem, FontIcon, NavigationDrawer, SelectionCont
 } from 'react-md';
 
 import * as loremIpsum from 'lorem-ipsum';
-
-// import { ArrayPage } from './components/simpleForm/simpleForm';   preserved just as example
 
 const Home = () => (
     <div>
@@ -91,7 +96,7 @@ const Home = () => (
 );
 
 class App extends React.Component<{}> {
-/*    
+    
     state = { visible: false };
 
     showDrawer = () => {
@@ -105,9 +110,10 @@ class App extends React.Component<{}> {
     handleVisibility = (visible: boolean) => {
         this.setState({ visible });
     }
-*/    
+  
     render() {
         return (
+            <div style={{height: '100vh'}}>
             <NavigationDrawer
                 toolbarTitle={'BEAM'}
                 drawerTitle={'Main Menu'}
@@ -120,19 +126,18 @@ class App extends React.Component<{}> {
                         <ListItem key={1} primaryText="Chart" leftIcon={<FontIcon>insert_chart</FontIcon>} component={Link} to="/Chart"/>,
                         <ListItem key={2} primaryText="Diagram Editor" leftIcon={<FontIcon>domain</FontIcon>} component={Link} to="/Diagram"/>,
                         <ListItem key={3} primaryText="Admin" leftIcon={<FontIcon>phonelink_setup</FontIcon>} component={Link} to="/Admin"/>,
-                        <ListItem key={4} primaryText="Composer" leftIcon={<FontIcon>view_compact</FontIcon>} component={Link} to="/Composer"/>
-                    
+                        <ListItem key={4} primaryText="Composer" leftIcon={<FontIcon>view_compact</FontIcon>} component={Link} to="/Composer"/>,
+                        <ListItem key={5} primaryText="Navigation" leftIcon={<NavLink/>} component={Link} to="/Navigation"/>
                     ]}
-                /*contentId="main-demo-content"
-                contentStyle={{minHeight: 'auto'}}
-                    contentClassName="md-grid"*/
             >
                 <Route exact={true} path="/" component={Home} />
                 <Route exact={true} path="/Chart" component={Example} />
                 <Route exact={true} path="/Diagram" component={Diagram} />
                 <Route exact={true} path="/Admin" component={Admin} />
                 <Route path="/Composer" component={Composer} />
+                <Route path="/Navigation" component={Navigation} />
             </NavigationDrawer>
+            </div>
         );
     }
 }

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Query, ChildProps, /*QueryProps*/ } from 'react-apollo';
 import BOTableRow from './BOTableRow';
 import { BizObjectsType, BOEditType } from './../Types';
-// import { Table } from 'semantic-ui-react';
 import SelectBOType from './selectBOType';
 import { allBOQuery } from './queries';
 import EditDrawer from './DrawerEditBO';

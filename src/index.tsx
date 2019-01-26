@@ -1,4 +1,5 @@
-// import './css/bootstrap.css';    // v4 theme!
+// REACT-MD
+// import '../node_modules/react-md/dist/react-md.blue_grey-red.min.css';
 import './index.css';
 
 import * as React from 'react';
@@ -9,8 +10,6 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
-// import { enthusiasm } from './reducers/index';
-// import { StoreState } from './types/index';
 import { reducer as formReducer } from 'redux-form';
 
 // Apollo Provider. This HOC will 'wrap' our React component chain
@@ -33,8 +32,9 @@ const store = createStore(rootReducer);
 
 WebFontLoader.load({
   google: {
-    // families: ['Roboto:300,400,500,700', 'Material Icons'],
-    families: ['Noto:300,400,500,600,700', 'Material Icons'],
+    // families: ['Droid Sans', 'Droid Serif']
+    families: ['Roboto:300,400,500,700', 'Material Icons'],
+    // families: ['Noto:300,400,500,600,700', 'Material Icons'],
   },
 });
 

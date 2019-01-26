@@ -41,7 +41,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                 attrs: [],
                 rels: []
             },
-            update: (store, { data: { createMetaObject }}) => {
+            update: (store, { data: createMetaObject }) => {
                 const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
                 data.allMetaObjects.splice(0, 0, createMetaObject);
                 store.writeQuery({ query: allMetaObjectsQuery, data });

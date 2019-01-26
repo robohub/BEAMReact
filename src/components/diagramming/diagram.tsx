@@ -1,39 +1,78 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import * as joint from 'jointjs';
-import * as vis from 'vis';
+// import * as joint from 'jointjs';
+import * as joint from '../../vendor/rappid';
 
-import { beam } from '../../utils/robShapes';
+// import * as vis from 'vis';
+// import { beam } from '../../utils/robShapes';
+
+import BOListContainer from './diagramComponents/boListContainer';
 
 import { Button, /*ButtonToolbar*/ } from 'react-md';
+import Grid from '@material-ui/core/Grid';
+import Paper from '@material-ui/core/Paper';
 
 class Diagram extends React.Component {
     test: Number = 5;
     inc: Number = 0;        
     graph: joint.dia.Graph = new joint.dia.Graph();
     private placeholder: HTMLDivElement;
-    private visualization: HTMLDivElement;
-    private network: HTMLDivElement;
+    // private paperScroller: joint.ui.PaperScroller;
     
-    componentDidMount() {
-        let paper = new joint.dia.Paper({
-            el: ReactDOM.findDOMNode(this.placeholder) as HTMLElement,
-            width: 600,
-            height: 200,
-            model : this.graph,
-            gridSize: 5
-        });
-        paper.setDimensions(800, 300);
+    onDragOver = (ev: React.DragEvent<HTMLDivElement>) => {
+        ev.preventDefault();
+    }
 
+    onDrop = (ev: React.DragEvent<HTMLDivElement>, cat: string) => {
+        let id = ev.dataTransfer.getData('id');
+        let name = ev.dataTransfer.getData('name');
+        // tslint:disable-next-line:no-console
+        console.log('DROP!! :' + id + ':' + name + ' på ett objekt: ' + cat);
+        this.addRect(name, ev.clientX - ev.currentTarget.offsetLeft, ev.clientY - ev.currentTarget.offsetTop);
+    }
+
+    componentDidMount() {
+        var beamDefaultLink = new joint.dia.Link({
+            attrs: {
+                '.connection': { stroke: '#E74C3C', 'stroke-width': 4 },
+                /*'.marker-source': { stroke: '#E74C3C', fill: '#E74C3C', d: 'M 10 0 L 0 5 L 10 10 z' },*/
+                '.marker-target': { stroke: '#E74C3C', fill: '#E74C3C', d: 'M 10 0 L 0 5 L 10 10 z' }
+            }
+        });
+
+        var paper = new joint.dia.Paper({
+                    el: ReactDOM.findDOMNode(this.placeholder) as HTMLElement,
+                    width: 2000,
+                    height: 2000,
+                    model : this.graph,
+                    gridSize: 10,
+                    defaultLink : beamDefaultLink,
+                    drawGrid: true  // RH Funkar inte?
+                });
+                
+        var snaplines = new joint.ui.Snaplines({ paper: paper });
+        snaplines.startListening();
+/*
+        this.paperScroller = new joint.ui.PaperScroller({
+            paper,
+            autoResizePaper: true,
+            cursor: 'grab'
+        });
+
+        let el = ReactDOM.findDOMNode(this.placeholder) as HTMLElement;
+        el.append(this.paperScroller.render().el);
+*/
+/* REFACTOR - nyare version... RH 2019
         let rect = new beam.Process({
             position: { x: 100, y: 30 },
             size: { width: 100, height: 30 },
-            attrs: { rect: { fill: 'blue' }, text: { text: 'my box', fill: 'white' } }
+            attrs: { rect: { fill: 'blue' }, text: 'my box' }
         });
 
         let c: joint.dia.Cell[] = [ rect ];
         this.graph.addCells(c);
-
+*/
+/* RH Timeplan
         var container = ReactDOM.findDOMNode(this.visualization) as HTMLElement;
         var data = [
           {id: 1, content: 'item 1', start: '2013-04-20'},
@@ -46,45 +85,13 @@ class Diagram extends React.Component {
         var options = {};
         var timeline = new vis.Timeline(container, data, options);
         timeline.redraw();
-
-        var nodes = [
-            {id: 1,  label: 'Node 1', color: 'orange'},
-            {id: 2,  label: 'Node 2', color: 'DarkViolet', font: {color: 'white'}},
-            {id: 3,  label: 'Node 3', color: 'orange'},
-            {id: 4,  label: 'Node 4', color: 'DarkViolet', font: {color: 'white'}},
-            {id: 5,  label: 'Node 5', color: 'orange'},
-            {id: 6,  label: 'cid = 1', cid: 1, color: 'orange'},
-            {id: 7,  label: 'cid = 1', cid: 1, color: 'DarkViolet', font: {color: 'white'}},
-            {id: 8,  label: 'cid = 1', cid: 1, color: 'lime'},
-            {id: 9,  label: 'cid = 1', cid: 1, color: 'orange'},
-            {id: 10, label: 'cid = 1', cid: 1, color: 'lime'}
-          ];
-          // create an array with edges
-        var edges = [
-            {from: 1, to: 2},
-            {from: 1, to: 3},
-            {from: 10, to: 4},
-            {from: 2, to: 5},
-            {from: 6, to: 2},
-            {from: 7, to: 5},
-            {from: 8, to: 6},
-            {from: 9, to: 7},
-            {from: 10, to: 9}
-          ];
-          // create a network
-        var container2 = ReactDOM.findDOMNode(this.network) as HTMLElement;
-        var data2 = {
-            nodes: nodes,
-            edges: edges
-          };
-        var options2 = {layout: {randomSeed: 8}, width: '1000', height: '500'};
-        var network = new vis.Network(container2, data2, options2);
-        network.redraw();
+*/
     }
 
-    addRect = () =>  {
+    addRect = (name: string, x: number, y: number) =>  {
         let rect = new joint.shapes.basic.Path({
-            size: { width: 30, height: 30 },
+            size: { width: 50, height: 50 },
+            position: {x: x, y: y},
             attrs: {
                 path: { 
                     d : 'M 441.30078 273.61133 C 266.57475 273.61133 124.34961 415.83646 124.34961 590.5625 L 124.34961 1457.4395\
@@ -100,7 +107,7 @@ class Diagram extends React.Component {
                         L 976.52148 1550.5098 L 976.52148 1597.9844 L 1071.4785 1597.9844 L 1071.4785 1550.5098 L 1071.4785 1440.2832\
                         L 1181.7031 1440.2832 L 1229.1836 1440.2832 L 1229.1836 1345.3203 L 1181.7031 1345.3203 L 1071.4785 1345.3203\
                         L 1071.4785 1235.0996 L 1071.4785 1187.6191 L 976.52148 1187.6191 z',
-                    style : 'color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;\
+                    style : ['color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:medium;\
                         line-height:normal;font-family:sans-serif;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;\
                         text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;\
                         direction:ltr;block-progression:tb;writing-mode:lr-tb;baseline-shift:baseline;text-anchor:start;white-space:normal;\
@@ -108,10 +115,10 @@ class Diagram extends React.Component {
                         color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill:#000000;fill-opacity:1;\
                         fill-rule:nonzero;stroke:none;stroke-width:63.47264862;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;\
                         stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;\
-                        text-rendering:auto;enable-background:accumulate'
+                        text-rendering:auto;enable-background:accumulate'],
                 },
                 text: {
-                    text: 'BPMN',
+                    text: name,
                     // 'ref-y': .5 // basic.Path text is originally positioned under the element
                 }
             }
@@ -121,19 +128,55 @@ class Diagram extends React.Component {
         this.graph.addCells(c);
     }
 
+    handleAddClick = () => {
+        this.addRect('New Object', 50, 50);
+    }
+
+    addLink = () => {
+        var link2 = new joint.dia.Link({
+            source: { x: 10, y: 380 },
+            target: { x: 350, y: 380 },
+            attrs: {
+                '.connection': { stroke: '#E74C3C', 'stroke-width': 3 },
+                // '.marker-source': { stroke: '#E74C3C', fill: '#E74C3C', d: 'M 10 0 L 0 5 L 10 10 z' },
+                // '.marker-target': { stroke: '#E74C3C', fill: '#E74C3C', d: 'M 10 0 L 0 5 L 10 10 z' },
+            }
+        });
+
+        this.graph.addCells([link2]);
+
+    }
+
     render() {
         return (
-            <div> 
-                {/* Standard button */}
-                <Button onClick={this.addRect} raised={true} primary={true}>Add rect</Button>{' '}
+                <Grid
+                    container={true}
+                    direction="row"
+                    justify="flex-start"
+                    alignItems="stretch"
+                    spacing={8}
+                >
+                    <Grid item={true} xs={4}>
+                        <Paper square={true}>
+                            {/* Standard button */}
+                            <Button onClick={this.handleAddClick} raised={true} primary={true}>Add rect</Button>{' '}
 
-                <Button raised={true} secondary={true}>secondary</Button>{' '}
-                <Button raised={true} negative={true}>negative</Button>{' '}
-                <Button>ordinary</Button>{' '}
-                <div ref={(c) => this.placeholder = c as HTMLDivElement}/>
-                <div ref={(c) => this.visualization = c as HTMLDivElement}/>
-                <div ref={(c) => this.network = c as HTMLDivElement}/>
-                </div>
+                            <Button onClick={this.addLink} raised={true} secondary={true}>Add link</Button>{' '}
+                            <div onDragOver={(e) => this.onDragOver(e)} onDrop={(e) => { this.onDrop(e, 'DIAGRAM'); }}>
+                                {/* <div ref={(c) => this.placeholder = c as HTMLDivElement}/> */}
+                            </div>
+                            {/* <div ref={(c) => this.visualization = c as HTMLDivElement}/> */}
+                        </Paper>
+                    </Grid>
+                    <Grid item={true} xs={5}>
+                        <div ref={(c) => this.placeholder = c as HTMLDivElement}/>
+                    </Grid>
+                    <Grid item={true} xs={3}>
+                        <Paper square={true}>                          
+                        <BOListContainer/>                       
+                        </Paper>
+                    </Grid>
+                </Grid>
         );
     }
 }

@@ -3,7 +3,7 @@ import * as joint from 'jointjs';
 export namespace beam {
     
     export class Process extends joint.dia.Element {
-        constructor(attributes?: joint.shapes.GenericAttributes<joint.shapes.basic.RectAttrs>, options?: Object) {
+        constructor(attributes?: joint.shapes.SVGRectSelector, options?: Object) {
             super(attributes, options);
             this.set('markup', '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>');
         }

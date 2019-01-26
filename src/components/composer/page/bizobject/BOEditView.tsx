@@ -2,10 +2,13 @@ import * as React from 'react';
 import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
 import gql from 'graphql-tag';
 import { allBOQuery, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject } from './queries';
-import BOEditForm, { BOEditFormData } from './BOEditForm';
-import { MOResponse, BizObjectsType, BOEditType, BizRelationsType } from './../Types';
+// import BOEditForm from './BOEditForm';
+import { MOResponse, BOEditType, BizRelationsType } from './../Types';
+
 // import { client as apolloClient } from '../../../../index';
 // import * as diff from 'deep-diff';
+
+import { BOEditForm, FormValues } from './BOEditForm';
 
 const createBizObject = gql`
 mutation CreateBO (
@@ -71,9 +74,9 @@ type BizRelMetaMapType = { bizkey: string, metaRelationId: string, oppositeObjec
 
 class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>> {
 
-    private formInit: BOEditFormData;
+    // private formInit: BOEditFormData;
     private bizrelIdMappings: Array<BizRelMetaMapType>;  // Use this to find bizRelation-id for deleted <metaRelationId,Value>
-    
+ /*   
     fromBOToForm = (newObject: boolean) => {
     
         const { attributes: metaAttrs, outgoingRelations: metaRels } = this.props.metaobject.MetaObject;
@@ -136,18 +139,18 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                     formRels[mr.id] = { Value: [] };                    
                 }
             });
-            /*
+            
             // Fix rels with 'many' relations, map -> array
-            for (var key in relMap) {
-                if (relMap[key] !== undefined) {  // TSLint requires this! Read on StackOverflow
-                    var relarr = [];                
-                    for (let i = 0; i < relMap[key].length; i++) {
-                        relarr.push(relMap[key][i]);
-                    }
-                    formRels[key] = { Value: relarr};
-                }
-            }
-            */
+            //for (var key in relMap) {
+            //    if (relMap[key] !== undefined) {  // TSLint requires this! Read on StackOverflow
+            //        var relarr = [];                
+            //        for (let i = 0; i < relMap[key].length; i++) {
+            //            relarr.push(relMap[key][i]);
+            //        }
+            //        formRels[key] = { Value: relarr};
+            //    }
+            //}
+            
         }
 
         this.formInit = {
@@ -160,6 +163,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
               
         return this.formInit;
     }
+*/
 
     deleteBizRels = async (bizrels: string[]) => {
         try {
@@ -247,7 +251,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
             alert('Error when updating business object: ' + e);
         }
     }
-
+/*
     onSave = async (values: BOEditFormData) => {
         try {
             if (this.props.newObject) {
@@ -261,7 +265,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                 // Fix relations for save
                 var rels = this.relArrayToPairs(bizRelations);
 
-                /*await*/
+                // await
                 this.props.createBO({
                     variables: {
                         id: this.props.metaobject.MetaObject.id, 
@@ -270,23 +274,23 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
                         state: 'Created',
                         rels: rels
                     },
-                    /*refetchQueries: [{
-                        query: allBOQuery,
-                        // variables: { repoFullName: 'apollographql/apollo-client' },
-                    },
-                    {             
-                            query: gql`
-                        query updateCache {
-                            allMetaRelations {
-                                id
-                                oppositeName
-                                oppositeRelation {
-                                    id
-                                    oppositeName
-                                }
-                            }
-                        }`
-                    }],*/
+//                    refetchQueries: [{
+//                        query: allBOQuery,
+//                        // variables: { repoFullName: 'apollographql/apollo-client' },
+//                    },
+//                    {             
+//                            query: gql`
+//                        query updateCache {
+//                            allMetaRelations {
+//                                id
+//                                oppositeName
+//                                oppositeRelation {
+//                                    id
+//                                    oppositeName
+//                                }
+//                            }
+//                        }`
+//                    }],
                     update: (store, { data: { createBusinessObject }}) => {
                         // Read the data from the cache for this query.
                         const data: BizObjectsType = store.readQuery({query: allBOQuery });
@@ -306,19 +310,18 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
 //                    });
                 });
 
-/*
                 // For the newly created object, create opposite relations!
 
                 // tslint:disable-next-line:no-console
-                console.log('new BO id: ' + newBO.allBusinessObjects[0].id);
+//                console.log('new BO id: ' + newBO.allBusinessObjects[0].id);
                
-                setTimeout(() => {
-                    const newBO: BizObjectsType = apolloClient.readQuery({query: allBOQuery });
-                    let len = newBO.allBusinessObjects.length - 1;
-                    this.addOppositeBizRels(newBO.allBusinessObjects[len].id, newBO.allBusinessObjects[len].outgoingRelations, rels);      // Pick new BO first in list, see update above
-                }, 
-                           5000);
-*/                
+//                setTimeout(() => {
+//                    const newBO: BizObjectsType = apolloClient.readQuery({query: allBOQuery });
+//                    let len = newBO.allBusinessObjects.length - 1;
+//                    this.addOppositeBizRels(newBO.allBusinessObjects[len].id, newBO.allBusinessObjects[len].outgoingRelations, rels);      // Pick new BO first in list, see update above
+//                }, 
+//                           5000);
+               
             } else {
                 // Check changed attributes
                 var changedAttributes = this.getUpdatedBizAttributes(values.bizAttributes, this.formInit.bizAttributes);
@@ -348,7 +351,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
             alert('ONSAVE error: ' + e);
         }
     }
-
+*/
     getUpdatedBizAttributes = (newAttrs: AttrType, oldAttrs: AttrType): UpdateBizRelPair[] => {
         var updated = new Array<{metaId: string, value: string}>(0);
         Object.keys(oldAttrs).forEach(metaId => {
@@ -424,10 +427,10 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>
         return deleted;
     }
 
-    showResults = (values: BOEditFormData) => {
+    showResults = (input: FormValues) => {
         // tslint:disable-next-line:no-console
-        console.log(`You submitted:\n\n${JSON.stringify(values, null, 2)}`);
-        window.alert(`You submitted:\n\n${JSON.stringify(values, null, 2)}`);
+        console.log(`You submitted:\n\n${JSON.stringify(input, null, 2)}`);
+        window.alert('Klar med edit av BO!');
     }
 
     render() {
