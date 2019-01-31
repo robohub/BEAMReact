@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ChildProps, Query } from 'react-apollo';
 import gql from 'graphql-tag';
 import EditBOView from './BOEditView';
-import { MOResponse, BOEditType } from './../Types';
+import { MOResponse, BOEditType, AllMRResponse } from './Types';
 
 const MOQuery = gql`
 query MOQuery($id: ID!) {
@@ -29,6 +29,7 @@ query MOQuery($id: ID!) {
     allMetaRelations {
         id
         oppositeName
+        oneway
         oppositeRelation {
             id
             oppositeName
@@ -60,6 +61,7 @@ export default class BOEditView extends React.Component<ChildProps<InputProps, M
                             newObject={this.props.newObject} 
                             metaobject={data as MOResponse} 
                             bizObject={this.props.bizObject}
+                            allMetaRels={data as AllMRResponse}
                         />
                     );
                 }}

@@ -11,6 +11,6 @@ Runtime error i rappid: ta bort fel genom att kommentera bort:
  
    transpileOnly: true;
 
-i "webpack.config.dev.js" som ligger här:
+i "webpack.config.dev.js" och "webpack.config.prod.js" som ligger här:
 
 node_modules/react-script-ts/config...

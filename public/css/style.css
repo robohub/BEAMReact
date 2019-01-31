@@ -64,7 +64,6 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
     src: url('../assets/fonts/Alegreya_Sans/AlegreyaSans-Bold.ttf');
     font-weight: Bold;
 }
-
 html, body, .joint-app {
     position: relative;
     width: 100%;
@@ -73,6 +72,7 @@ html, body, .joint-app {
     margin: 0;
     padding: 0;
 }
+/* ROBERT - ställer till scrollningen för hela appen!!!!
 
 body {
     -webkit-user-select: none;
@@ -81,7 +81,7 @@ body {
     font-family: sans-serif, Arial;
     overflow: hidden;
 }
-
+*/
 .app-header {
     position: relative;
     width: 100%;

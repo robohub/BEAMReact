@@ -3,6 +3,7 @@ import gql from 'graphql-tag';
 import { client } from '../../../index';
 
 import * as vis from 'vis';
+import { Button } from 'react-md';
 
 const getBO = gql`
 query getBO($id: ID) {
@@ -14,6 +15,11 @@ query getBO($id: ID) {
             oppositeObject {
                 id
                 name
+                outgoingRelations {
+                    oppositeObject {
+                        id
+                    }
+                }
             }
         }
     }
@@ -27,7 +33,12 @@ interface BoItem {
         oppositeObject: {
             id: string;
             name: string;
-        };
+            outgoingRelations: {
+                oppositeObject: {
+                    id: string;
+                }
+            }[]        
+        }
     }[];
 }
 
@@ -40,17 +51,6 @@ type ClickParams = {
         canvas: {x: number, y: number}
     }
 };
-
-interface BoItem {
-    id: string;
-    name: string;
-    outgoingRelations: {
-        oppositeObject: {
-            id: string;
-            name: string;
-        };
-    }[];
-}
 
 interface Props {
     selectedListBO: BoItem;
@@ -91,7 +91,7 @@ export default class BOGraphView extends React.Component<Props> {
     }
 */
     componentDidUpdate() {
-        if (this.props.selectedListBO.id !== this.selectedListBO) {
+        if (this.props.selectedListBO !== null && (this.props.selectedListBO.id !== this.selectedListBO)) {
             this.drawGraph();
             this.selectedListBO = this.props.selectedListBO.id;
         }
@@ -105,10 +105,15 @@ export default class BOGraphView extends React.Component<Props> {
         bo.outgoingRelations.map(rel => {
             try {
                 this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'dot'});
+            } catch (e) {
+                // tslint:disable-next-line:no-console
+                console.log(`Node already in graph...`);
+            }
+            try {
                 this.edges.add({id: 'E' + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
             } catch (e) {
                 // tslint:disable-next-line:no-console
-                console.log(`Node/edge already in graph...`);
+                console.log(`Edge already in graph...`);
             }
         });
         this.props.selectedBOchange(bo.id);
@@ -117,34 +122,48 @@ export default class BOGraphView extends React.Component<Props> {
     drawGraph() {
         // RH ----------- OBS! Kolla om expand eller collapse, dvs håll state om ett objekt är öppet eller stängt! -----------
         const bo = this.props.selectedListBO;
+        this.nodes = new vis.DataSet();
+        this.edges = new vis.DataSet();
+
         if (bo !== null) {
-            this.nodes = new vis.DataSet();
-
-            // var nodes = new Array<{id: string, label: string, color: string, font: {color: string}, shape: string}>(0);
-            this.edges = new vis.DataSet();
-            this.nodes.add({id: bo.id, label: bo.name, color: 'red', font: {color: 'gray'}, shape: 'dot'});
+            this.nodes.add({id: bo.id, label: bo.name, color: 'orange', font: {color: 'gray'}, shape: 'dot'});
             bo.outgoingRelations.map(rel => {
-                this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.name, color: 'orange', font: {color: 'black'}, shape: 'dot'});
-                this.edges.add({id: 'E' + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
-            });
-
-            // create a network
-            // var container = ReactDOM.findDOMNode(this.networkNode) as HTMLElement;
-            var data = {
-                nodes: this.nodes,
-                edges: this.edges
-            };
-            var options = { layout: { randomSeed: 8 }, width: '1000', height: '500' };
-
-            this.network = new vis.Network(this.myRef.current, data, options);
-            this.network.on('oncontext', params => {
-                if (params.nodes.length > 0) {
-                    this.props.selectedBOchange(params.nodes[0]);
+                try {
+                    this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.name, color: 'blue', font: {color: 'black'}, shape: 'dot'});
+                } catch (e) {
+                    // tslint:disable-next-line:no-console
+                    console.log(`Node already in graph...`);
+                }
+                try {
+                    this.edges.add({id: 'E' + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
+                } catch (e) {
+                    // tslint:disable-next-line:no-console
+                    console.log(`Edge already in graph...`);
                 }
             });
-            this.network.on('click', params => this.expandCollapseNode(params));
-            // this.network.redraw();
         }
+
+        var data = {
+            nodes: this.nodes,
+            edges: this.edges
+        };
+        var options = { layout: { randomSeed: 8 }, width: '1000', height: '1000' };
+
+        this.network = new vis.Network(this.myRef.current, data, options);
+        this.network.on('oncontext', params => {
+        if (params.nodes.length > 0) {
+            this.props.selectedBOchange(params.nodes[0]);
+        }
+        });
+        this.network.on('click', params => this.expandCollapseNode(params));
+    }
+
+    clicked = () => {
+        this.network.moveTo({
+            position: {x: 300, y: 300},
+            scale: 1.0,
+            // offset: {x: -500, y: -700}
+          });       
     }
 
     render() {  
@@ -155,7 +174,10 @@ export default class BOGraphView extends React.Component<Props> {
                 <div>
                     Selected BO = {name}
                 </div>
-                <div ref={this.myRef}/>
+                <div>
+                    <Button onClick={this.clicked}>TRYCK HÄR</Button>
+                </div>
+                <div ref={this.myRef} style={{overflow: 'auto', height: '400'}}/>
             </div>
         );
     }

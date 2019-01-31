@@ -15,6 +15,11 @@ query getBO($id: ID) {
             oppositeObject {
                 id
                 name
+                outgoingRelations {
+                    oppositeObject {
+                        id
+                    }
+                }
             }
         }
     }
@@ -28,7 +33,12 @@ interface BoItem {
         oppositeObject: {
             id: string;
             name: string;
-        };
+            outgoingRelations: {
+                oppositeObject: {
+                    id: string;
+                }
+            }[]        
+        }
     }[];
 }
 

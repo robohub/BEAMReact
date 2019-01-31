@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Route, RouteComponentProps } from 'react-router-dom';
 // import BOTableView from './bizobject/BOTableView';
-import BOTableView from './MUITableView';
+import BOTableView from './bizobject/BOTableView';
 
 export default class Composer extends React.Component<RouteComponentProps<{}>, {}> {
     detailLink = this.props.match.path + '/detail';

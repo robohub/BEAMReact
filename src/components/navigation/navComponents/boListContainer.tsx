@@ -2,10 +2,7 @@ import * as React from 'react';
 import { ChildProps, Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import { Typography, Divider } from '@material-ui/core';
+import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core';
 
 const allBOQuery = gql`
 query allBusinessObjects {
@@ -53,15 +50,25 @@ export default class BOListContainer extends React.Component<ChildProps<Props, R
                     
                     return (
                         <div>
-                            <Typography variant="title">Business Objects</Typography>
                             <Divider/>
-                            <List component="nav">
-                                {data.allBusinessObjects.map((o: BoItem) => 
-                                    <ListItem button={true} key={o.id} onClick={this.handleItemClick} id={o.id}>
-                                        <ListItemText primary={o.metaObject.name + ' ' + o.name} />
-                                    </ListItem>
-                                )}
-                            </List>
+                            <Table padding="dense">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell><Typography variant="h6">Type</Typography></TableCell>
+                                            <TableCell><Typography variant="h6">Object Name</Typography></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {data.allBusinessObjects.map((o: BoItem) => 
+                                            <TableRow key={o.id} onClick={this.handleItemClick} id={o.id} hover={true} >
+                                                <TableCell>{o.metaObject.name} </TableCell>
+                                                <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
+                                                    <Typography variant="subheading">{o.name}</Typography>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                            </Table>
                         </div>
                     );
                 }}

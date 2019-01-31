@@ -63,3 +63,34 @@ export interface MOResponse {
         }[]
     };
 }
+
+export type MetaRel = {
+    id: string;
+    oppositeName: string;
+    oneway: boolean;
+    oppositeRelation: {
+        id: string;
+        oppositeName: string;
+    }
+};
+
+export type AllMRResponse = {
+    allMetaRelations: MetaRel[];
+};
+
+export type FormAttribute = {
+    name: string;
+    maid: string;
+    bizattrval: string;
+};
+
+export type FormRelation = {
+    name: string;
+    metarelid: string;
+    bizrelbizobjs: string | string[];
+};
+
+export type FormValues = {
+    bizAttributes: FormAttribute[];
+    bizRelations: FormRelation[];
+};

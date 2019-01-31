@@ -2,7 +2,8 @@ import * as React from 'react';
 import { Query, ChildProps } from 'react-apollo';
 // import { Segment, Dropdown } from 'semantic-ui-react';
 import gql from 'graphql-tag';
-import EditBOtModal from './editBOModal';
+import { DialogContainer } from 'react-md';
+import BOEditContainer from './BOEditContainer';
 
 import {
     SelectField, Grid, Cell, Button,
@@ -76,13 +77,25 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                             </Cell>
                             <Cell align="middle" size={10}>
                                 <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
-                                <EditBOtModal
+{/*}                                <EditBOtModal
                                     selected={this.state.selected}
                                     visible={this.state.visible}
                                     metaID={this.state.selectedId}
                                     boType={this.state.boType}
                                     hide={this.hide}
-                                />
+                    />*/}
+                                <DialogContainer
+                                    id="createBODialog"
+                                    visible={this.state.visible}
+                                    onHide={this.hide}
+                                    title={'Add Business Object: ' + this.state.boType}
+                                    focusOnMount={false}
+                                    width={480}
+                                >
+                                    {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
+
+                                </DialogContainer >
+
                             </Cell>
                         </Grid>
                     );

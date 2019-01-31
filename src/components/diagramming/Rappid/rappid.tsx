@@ -39,7 +39,7 @@ class Rappid extends React.Component<Props, State> {
 
         return (
             // tslint:disable-next-line:jsx-no-string-ref
-            <div id="dia" className="joint-app joint-theme-modern" style={{height: '94vh'}}>
+            <div id="dia" className="joint-app joint-theme-material" style={{height: '94vh'}}>
                 <div className="app-header">
                     <div className="app-title">
                         <h1>Rappid</h1>

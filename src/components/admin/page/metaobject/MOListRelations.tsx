@@ -7,7 +7,7 @@ export default function MOListAttributes({ name, outgoingRelations }: MOProperti
     return (
         <div>
             {outgoingRelations.length === 0 ?
-                'No relations"/>'
+                'No relations defined'
                 :
                 outgoingRelations.map(p  =>
                     <MORelationItem key={p.id} oppositeName={p.oppositeName} oppositeObject={p.oppositeObject} multiplicity={p.multiplicity} />
