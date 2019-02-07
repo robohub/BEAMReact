@@ -62,7 +62,7 @@ class TrelloView extends React.Component<{}, State> {
 
         this.selectedBoard = data[1];
         
-        res = await fetch('https://api.trello.com/1/boards/' + data[1].id + '/lists?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
+        res = await fetch('https://api.trello.com/1/boards/' + data[1].id + '/lists?key={}&token={}');
         this.listor = await res.json();
 
         // tslint:disable-next-line:no-console
@@ -70,7 +70,7 @@ class TrelloView extends React.Component<{}, State> {
 
         this.listor.map(async lista => {
             // tslint:disable-next-line:max-line-length
-            res = await fetch('https://api.trello.com/1/lists/' + lista.id + '/cards?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
+            res = await fetch('https://api.trello.com/1/lists/' + lista.id + '/cards?key={}&token={}');
             lista.cards = await res.json();
             this.listCardCount++;
             if (this.listCardCount === this.listor.length) {
@@ -80,7 +80,7 @@ class TrelloView extends React.Component<{}, State> {
     }
 
     componentDidMount() {
-        this.fetchTrelloLists('https://api.trello.com/1/members/me/boards?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
+        this.fetchTrelloLists('https://api.trello.com/1/members/me/boards?key={}&token={}');
     }
     
     render() {
