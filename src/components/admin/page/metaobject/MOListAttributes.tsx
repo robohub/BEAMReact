@@ -9,7 +9,7 @@ export default function MOListAttributes({ name, attributes }: MOPropertiesType)
     return (
         <div>
             {attributes.length === 0 ?
-                'No attributes"/>'
+                'No attributes defined.'
                 :
                 attributes.map(p =>
                     /* <ListItem primaryText="TESTAR" key={p.name}> */

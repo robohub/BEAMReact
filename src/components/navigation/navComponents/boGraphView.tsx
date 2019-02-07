@@ -11,10 +11,14 @@ query getBO($id: ID) {
     {
         id
         name
+      
         outgoingRelations {
             oppositeObject {
                 id
                 name
+                metaObject {
+                    name
+                }
                 outgoingRelations {
                     oppositeObject {
                         id
@@ -33,6 +37,9 @@ interface BoItem {
         oppositeObject: {
             id: string;
             name: string;
+            metaObject: {
+                name: string;
+            };
             outgoingRelations: {
                 oppositeObject: {
                     id: string;
@@ -104,13 +111,13 @@ export default class BOGraphView extends React.Component<Props> {
     drawSubTree = (bo: BoItem) => {
         bo.outgoingRelations.map(rel => {
             try {
-                this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'dot'});
+                this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'dot'});
             } catch (e) {
                 // tslint:disable-next-line:no-console
                 console.log(`Node already in graph...`);
             }
             try {
-                this.edges.add({id: 'E' + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
+                this.edges.add({id: bo.id + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
             } catch (e) {
                 // tslint:disable-next-line:no-console
                 console.log(`Edge already in graph...`);
@@ -129,13 +136,13 @@ export default class BOGraphView extends React.Component<Props> {
             this.nodes.add({id: bo.id, label: bo.name, color: 'orange', font: {color: 'gray'}, shape: 'dot'});
             bo.outgoingRelations.map(rel => {
                 try {
-                    this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.name, color: 'blue', font: {color: 'black'}, shape: 'dot'});
+                    this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'blue', font: {color: 'black'}, shape: 'dot'});
                 } catch (e) {
                     // tslint:disable-next-line:no-console
                     console.log(`Node already in graph...`);
                 }
                 try {
-                    this.edges.add({id: 'E' + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
+                    this.edges.add({id: bo.id + rel.oppositeObject.id, from: bo.id, to: rel.oppositeObject.id});
                 } catch (e) {
                     // tslint:disable-next-line:no-console
                     console.log(`Edge already in graph...`);

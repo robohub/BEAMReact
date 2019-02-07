@@ -132,11 +132,28 @@ const formikEnhancer = withFormik<Props, FormValues>({
     displayName: 'Roberts BO Edit Form',
 });
 
+type Metarel = {
+    multiplicity: string;
+    bizobjects: {
+        id: string;
+        name: string;
+    }[]
+};
+
 class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompState> {
+
+    private options = new Map<string, Metarel>();
 
     constructor(props: Props & FormikProps<FormValues>) {
         super(props);
         this.state = { tabval: 0 };
+        props.metaObject.MetaObject.outgoingRelations.map(mr => {
+            if (this.options[mr.id] === undefined) {
+                this.options[mr.id] = { multiplicity: mr.multiplicity, bizobjects: mr.oppositeObject.businessObjects };
+            }
+        });
+        // tslint:disable-next-line:no-console
+        console.log('OPTIONS: ', this.options);
     }
 
     handleTabChange = (e: React.ChangeEvent, value: number) => {
@@ -181,23 +198,23 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
                                 name="bizRelations"
                                 render={() => (
                                     <div>
-                                        {this.props.metaObject.MetaObject.outgoingRelations.length > 0 ?
+                                        {this.props.values.bizRelations.length > 0 ?
                                             <div>
-                                                {this.props.metaObject.MetaObject.outgoingRelations.map((rel, index) => (
+                                                {this.props.values.bizRelations.map((rel, index) => (
                                                     <div key={index}>
-                                                        {rel.multiplicity === 'One' ? 
+                                                        {this.options[rel.metarelid].multiplicity === 'One' ? 
                                                             <Field
                                                                 name={`bizRelations.${index}.bizrelbizobjs`}
                                                                 component={MDSelectField}
-                                                                options={rel.oppositeObject.businessObjects}
-                                                                label={rel.oppositeName}
+                                                                options={this.options[rel.metarelid].bizobjects}
+                                                                label={rel.name}
                                                             />
                                                             :
                                                             <Field
                                                                 name={`bizRelations.${index}.bizrelbizobjs`}
                                                                 component={MDMultiSelectField}
-                                                                options={rel.oppositeObject.businessObjects}
-                                                                label={rel.oppositeName}
+                                                                options={this.options[rel.metarelid].bizobjects}
+                                                                label={rel.name}
                                                             />
                                                         }
                                                     </div>

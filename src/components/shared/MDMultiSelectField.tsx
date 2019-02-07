@@ -47,9 +47,9 @@ class MDMultiSelectField extends React.Component<FieldProps & SelectFieldProps> 
                     renderValue={(selected: []) => (
                         // <div className={classes.chips}>
                         <div>
-                            {selected.map(value => (
+                            {selected.map((value, i) => (
                                 // <Chip key={value} label={value} className={classes.chip} />
-                                <Chip key={value} label={this.getNameFromId(value)} />
+                                <Chip key={i} label={this.getNameFromId(value)} />
                             ))}
                         </div>
                     )}

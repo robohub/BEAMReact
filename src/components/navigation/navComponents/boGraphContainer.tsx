@@ -11,10 +11,14 @@ query getBO($id: ID) {
     {
         id
         name
+      
         outgoingRelations {
             oppositeObject {
                 id
                 name
+                metaObject {
+                    name
+                }
                 outgoingRelations {
                     oppositeObject {
                         id
@@ -33,6 +37,9 @@ interface BoItem {
         oppositeObject: {
             id: string;
             name: string;
+            metaObject: {
+                name: string;
+            };
             outgoingRelations: {
                 oppositeObject: {
                     id: string;
@@ -61,7 +68,9 @@ export default class BOGraphContainer extends React.Component<ChildProps<Props, 
     
                     if (loading) { return <div>Loading</div>; }
                     
-                    if (error) { return <h1>ERROR</h1>; }             
+                    if (error) { 
+                        return <h1>ERROR</h1>;
+                    }             
     
                     return (
                         <BOGraphView selectedListBO={data.BusinessObject} selectedBOchange={this.props.updateInfoView}/>

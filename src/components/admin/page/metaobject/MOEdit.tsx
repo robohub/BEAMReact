@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { MOEditType, MOPropertiesType, MOAttributeItemType } from './Types';
+import { /* MOEditType, */ MOPropertiesType, MOAttributeItemType } from './Types';
 
 import MOListAttributes from './MOListAttributes';
 import MOListRelations from './MOListRelations';
@@ -40,16 +40,21 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                 name: this.moName, 
                 attrs: [],
                 rels: []
-            },
+            }/*,
             update: (store, { data: createMetaObject }) => {
                 const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
                 data.allMetaObjects.splice(0, 0, createMetaObject);
                 store.writeQuery({ query: allMetaObjectsQuery, data });
-            },
+            },*/
         });
     }
 
     updateMOAttrs = async (moId: string, attrs: string[]) => {
+
+        // RH TODO
+        // 1. Check if any existing attributes are removed
+        // 1.5 If so -> check if any businessobjects has any data on that attribute for notification to user
+
         await this.props.updateMOAttrs({
             variables: {
                 id: moId, 
@@ -68,10 +73,52 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         });
     }
 
-    addMORels = async (moId: string, newRelation: MOEditFormData) => {
+    findMRinMetaRelations(mrid: string): boolean {
+        var found = false;
+        this.state.selectedMO.outgoingRelations.forEach(mr => {
+            if (mrid === mr.id) {
+                found = true;
+            }
+        });
+        return found;
+    }
 
-        // 1. Find NewRels
+    addMORels = async (moId: string, newValues: MOEditFormData) => {
+
+        // 1. Find and create new relations
+
+        newValues.relations.map(async rel => {
+            if (rel.id === undefined) {
+                try {
+                    await this.props.createMR({
+                        variables: {
+                            incomingid: moId, 
+                            oppositeId: rel.oppositeObject.id,
+                            oppName: rel.oppositeName,
+                            multiplicity: rel.multiplicity,
+                            oneway: rel.oneway
+                        },
+                        refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                            query: allMetaObjectsQuery,
+                            // variables: { repoFullName: 'apollographql/apollo-client' },
+                        }],            /*
+                        update: (store, { data: { createMetaObject }}) => {
+                            const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
+                            data.allMetaObjects.splice(0, 0, createMetaObject);
+                            store.writeQuery({ query: allMetaObjectsQuery, data });
+                        },
+                        */
+                    });
+                } catch (e) {
+                    alert('Error in adding MORels: ' + e);
+                }
+        
+            }
+        });
+
         // 2. Find DeletedRels
+        this.findMRinMetaRelations('TEST DUMMY');
+
         // 3. For each in NewRels
         // 3.1 Add newRel
         // 3.2 If newRel is twoway -> Add opposite newRel, connect the 2 new rels
@@ -79,38 +126,17 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         // 4.1 Delete delRel
         // 4.2 If delRel is twoway -> Delete opposite delRel
         // 5. Update MO with NewRelsIds -- BEHÖVS EJ om 3 är gjord?
-        try {
-            await this.props.createMR({
-                variables: {
-                    incomingid: moId, 
-                    oppositeId: newRelation.relations[0].oppositeObject.id,
-                    oppName: newRelation.relations[0].oppositeName,
-                    multiplicity: newRelation.relations[0].multiplicity,
-                    oneway: newRelation.relations[0].oneway
-                },
-                refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
-                    query: allMetaObjectsQuery,
-                    // variables: { repoFullName: 'apollographql/apollo-client' },
-                }],            /*
-                update: (store, { data: { createMetaObject }}) => {
-                    const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
-                    data.allMetaObjects.splice(0, 0, createMetaObject);
-                    store.writeQuery({ query: allMetaObjectsQuery, data });
-                },
-                */
-            });
-        } catch (e) {
-            alert('Error in adding MORels: ' + e);
-        }
+
     }
     
-    formSaved = async (moId: string, values: MOEditFormData) => {   // ASYNC!
+    formSaved = async (moId: string, values: MOEditFormData) => {
         this.hideEditForm();
         var attrs = new Array<string>(0);
         values.attributes.map(a =>
             attrs.push(a.id)
         );
         await this.updateMOAttrs(moId, attrs);
+        await this.addMORels(moId, values);
         this.toastSaved();
     }
         
@@ -146,7 +172,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
             <div>
                 <Grid className="md-paper--1">
                     <Cell size={2}>
-                        <TextField id="input" /*leftIcon={<FontIcon>plus</FontIcon>}*/ placeholder="Add Meta Object" /*onChange={this.handleInput}*//> 
+                        <TextField id="input" /*leftIcon={<FontIcon>plus</FontIcon>}*/ placeholder="Add Meta Object" onChange={this.handleInput}/> 
                     </Cell>
                     <Cell align="middle" size={10}>
                         <Button raised={true} primary={true} onClick={this.createMO}>Add</Button>

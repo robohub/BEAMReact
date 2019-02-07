@@ -62,7 +62,7 @@ class TrelloView extends React.Component<{}, State> {
 
         this.selectedBoard = data[1];
         
-        res = await fetch('https://api.trello.com/1/boards/' + data[1].id + '/lists?key={}&token={}');
+        res = await fetch('https://api.trello.com/1/boards/' + data[1].id + '/lists?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
         this.listor = await res.json();
 
         // tslint:disable-next-line:no-console
@@ -70,7 +70,7 @@ class TrelloView extends React.Component<{}, State> {
 
         this.listor.map(async lista => {
             // tslint:disable-next-line:max-line-length
-            res = await fetch('https://api.trello.com/1/lists/' + lista.id + '/cards?key={}&token={}');
+            res = await fetch('https://api.trello.com/1/lists/' + lista.id + '/cards?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
             lista.cards = await res.json();
             this.listCardCount++;
             if (this.listCardCount === this.listor.length) {
@@ -80,7 +80,7 @@ class TrelloView extends React.Component<{}, State> {
     }
 
     componentDidMount() {
-        this.fetchTrelloLists('https://api.trello.com/1/members/me/boards?key={}&token={}');
+        this.fetchTrelloLists('https://api.trello.com/1/members/me/boards?key=d7c07e3cc113f52311febcf783969005&token=bb26a9833433022ec2407a9184ddcfac828309d183fe6ad488526405b0024d39');
     }
     
     render() {
@@ -199,7 +199,7 @@ class App extends React.Component<{}> {
                 navItems={
                     [
                         <ListItem key={0} primaryText="Home" leftIcon={<FontIcon>home</FontIcon>} component={Link} to="/"/>,
-                        <ListItem key={1} primaryText="Chart" leftIcon={<FontIcon>insert_chart</FontIcon>} component={Link} to="/Chart"/>,
+                        <ListItem key={1} primaryText="Chart & Timeplan" leftIcon={<FontIcon>insert_chart</FontIcon>} component={Link} to="/Chart"/>,
                         <ListItem key={2} primaryText="Diagram Editor" leftIcon={<FontIcon>domain</FontIcon>} component={Link} to="/Diagram"/>,
                         <ListItem key={3} primaryText="Admin" leftIcon={<FontIcon>phonelink_setup</FontIcon>} component={Link} to="/Admin"/>,
                         <ListItem key={4} primaryText="Composer" leftIcon={<FontIcon>view_compact</FontIcon>} component={Link} to="/Composer"/>,

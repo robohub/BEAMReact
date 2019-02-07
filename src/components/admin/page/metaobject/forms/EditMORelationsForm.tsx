@@ -139,7 +139,7 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                                     this.state.relName === '' || this.state.selectedBOId === '' || this.state.corrRelName === '' 
                             }
                         >
-                            Create Relation
+                            Add Relation
                         </Button>
                     </Cell>
                 </Grid>
