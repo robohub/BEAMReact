@@ -2,7 +2,7 @@ import * as React from 'react';
 import { MORelationItemType, /*MOPropType*/ } from './Types';
 import { Avatar, Chip, FontIcon } from 'react-md';
 
-export default function MOAttributeItem({ oppositeName, oppositeObject, multiplicity }: MORelationItemType) {
+export default function MORelationItem({ oppositeName, oppositeObject, multiplicity }: MORelationItemType) {
 
     return (
         <Chip

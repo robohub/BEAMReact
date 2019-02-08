@@ -14,10 +14,13 @@ query allMetaObjects {
             id
             oppositeName
             oppositeObject {
+                id
                 name
             }
+            oppositeRelation {
+                id
+            }
             multiplicity
-            oneway
         }
     }
     allMetaAttributes {
@@ -60,18 +63,43 @@ mutation createMR(
     $oppositeId: ID!,
     $oppName: String!,
     $multiplicity: MultiplicityType!,
-    $oneway: Boolean!) {
+    $opprelid: ID) {
 
         createMetaRelation(
-            incomingObjectId: $incomingid, 
+            incomingObjectId: $incomingid
             oppositeObjectId: $oppositeId,
             oppositeName: $oppName,
             multiplicity: $multiplicity,
-            oneway: $oneway) {
+            oppositeRelationId: $opprelid)
+            {
                 id
             }
     }
-`;  
+`;
+            
+export const deleteMetaRel = gql`
+mutation removeMR($mrid: ID!)  {
+    deleteMetaRelation(id: $mrid )
+    {id}
+}
+`;
+
+export const findBizObjsWithMetaRelation = gql`
+query bizObjsWithMetaRelation($maid: ID!) {
+    allBusinessObjects( filter: {
+        bizAttributes_some: {
+            metaAttribute: {
+                id: $maid
+            }
+        }
+    })
+    {
+        id
+    	name
+    }
+}
+`;
+
             /*
             export const allBOQuery = gql`
             query allBusinessObjects {

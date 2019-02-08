@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { /* MOEditType, */ MOPropertiesType, MOAttributeItemType } from './Types';
 
+import { client as apolloClient } from '../../../../index';
+
 import MOListAttributes from './MOListAttributes';
 import MOListRelations from './MOListRelations';
 import { FontIcon, Divider, Button, TextField, /*FontIcon,*/ Grid, Cell, Snackbar } from 'react-md';
@@ -8,8 +10,8 @@ import { FontIcon, Divider, Button, TextField, /*FontIcon,*/ Grid, Cell, Snackba
 import EditAttributesModal from './modals/attributeModal';
 import { MOEditFormData } from './forms/Types';
 
-import { graphql, ChildProps, compose, MutationFunc } from 'react-apollo';
-import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMetaRelation } from './queries';
+import { graphql, ChildProps, compose, MutationFunc, FetchResult } from 'react-apollo';
+import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMetaRelation, deleteMetaRel, findBizObjsWithMetaRelation } from './queries';
 
 interface Props {
     allMetaObjects: MOPropertiesType[];
@@ -54,6 +56,32 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         // RH TODO
         // 1. Check if any existing attributes are removed
         // 1.5 If so -> check if any businessobjects has any data on that attribute for notification to user
+        this.state.selectedMO.attributes.forEach(async ma => {
+            var found = false;
+            for (var i = 0; i < attrs.length; i++ ) {
+                if (ma.id === attrs[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                //
+                try {
+                    const { data } = await apolloClient.query({
+                        query: findBizObjsWithMetaRelation,
+                        fetchPolicy: 'network-only',
+                        variables: { maid: ma.id }
+                    });
+                    if (data.allBusinessObjects.length > 0) {
+                        // RH TODO: bättre logik om BO har värde i attrbutet som kriterie för varningen?
+                        alert('Some business objects are using the meta attribute: ' + ma.name + '\n\nRemove attribute anyway?');
+                    }
+                } catch (e) {
+                    alert('Error when searching for metarelation: ' + e);
+                }
+            }
+
+        });
 
         await this.props.updateMOAttrs({
             variables: {
@@ -85,48 +113,76 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
 
     addMORels = async (moId: string, newValues: MOEditFormData) => {
 
-        // 1. Find and create new relations
-
+        // Find any added relations
         newValues.relations.map(async rel => {
             if (rel.id === undefined) {
+                // Create new doublelinked relation
                 try {
                     await this.props.createMR({
                         variables: {
-                            incomingid: moId, 
+                            incomingid: moId,
                             oppositeId: rel.oppositeObject.id,
                             oppName: rel.oppositeName,
                             multiplicity: rel.multiplicity,
-                            oneway: rel.oneway
                         },
-                        refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
-                            query: allMetaObjectsQuery,
-                            // variables: { repoFullName: 'apollographql/apollo-client' },
-                        }],            /*
-                        update: (store, { data: { createMetaObject }}) => {
-                            const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
-                            data.allMetaObjects.splice(0, 0, createMetaObject);
-                            store.writeQuery({ query: allMetaObjectsQuery, data });
-                        },
-                        */
+                    }).then(async (response: FetchResult<{createMetaRelation: { id: string; }}>) => {
+
+                        await this.props.createMR({
+                            variables: {
+                                incomingid: rel.oppositeObject.id,
+                                oppositeId: moId,
+                                oppName: rel.oppositeRelation.oppositeName,
+                                multiplicity: rel.oppositeRelation.multiplicity,
+                                opprelid: response.data.createMetaRelation.id
+                            },
+                            refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                                query: allMetaObjectsQuery,
+                                // variables: { repoFullName: 'apollographql/apollo-client' },
+                            }],            /*
+                            update: (store, { data: { createMetaObject }}) => {
+                                const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
+                                data.allMetaObjects.splice(0, 0, createMetaObject);
+                                store.writeQuery({ query: allMetaObjectsQuery, data });
+                            },
+                            */
+                        });
                     });
                 } catch (e) {
                     alert('Error in adding MORels: ' + e);
                 }
-        
             }
         });
-
-        // 2. Find DeletedRels
-        this.findMRinMetaRelations('TEST DUMMY');
-
-        // 3. For each in NewRels
-        // 3.1 Add newRel
-        // 3.2 If newRel is twoway -> Add opposite newRel, connect the 2 new rels
-        // 4. For each in DeleteRelse
-        // 4.1 Delete delRel
-        // 4.2 If delRel is twoway -> Delete opposite delRel
-        // 5. Update MO with NewRelsIds -- BEHÖVS EJ om 3 är gjord?
-
+        // Find any removed relations
+        this.state.selectedMO.outgoingRelations.forEach(async mr => {
+            var found = false;
+            for (var i = 0; i < newValues.relations.length; i++ ) {
+                if (mr.id === newValues.relations[i].id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                // Delete removed doublelinked relation
+                try {
+                    await this.props.deleteMR({
+                        variables: {
+                            mrid: mr.id,
+                        },
+                    });
+                    await this.props.deleteMR({
+                        variables: {
+                            mrid: mr.oppositeRelation.id,
+                        },
+                        refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                            query: allMetaObjectsQuery,
+                            // variables: { repoFullName: 'apollographql/apollo-client' },
+                        }], 
+                    });
+                } catch (e) {
+                    alert('Error in deleting MORels: ' + e);
+                }
+            }
+        });
     }
     
     formSaved = async (moId: string, values: MOEditFormData) => {
@@ -227,10 +283,12 @@ interface MyMutations {
     createMR: MutationFunc<{ id: string; }>;
     updateMOAttrs: MutationFunc<{ id: string; }>;
     createMO: MutationFunc<{}>;
+    deleteMR: MutationFunc<{ id: string; }>;
 }
 
 export default compose(
     graphql<{}, Props>(createMetaRelation, { name: 'createMR' }),
+    graphql<{}, Props>(deleteMetaRel, { name: 'deleteMR' }),
     graphql<{}, Props>(updateMOAttributes, { name: 'updateMOAttrs' }),
     graphql<{}, Props>(createMetaObj, { name: 'createMO' })  
 )(MOEdit);

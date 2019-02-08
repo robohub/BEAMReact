@@ -29,7 +29,6 @@ query MOQuery($id: ID!) {
     allMetaRelations {
         id
         oppositeName
-        oneway
         oppositeRelation {
             id
             oppositeName

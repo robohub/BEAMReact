@@ -67,7 +67,6 @@ export interface MOResponse {
 export type MetaRel = {
     id: string;
     oppositeName: string;
-    oneway: boolean;
     oppositeRelation: {
         id: string;
         oppositeName: string;

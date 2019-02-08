@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { FieldArray, reduxForm, InjectedFormProps, WrappedFieldArrayProps, GenericFieldArray } from 'redux-form';
 import { 
-    SelectionControlGroup, Checkbox,
+    SelectionControlGroup,
     Divider, TextField, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader
 } from 'react-md';
 import { MOPropertiesType, MORelationItemType } from '../Types';
@@ -16,7 +16,7 @@ const XFieldArray = FieldArray as new () => GenericFieldArray<MORelationItemType
 class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationItemType> & RelProps> {
 
     state = { showOppositeName: true, selectedBOId: '', selectedBOName: '', relName: '',
-              oneway: false, multi: 'One', corrMulti: 'One', corrRelName: '' };
+              multi: 'One', corrMulti: 'One', corrRelName: '' };
     
     switchOnewWayOnOff = () => {
         this.setState({ showOppositeName: !this.state.showOppositeName});
@@ -59,19 +59,7 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                             fullWidth={true}
                         />
                     </Cell>
-                    <Cell size={6} align="top">
-                        <Checkbox
-                            id="mrcb"
-                            name="mrcb"
-                            checked={this.state.oneway}
-                            label="Directed"
-                            onChange={(checked, event) => {
-                                this.setState({oneway: checked});
-                                this.switchOnewWayOnOff();
-                            }}
-                        />
-                    </Cell>
-                    <Cell size={6}>
+                    <Cell size={12}>
                         <SelectionControlGroup
                             id={1}
                             name="sel1"
@@ -124,19 +112,16 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                                     oppositeName: this.state.relName,
                                     oppositeObject: { id: this.state.selectedBOId, name: this.state.selectedBOName },
                                     oppositeRelation: {
+                                        id: '',
                                         multiplicity: this.state.corrMulti,
                                         oppositeName: this.state.corrRelName
                                     },
                                     multiplicity: this.state.multi,
-                                    oneway: this.state.oneway
                                 };
                                 fields.push(rel);
                             }}
                             disabled={
-                                this.state.oneway ?
-                                    this.state.relName === '' || this.state.selectedBOId === ''
-                                :
-                                    this.state.relName === '' || this.state.selectedBOId === '' || this.state.corrRelName === '' 
+                                this.state.relName === '' || this.state.selectedBOId === '' || this.state.corrRelName === '' 
                             }
                         >
                             Add Relation
@@ -152,7 +137,6 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                             <TableColumn>Name</TableColumn>
                             <TableColumn>Opposite Object</TableColumn>
                             <TableColumn>Multiplicity</TableColumn>
-                            <TableColumn>Oneway</TableColumn>
                             <TableColumn>Delete</TableColumn> 
                         </TableRow>
                     </TableHeader>
@@ -163,7 +147,6 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                                     <TableColumn>{fields.get(index).oppositeName}</TableColumn>
                                     <TableColumn>{fields.get(index).oppositeObject.name}</TableColumn>
                                     <TableColumn>{fields.get(index).multiplicity}</TableColumn>
-                                    <TableColumn>{fields.get(index).oneway ? 'Yes' : 'No'}</TableColumn>
                                     <TableColumn>
                                         <Button onClick={() => fields.remove(index)} icon={true} primary={true} secondary={true}>delete_forever</Button>
                                     </TableColumn>

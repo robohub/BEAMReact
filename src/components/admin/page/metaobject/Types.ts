@@ -10,9 +10,8 @@ export type MORelationItemType = {
     id?: string
     oppositeName: string
     oppositeObject: { id: string; name: string }
-    oppositeRelation?: { oppositeName: string; multiplicity: string }
+    oppositeRelation?: { id: string; oppositeName: string; multiplicity: string }
     multiplicity: string
-    oneway?: boolean
 };
 
 export type MOPropertiesType = {

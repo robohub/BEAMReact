@@ -82,20 +82,20 @@ query allBizRels($MRID: ID, $INCOBJID: ID, $OPPOBJID: ID) {
   }
 `;
 
-interface TEST {
+interface CreateBOResult {
     createBusinessObject: BOEditType;
 }
 
 type BizRelPair = { metaRelationId: string, oppositeObjectId: string, bizrelId?: string };
 type UpdateBizRelPair = { bizRelId: string, value: string };
 
-class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, TEST>> {
+class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, CreateBOResult>> {
     
     deleteBizRels = async (bizrels: BizRelPair[]) => {
         try {
             for (let i = 0; i < bizrels.length; i++) {
 
-                // DELETE Opposite relation if oneway === false! 
+                // DELETE Opposite relation 
 
                 let found = false;
                 var oppositeMRId: string;
@@ -146,7 +146,7 @@ addBizRels = async (added: BizRelPair[]) => {
                         metarelation: added[i].metaRelationId
                     }
                 });
-                // ADD opposite relation if oneway === false!
+                // ADD opposite relation 
                 let found = false;
                 var rel: MetaRel;
                 this.props.allMetaRels.allMetaRelations.map(mr => {
@@ -156,15 +156,13 @@ addBizRels = async (added: BizRelPair[]) => {
                     }
                 });
                 if (found) {
-                    if (!rel.oneway) {
-                        await this.props.createBR({
-                            variables: {
-                                incoming: added[i].oppositeObjectId,
-                                oppositeObj: bizObject.id,
-                                metarelation: rel.oppositeRelation.id
-                            }
-                        });                    
-                    }
+                    await this.props.createBR({
+                        variables: {
+                            incoming: added[i].oppositeObjectId,
+                            oppositeObj: bizObject.id,
+                            metarelation: rel.oppositeRelation.id
+                        }
+                    });                    
                 }
             }
         } catch (err) {
@@ -290,7 +288,7 @@ onSave = async (values: FormValues) => {
                         // Write the data back to the cache.
                         store.writeQuery({ query: allBOQuery, data });
                     },
-                }).then((response: FetchResult<TEST>) => {
+                }).then((response: FetchResult<CreateBOResult>) => {
                     // tslint:disable-next-line:no-console
                     console.log('Response: ', response);
                     // tslint:disable-next-line:no-console
@@ -451,7 +449,7 @@ interface MyMutations {
     updateBA: MutationFunc<{ id: string; }>;
     createBR: MutationFunc<{ id: string; }>;
     deleteBR: MutationFunc<{ id: string; }>;
-    createBO: MutationFunc<TEST>;
+    createBO: MutationFunc<CreateBOResult>;
 }
 
 export default compose(
