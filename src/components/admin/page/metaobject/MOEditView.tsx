@@ -7,11 +7,13 @@ import MOListAttributes from './MOListAttributes';
 import MOListRelations from './MOListRelations';
 import { FontIcon, Divider, Button, TextField, /*FontIcon,*/ Grid, Cell, Snackbar } from 'react-md';
 
-import EditAttributesModal from './modals/attributeModal';
+import EditPropertiesModal from './modals/propertiesModal';
 import { MOEditFormData } from './forms/Types';
 
 import { graphql, ChildProps, compose, MutationFunc, FetchResult } from 'react-apollo';
 import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMetaRelation, deleteMetaRel, findBizObjsWithMetaRelation } from './queries';
+
+type FormValues = MOEditFormData;   // RH TODO temporär
 
 interface Props {
     allMetaObjects: MOPropertiesType[];
@@ -111,7 +113,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         return found;
     }
 
-    addMORels = async (moId: string, newValues: MOEditFormData) => {
+    addMORels = async (moId: string, newValues: FormValues) => {
 
         // Find any added relations
         newValues.relations.map(async rel => {
@@ -185,14 +187,14 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         });
     }
     
-    formSaved = async (moId: string, values: MOEditFormData) => {
+    formSaved = async (values: FormValues) => {
         this.hideEditForm();
         var attrs = new Array<string>(0);
         values.attributes.map(a =>
             attrs.push(a.id)
         );
-        await this.updateMOAttrs(moId, attrs);
-        await this.addMORels(moId, values);
+        await this.updateMOAttrs(this.state.selectedMO.id, attrs);
+        await this.addMORels(this.state.selectedMO.id, values);
         this.toastSaved();
     }
         
@@ -259,7 +261,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                         <Divider/>
                     </div>
                 )}
-                <EditAttributesModal
+                <EditPropertiesModal
                     metaObject={this.state.selectedMO}
                     metaAttributes={this.props.allMetaAttributes}
                     metaObjects={this.props.allMetaObjects}

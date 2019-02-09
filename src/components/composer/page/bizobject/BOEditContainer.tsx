@@ -17,6 +17,7 @@ query MOQuery($id: ID!) {
           id
           oppositeName
           oppositeObject {
+            id
             name
             businessObjects {
               id
@@ -53,7 +54,7 @@ export default class BOEditView extends React.Component<ChildProps<InputProps, M
     
                     if (loading) { return <div>Loading</div>; }
                     
-                    if (error) { return <h1>ERROR</h1>; }             
+                    if (error) { return <div>ERROR: {error.message}</div>; }             
                     
                     return (
                         <EditBOView 

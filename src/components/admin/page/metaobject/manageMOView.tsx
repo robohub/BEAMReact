@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Query } from 'react-apollo';
-import MOEdit from './MOEdit';
+import MOEditView from './MOEditView';
 // import { MOEditType } from './Types';
 import { allMetaObjectsQuery } from './queries';
 
@@ -18,7 +18,7 @@ export default class ManageMOView extends React.Component {
                     } 
                     
                     return (
-                        <MOEdit
+                        <MOEditView
                             allMetaObjects={data.allMetaObjects}
                             allMetaAttributes={data.allMetaAttributes}
                             // allMetaRelations={allMetaRelations}

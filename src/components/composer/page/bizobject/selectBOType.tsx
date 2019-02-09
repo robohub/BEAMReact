@@ -77,13 +77,6 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                             </Cell>
                             <Cell align="middle" size={10}>
                                 <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
-{/*}                                <EditBOtModal
-                                    selected={this.state.selected}
-                                    visible={this.state.visible}
-                                    metaID={this.state.selectedId}
-                                    boType={this.state.boType}
-                                    hide={this.hide}
-                    />*/}
                                 <DialogContainer
                                     id="createBODialog"
                                     visible={this.state.visible}
@@ -93,7 +86,6 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                                     width={480}
                                 >
                                     {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
-
                                 </DialogContainer >
 
                             </Cell>

@@ -1,119 +1,98 @@
 import * as React from 'react';
-import { FieldArray, reduxForm, InjectedFormProps, WrappedFieldArrayProps, GenericFieldArray } from 'redux-form';
-import { FontIcon, Divider, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader } from 'react-md';
-import { MOAttributeItemType } from '../Types';
-import { MOEditFormData } from './Types';
+import { FieldArray, /* ArrayHelpers */ } from 'formik';
 
-interface AttrProps {
-    metaAttributes: MOAttributeItemType[];
+import { FontIcon, Divider, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader } from 'react-md';
+import { MOAttributeItemType } from './../Types';
+
+type FormValues = MOAttributeItemType[];  // RH temporärt?
+
+interface MOEditFormProps {
+    values: FormValues;
+    metaAttributes: MOAttributeItemType[];    
 }
 
-class RenderAttributes extends React.Component<WrappedFieldArrayProps<MOAttributeItemType> & AttrProps> {
+export default class MOEditAttributesForm extends React.Component<MOEditFormProps> {
 
     state = { selectedMOId: '', selectedMOIndex: 0};
 
     render() {
-        const { metaAttributes, fields } = this.props;
+        const { metaAttributes } = this.props;
         
         var dropList = new Array<{label: string, value: string}>(0);
-        metaAttributes.map((a, index) => {
+        metaAttributes.map(a => {
             dropList.push({label: a.name, value: a.id});
         });
 
         return (
-            <div /*style={{borderStyle: 'solid', borderWidth: 'thin', borderColor: 'lightgray', borderSpacing: '5px'}}*/>
-                <Grid >
-                    <Cell size={6} >
-                        <SelectField
-                            id="moSelect"
-                            label="Select Attribute"
-                            value={this.state.selectedMOId}
-                            placeholder="Select Attribute"
-                            menuItems={dropList}
-                            onChange={(value, index, event) => {
-                                this.setState( {selectedMOId: value, selectedMOIndex: index});
-                            }}
-                            fullWidth={true}
-                        />
-                    </Cell>
-                    <Cell size={6} align="bottom">
-                        <Button
-                            primary={true}
-                            raised={true}
-                            onClick={() =>
-                                fields.push(metaAttributes[this.state.selectedMOIndex])
-                            }
-                            disabled={this.state.selectedMOId === ''}
-                        >
-                            Add Attribute
-                        </Button>
-                    </Cell>
-                </Grid>
-                <Divider/>
-                <DataTable plain={true}>
-                    <TableHeader>
-                        <TableRow>
-                            <TableColumn>Name</TableColumn>
-                            <TableColumn>Type</TableColumn>
-                            <TableColumn>Action</TableColumn>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {fields.length !== 0 ?
-                            fields.map((name, index, attr) =>
-                                <TableRow key={index}>
-                                    <TableColumn>
-                                        {fields.get(index).name}
-                                    </TableColumn>
-                                    <TableColumn>
-                                        {fields.get(index).type}
-                                    </TableColumn>
-                                    <TableColumn>
-                                        <Button size="small" onClick={() => fields.remove(index)} secondary={true} flat={true} iconEl={<FontIcon>delete_forever</FontIcon>}>
-                                            Delete
-                                        </Button>
-                                    </TableColumn>
+            <FieldArray
+                name="attributes" // Check mapPropsToValues in MOEditForm
+                render={arrayHelpers => 
+                    <div>
+                        <Grid >
+                            <Cell size={6} >
+                                <SelectField
+                                    id="moSelect"
+                                    label="Select Attribute"
+                                    value={this.state.selectedMOId}
+                                    placeholder="Select Attribute"
+                                    menuItems={dropList}
+                                    onChange={(value, index) => {
+                                        this.setState( {selectedMOId: value, selectedMOIndex: index});
+                                    }}
+                                    fullWidth={true}
+                                />
+                            </Cell>
+                            <Cell size={6} align="bottom">
+                                <Button
+                                    primary={true}
+                                    raised={true}
+                                    onClick={() =>
+                                        arrayHelpers.push(metaAttributes[this.state.selectedMOIndex])
+                                    }
+                                    disabled={this.state.selectedMOId === ''}
+                                >
+                                    Add Attribute
+                                </Button>
+                            </Cell>
+                        </Grid>
+                        <Divider/>
+                        <DataTable plain={true}>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableColumn>Name</TableColumn>
+                                    <TableColumn>Type</TableColumn>
+                                    <TableColumn>Action</TableColumn>
                                 </TableRow>
-                            )
-                            :
-                            <TableRow>
-                                <TableColumn>
-                                    No attributes defined...
-                                </TableColumn>
-                            </TableRow>
-
-                        }
-                    </TableBody>
-                </DataTable>
-            </div>
+                            </TableHeader>
+                            <TableBody>
+                                {this.props.values && this.props.values.length !== 0 ?
+                                    this.props.values.map((attr, index) =>
+                                        <TableRow key={index}>
+                                            <TableColumn>
+                                                {attr.name}
+                                            </TableColumn>
+                                            <TableColumn>
+                                                {attr.type}
+                                            </TableColumn>
+                                            <TableColumn>
+                                                <Button size="small" onClick={() => arrayHelpers.remove(index)} secondary={true} flat={true} iconEl={<FontIcon>delete_forever</FontIcon>}>
+                                                    Delete
+                                                </Button>
+                                            </TableColumn>
+                                        </TableRow>
+                                    )
+                                    :
+                                    <TableRow>
+                                        <TableColumn>
+                                            No attributes defined...
+                                        </TableColumn>
+                                    </TableRow>
+                                }
+                            </TableBody>
+                        </DataTable>
+                    </div>
+                }
+            />
         );
     }
 }
-
-interface MOEditFormProps {
-    metaAttributes: MOAttributeItemType[];    
-}
-
-const XFieldArray = FieldArray as new () => GenericFieldArray<MOAttributeItemType, AttrProps>;
-
-type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
-
-export default 
-reduxForm<MOEditFormData, MOEditFormProps>({
-    form: 'MOEditForm',
-})(
-class MOEditAttributesForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps> {
-
-    render() {
-        const { metaAttributes } = this.props;
-        return (
-            <form onSubmit={this.props.handleSubmit}>
-                <XFieldArray
-                    name="attributes"
-                    component={RenderAttributes}
-                    metaAttributes={metaAttributes}
-                />
-            </form>
-        );
-    }
-});

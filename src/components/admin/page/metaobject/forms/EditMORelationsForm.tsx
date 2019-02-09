@@ -1,19 +1,20 @@
 import * as React from 'react';
-import { FieldArray, reduxForm, InjectedFormProps, WrappedFieldArrayProps, GenericFieldArray } from 'redux-form';
 import { 
     SelectionControlGroup,
     Divider, TextField, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader
 } from 'react-md';
 import { MOPropertiesType, MORelationItemType } from '../Types';
-import { MOEditFormData } from './Types';
+import { FieldArray, ArrayHelpers } from 'formik';
+
+type FormValues = MORelationItemType[];  // RH temporärt?
 
 interface RelProps {
     metaObjects: MOPropertiesType[];
+    values: FormValues;
+    arrayHelpers: ArrayHelpers;
 }
 
-const XFieldArray = FieldArray as new () => GenericFieldArray<MORelationItemType, RelProps>;
-
-class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationItemType> & RelProps> {
+class RenderRelations extends React.Component<RelProps> {
 
     state = { showOppositeName: true, selectedBOId: '', selectedBOName: '', relName: '',
               multi: 'One', corrMulti: 'One', corrRelName: '' };
@@ -23,7 +24,7 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
     }
 
     render() {
-        const { metaObjects, fields } = this.props;
+        const { metaObjects } = this.props;
         let multiplicityVals = [{
             label: 'One', value: 'One',
         }, {
@@ -118,7 +119,7 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                                     },
                                     multiplicity: this.state.multi,
                                 };
-                                fields.push(rel);
+                                this.props.arrayHelpers.push(rel);
                             }}
                             disabled={
                                 this.state.relName === '' || this.state.selectedBOId === '' || this.state.corrRelName === '' 
@@ -141,14 +142,14 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {fields.length !== 0 ?
-                            fields.map((name, index, r) =>
+                        {this.props.values && this.props.values.length !== 0 ?
+                            this.props.values.map((rel, index, r) =>
                                 <TableRow key={index}>
-                                    <TableColumn>{fields.get(index).oppositeName}</TableColumn>
-                                    <TableColumn>{fields.get(index).oppositeObject.name}</TableColumn>
-                                    <TableColumn>{fields.get(index).multiplicity}</TableColumn>
+                                    <TableColumn>{rel.oppositeName}</TableColumn>
+                                    <TableColumn>{rel.oppositeObject.name}</TableColumn>
+                                    <TableColumn>{rel.multiplicity}</TableColumn>
                                     <TableColumn>
-                                        <Button onClick={() => fields.remove(index)} icon={true} primary={true} secondary={true}>delete_forever</Button>
+                                        <Button onClick={() => this.props.arrayHelpers.remove(index)} icon={true} primary={true} secondary={true}>delete_forever</Button>
                                     </TableColumn>
                                 </TableRow>                            
                             )
@@ -169,32 +170,19 @@ class RenderRelations extends React.Component<WrappedFieldArrayProps<MORelationI
 }
 
 interface MOEditFormProps {
+    values: FormValues;
     metaObjects: MOPropertiesType[];    
 }
 
-type MOEditFormInjectedProps = InjectedFormProps<MOEditFormData, MOEditFormProps>;
-
-interface State {
-    showOppositeName: boolean;
-}
-
-export default 
-reduxForm<MOEditFormData, MOEditFormProps>({
-    form: 'MOEditForm',
-})(
-class MOEditRelationsForm extends React.Component<MOEditFormInjectedProps & MOEditFormProps, State> {
+export default class MOEditRelationsForm extends React.Component<MOEditFormProps> {
 
     render() {
-        const { metaObjects } = this.props;
+        const { metaObjects, values } = this.props;
         return (
-            <form onSubmit={this.props.handleSubmit}>
-                <XFieldArray
-                    name="relations"
-                    component={RenderRelations}
-                    metaObjects={metaObjects}
+                <FieldArray
+                    name="relations"  // Check mapPropsToValues in MOEditForm
+                    render={arrayHelper => <RenderRelations arrayHelpers={arrayHelper} metaObjects={metaObjects} values={values}/>}
                 />
-            </form>
-                
         );
     }
-});
+}
