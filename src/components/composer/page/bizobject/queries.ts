@@ -29,9 +29,7 @@ query allBusinessObjects {
                 id
                 multiplicity
                 oppositeName
-                oppositeRelation {
-                    id
-                }
+
             }
         }
     }
@@ -49,11 +47,12 @@ mutation updateBO($id: ID!, $name: String) {
 `;
 
 export const createBizRelation = gql`
-mutation createBizRel($incoming: ID!, $oppositeObj: ID!, $metarelation: ID!) {
+mutation createBizRel($incoming: ID!, $oppositeObj: ID!, $metarelation: ID!, $oppRelId: ID) {
     createBizRelation(
         incomingObjectId: $incoming
         oppositeObjectId: $oppositeObj
         metaRelationId: $metarelation
+        oppositeRelationId: $oppRelId
     )
     {id}
 }
@@ -87,5 +86,31 @@ mutation updateBA($id: ID!, $value: String) {
         value: $value
     )
     {id}
+}
+`;
+
+export const updateBizRelation = gql`
+mutation updateBRel($brid: ID!, $oppBoId: ID, $oppRelId: ID) {
+    updateBizRelation(
+        id: $brid
+        oppositeObjectId: $oppBoId
+        oppositeRelationId: $oppRelId
+    )
+    {id}
+}
+`;
+
+export const findBizRelation = gql`
+query findBRel($metaid: ID!, $oppBoId: ID) {
+	allBizRelations(filter: {
+        metaRelation: { id: $metaid },
+        incomingObject: { id: $oppBoId }}
+    )
+    {
+        id
+        oppositeRelation {
+            id
+        }
+    }
 }
 `;

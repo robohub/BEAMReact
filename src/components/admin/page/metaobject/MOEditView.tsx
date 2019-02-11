@@ -44,12 +44,16 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                 name: this.moName, 
                 attrs: [],
                 rels: []
-            }/*,
+            }, /*
             update: (store, { data: createMetaObject }) => {
                 const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
                 data.allMetaObjects.splice(0, 0, createMetaObject);
                 store.writeQuery({ query: allMetaObjectsQuery, data });
             },*/
+            refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                query: allMetaObjectsQuery,
+                // variables: { repoFullName: 'apollographql/apollo-client' },
+            }],
         });
     }
 

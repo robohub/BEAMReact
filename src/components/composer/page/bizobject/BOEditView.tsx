@@ -3,9 +3,9 @@ import { client } from '../../../../index';
 
 import { graphql, ChildProps, compose, MutationFunc, FetchResult } from 'react-apollo';
 import gql from 'graphql-tag';
-import { allBOQuery, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject } from './queries';
+import { allBOQuery, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject, updateBizRelation, findBizRelation } from './queries';
 // import BOEditForm from './BOEditForm';
-import { MOResponse, BOEditType, BizRelationsType, BizAttributeType, FormValues, FormRelation, FormAttribute, BizObjectsType, AllMRResponse, MetaRel } from './Types';
+import { MOResponse, BOEditType, BizRelationsType, BizAttributeType, FormValues, FormRelation, FormAttribute, BizObjectsType, AllMRResponse } from './Types';
 
 import { BOEditForm } from './BOEditForm';
 
@@ -55,9 +55,7 @@ mutation CreateBO (
                 id
                 multiplicity
                 oppositeName
-                oppositeRelation {
-                    id
-                }
+
             }
         }
     }
@@ -135,63 +133,124 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, Creat
         }
     }
 
-addBizRels = async (added: BizRelPair[]) => {
+    addBizRels = async (added: BizRelPair[]) => {  // Used when adding relations to existing bizobject
         let { bizObject } = this.props;
         try {
             for (let i = 0; i < added.length; i++) {
+
+                // tslint:disable-next-line:no-console
+                console.log('STEP 1...');
+
                 await this.props.createBR({
                     variables: {
                         incoming: bizObject.id,
                         oppositeObj: added[i].oppositeObjectId,
                         metarelation: added[i].metaRelationId
                     }
+                }).then(async (response: FetchResult<{createBizRelation: {id: string}}>) => {
+                    // Add opposite relation
+                
+                    // tslint:disable-next-line:no-console
+                    console.log('STEP 2...... Skapat ny BR: ', response.data.createBizRelation.id);
+
+                    await this.addOneOppositeBizRel(bizObject.id, added[i], response.data.createBizRelation.id);
+
+                    // tslint:disable-next-line:no-console
+                    console.log('STEP 3.........');
                 });
-                // ADD opposite relation 
-                let found = false;
-                var rel: MetaRel;
-                this.props.allMetaRels.allMetaRelations.map(mr => {
-                    if (mr.id === added[i].metaRelationId) {
-                        found = true;
-                        rel = mr;
-                    }
-                });
-                if (found) {
-                    await this.props.createBR({
-                        variables: {
-                            incoming: added[i].oppositeObjectId,
-                            oppositeObj: bizObject.id,
-                            metarelation: rel.oppositeRelation.id
-                        }
-                    });                    
-                }
+
+                // tslint:disable-next-line:no-console
+                console.log('STEP 4......');
+
             }
         } catch (err) {
             alert('Error when creating business relations...\n' + err);
         }
     }
 
-addOppositeBizRels =  async (boId: string, outgoingRels: BizRelationsType[], added: BizRelPair[]) => {
+    addOppositeBizRels =  async (boId: string, outgoingRels: BizRelationsType[]) => {  // Used after creating new bizobject
         try {
-            for (let i = 0; i < added.length; i++) {
-                for (let j = 0; j < outgoingRels.length; j++) {
-                    if (added[i].metaRelationId === outgoingRels[j].metaRelation.id) {
+            for (let i = 0; i < outgoingRels.length; i++) {
+                await this.addOneOppositeBizRel(
+                    boId,
+                    { metaRelationId: outgoingRels[i].metaRelation.id, oppositeObjectId: outgoingRels[i].oppositeObject.id},
+                    outgoingRels[i].id);
+            }
+        } catch (err) {
+            alert('Error when creating opposite business relations...\n' + err);
+        }
+    }
+
+    addOneOppositeBizRel = async (boId: string, added: BizRelPair, incomingBizrelId: string) => {
+        try {
+            for (let mr = 0; mr < this.props.allMetaRels.allMetaRelations.length; mr++) {
+                var rel = this.props.allMetaRels.allMetaRelations[mr];
+                if (rel.id === added.metaRelationId) {
+                    if (rel.oppositeRelation.multiplicity === 'Many') {
+                        // tslint:disable-next-line:no-console
+                        console.log('Opposite relation multiplicity = MANY...CREATE a new Bizrelation');
                         await this.props.createBR({
                             variables: {
+                                incoming: added.oppositeObjectId,
                                 oppositeObj: boId,
-                                incoming: added[i].oppositeObjectId,
-                                metarelation: outgoingRels[j].metaRelation.oppositeRelation.id
+                                metarelation: rel.oppositeRelation.id,
+                                oppRelId: incomingBizrelId
                             }
                         });
-                        break;
+                    } else {
+
+                        // tslint:disable-next-line:no-console
+                        console.log('Searching for existing old opposite Bizrelation!!! MR & BO', rel.oppositeRelation.id, added.oppositeObjectId);
+
+                        const { data: { allBizRelations: result } } = await client.query({
+                            query: findBizRelation,
+                            fetchPolicy: 'network-only',
+                            variables: { metaid: rel.oppositeRelation.id, oppBoId: added.oppositeObjectId }
+                        });
+
+                        // tslint:disable-next-line:no-console
+                        console.log('Found existing old opposite Bizrelation!!! ', result[0].oppositeRelation);
+
+                        if (result.length > 0) {
+                            // tslint:disable-next-line:no-console
+                            console.log('Removing existing old opposite Bizrelation!!! ', result[0].oppositeRelation.id);
+                            await this.props.deleteBR({
+                                variables: {
+                                    bizRelId: result[0].oppositeRelation.id 
+                                }
+                            });  
+                            // tslint:disable-next-line:no-console
+                            console.log('Opposite relation multiplicity = ONE...UPDATE existing Bizrelation: ', result[0].id);
+                            await this.props.updateBR({
+                                variables: {
+                                    brid: result[0].id, oppBoId: boId, oppRelId: incomingBizrelId
+                                }
+                            });
+                        } else {
+                            // tslint:disable-next-line:no-console
+                            console.log('Opposite relation multiplicity = ONE...CREATE a new Bizrelation');
+                            await this.props.createBR({
+                                variables: {
+                                    incoming: added.oppositeObjectId,
+                                    oppositeObj: boId,
+                                    metarelation: rel.oppositeRelation.id,
+                                    oppRelId: incomingBizrelId
+                                }
+                            });
+                        }
                     }
+                  
+                    break;
                 }
             }
         } catch (err) {
-            alert('Error when creating business relations...\n' + err);
+            // alert('Error when creating business relations...\n' + err);
+            // tslint:disable-next-line:no-console
+            console.log('-----------------> Error when creating business relations...\n' + err);
         }
     }
 
-updateBizAttributes = async (relationPairs: UpdateBizRelPair[]) => {
+    updateBizAttributes = async (relationPairs: UpdateBizRelPair[]) => {
         try {
             for (let i = 0; i < relationPairs.length; i++) {
                 await this.props.updateBA({
@@ -206,7 +265,7 @@ updateBizAttributes = async (relationPairs: UpdateBizRelPair[]) => {
         }
     }
 
-updateBizObject = async () => {
+    updateBizObject = async () => {
         try {
             await this.props.updateBO({
                 variables: {
@@ -223,7 +282,7 @@ updateBizObject = async () => {
         }
     }
 
-onSave = async (values: FormValues) => {
+    onSave = async (values: FormValues) => {
         try {
             if (this.props.newObject) {
                 // Fix attributes for save
@@ -263,24 +322,10 @@ onSave = async (values: FormValues) => {
                         state: 'Created',
                         rels: rels
                     },
-//                    refetchQueries: [{
-//                        query: allBOQuery,
-//                        // variables: { repoFullName: 'apollographql/apollo-client' },
-//                    },
-//                    {             
-//                            query: gql`
-//                        query updateCache {
-//                            allMetaRelations {
-//                                id
-//                                oppositeName
-//                                oppositeRelation {
-//                                    id
-//                                    oppositeName
-//                                }
-//                            }
-//                        }`
-//                    }],
-                    update: (store, { data: { createBusinessObject }}) => {
+                    // refetchQueries: [{
+                    //    query: allBOQuery,
+                    // }],
+                    update: (store, { data: { createBusinessObject }}) => {   // RH TODO: säkerställ att cachen uppdateras utan att korrumperas!!!! Inte bra här anar jag...
                         // Read the data from the cache for this query.
                         const data: BizObjectsType = store.readQuery({query: allBOQuery });
                         // Add our new BO from the mutation to the beginning.
@@ -289,34 +334,12 @@ onSave = async (values: FormValues) => {
                         store.writeQuery({ query: allBOQuery, data });
                     },
                 }).then((response: FetchResult<CreateBOResult>) => {
-                    // tslint:disable-next-line:no-console
-                    console.log('Response: ', response);
-                    // tslint:disable-next-line:no-console
-                    console.log('Object: ', response.data.createBusinessObject);
-            //                        setTimeout(() => {
-                    /*this.addOppositeBizRels(
+                    // For the newly created object, create opposite relations!
+                    this.addOppositeBizRels(
                         response.data.createBusinessObject.id, 
-                        response.data.createBusinessObject.outgoingRelations, 
-                        rels
-                    );   */
-                       // Pick new BO first in list, see update above  
-            //                        }, 
-            //                                   5000);
-            //                    });
+                        response.data.createBusinessObject.outgoingRelations
+                    );
                 });
-
-                // For the newly created object, create opposite relations!
-
-                // tslint:disable-next-line:no-console
-//                console.log('new BO id: ' + newBO.allBusinessObjects[0].id);
-               
-//                setTimeout(() => {
-//                    const newBO: BizObjectsType = apolloClient.readQuery({query: allBOQuery });
-//                    let len = newBO.allBusinessObjects.length - 1;
-//                    this.addOppositeBizRels(newBO.allBusinessObjects[len].id, newBO.allBusinessObjects[len].outgoingRelations, rels);      // Pick new BO first in list, see update above
-//                }, 
-//                           5000);
-
             } else {
                 // Check changed attributes
                 var changedAttributes = this.getUpdatedBizAttributes(values.bizAttributes, this.props.bizObject.bizAttributes);
@@ -335,17 +358,13 @@ onSave = async (values: FormValues) => {
                 await this.updateBizObject();   // TODO: To get chache update! Only for prototyping!
                 // await apolloClient.query<BizObjectsType>({ query: allBOQuery });  // Uppdaterar inte cachen!
                 // TODO: OBS! updateBizObject() uppdaterar t.ex. inte ändrade attribut-texter som dyker upp i dropdowns!!!
-
-                // TODO: vissa object har outgoingrelations men inte incomingrelations!!! Missar dubbelriktning?!?!?!?!
-                // Måste jag själv skapa två BizRelations, för dubbelriktning!?
-
             }
         } catch (e) {
             alert('ONSAVE error: ' + e);
         }
     }
 
-getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType[]): UpdateBizRelPair[] => {
+    getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType[]): UpdateBizRelPair[] => {
         var updated = new Array<{metaId: string, value: string}>(0);
         oldAttrs.forEach(oldBO => {
             newAttrs.forEach(newBO => {
@@ -371,12 +390,12 @@ getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType
         return changedBizAttrs;
     }
 
-getRelationChanges = (oldrels: BizRelationsType[], newrels: FormRelation[]): { forDeletion: BizRelPair[], added: BizRelPair[] } => {
+    getRelationChanges = (oldrels: BizRelationsType[], newrels: FormRelation[]): { forDeletion: BizRelPair[], added: BizRelPair[] } => {
         var newrelPairs = new Array<BizRelPair>(0);
         var oldrelPairs = new Array<BizRelPair>(0);
 
         newrels.map(mo => {
-            if (typeof mo.bizrelbizobjs === 'string') {
+            if (typeof mo.bizrelbizobjs === 'string' && mo.bizrelbizobjs !== '') {
                 newrelPairs.push({metaRelationId: mo.metarelid, oppositeObjectId: mo.bizrelbizobjs as string});
             } else {
                 for (let e = 0; e < mo.bizrelbizobjs.length; e++) {
@@ -400,7 +419,7 @@ getRelationChanges = (oldrels: BizRelationsType[], newrels: FormRelation[]): { f
         return { forDeletion: deleted, added: added };
     }
 
-diffDeleted = (source: Array<BizRelPair>, compare: Array<BizRelPair>): Array<BizRelPair> => {
+    diffDeleted = (source: Array<BizRelPair>, compare: Array<BizRelPair>): Array<BizRelPair> => {
         var deleted = new Array<BizRelPair>(0);
         source.forEach(el => {
             let sourceObj = { metaRelationId: el.metaRelationId, oppositeObjectId: el.oppositeObjectId }; // Remove field bizRelId from object to compare correctly
@@ -414,28 +433,28 @@ diffDeleted = (source: Array<BizRelPair>, compare: Array<BizRelPair>): Array<Biz
         return deleted;
     }
 
-showResults = (input: FormValues) => {
+    showResults = (input: FormValues) => {
         // tslint:disable-next-line:no-console
         console.log(`You submitted:\n\n${JSON.stringify(input, null, 2)}`);
         window.alert('Klar med edit av BO!');
     }
 
-handleTabChange = (e: React.ChangeEvent, value: number) => {
+    handleTabChange = (e: React.ChangeEvent, value: number) => {
         this.setState( {tabval: value});
     }
 
-render() {
-        return (
-            <BOEditForm
-                newObject={this.props.newObject}
-                onSubmit={this.onSave}
-                // onSubmit={this.showResults}
-                metaObject={this.props.metaobject}
-                bizObject={this.props.newObject ? null : this.props.bizObject}
-            />
-        );
+    render() {
+            return (
+                <BOEditForm
+                    newObject={this.props.newObject}
+                    onSubmit={this.onSave}
+                    // onSubmit={this.showResults}
+                    metaObject={this.props.metaobject}
+                    bizObject={this.props.newObject ? null : this.props.bizObject}
+                />
+            );
+        }
     }
-}
 
 type MyProps = {
     newObject: boolean;
@@ -445,6 +464,7 @@ type MyProps = {
 };
 
 interface MyMutations {
+    updateBR: MutationFunc<{ id: string; }>;
     updateBO: MutationFunc<{ id: string; }>;
     updateBA: MutationFunc<{ id: string; }>;
     createBR: MutationFunc<{ id: string; }>;
@@ -453,6 +473,7 @@ interface MyMutations {
 }
 
 export default compose(
+    graphql<{}, MyProps>(updateBizRelation, { name: 'updateBR' }),
     graphql<{}, MyProps>(updateBizObject, { name: 'updateBO' }),
     graphql<{}, MyProps>(updateBizAttribute, { name: 'updateBA' }),
     graphql<{}, MyProps>(createBizRelation, { name: 'createBR' }),

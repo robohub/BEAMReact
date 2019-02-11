@@ -19,9 +19,7 @@ export type BizRelationsType = {
         id: string;
         oppositeName: string;
         multiplicity: string;
-        oppositeRelation: {
-          id: string;
-        }
+
     }
 };
 
@@ -70,6 +68,7 @@ export type MetaRel = {
     oppositeRelation: {
         id: string;
         oppositeName: string;
+        multiplicity: string;
     }
 };
 

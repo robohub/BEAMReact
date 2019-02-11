@@ -33,6 +33,7 @@ query MOQuery($id: ID!) {
         oppositeRelation {
             id
             oppositeName
+            multiplicity
         }
     }
 }
