@@ -35,20 +35,14 @@ interface InputProps {
     link: string;
 }
 
-interface State {
-    showEditForm: boolean;
-    selectedBO: BOEditType;
-    allBusinessObjects: BizObjectsType;
-}
-
-export default class BOTableView extends React.Component<ChildProps<InputProps, Response>, State> {
+export default class BOTableView extends React.Component<ChildProps<InputProps, Response>> {
     render() {
         return (
             <Query
                 query={allBOQuery}
                 fetchPolicy={'cache-and-network'}
             >
-                {({ loading, data: { allBusinessObjects }, error }) => {
+                {({ loading, data: { businessObjects }, error }) => {
                     if (loading) {
                         return <div>Loading</div>;
                     }
@@ -70,7 +64,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {allBusinessObjects.map((o: BOEditType, index: number) =>
+                                        {businessObjects.map((o: BOEditType, index: number) =>
                                             <TableRow key={o.id}>
                                                 <TableCell>
                                                     <List>

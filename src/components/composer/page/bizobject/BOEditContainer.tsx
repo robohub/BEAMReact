@@ -6,7 +6,7 @@ import { MOResponse, BOEditType, AllMRResponse } from './Types';
 
 const MOQuery = gql`
 query MOQuery($id: ID!) {
-    MetaObject(id: $id) {
+    metaObject(where: {id: $id}) {
         id
         name
         attributes {
@@ -27,7 +27,7 @@ query MOQuery($id: ID!) {
           multiplicity
         }
     }
-    allMetaRelations {
+    metaRelations {
         id
         oppositeName
         oppositeRelation {

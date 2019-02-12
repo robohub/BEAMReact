@@ -11,13 +11,13 @@ import EditPropertiesModal from './modals/propertiesModal';
 import { MOEditFormData } from './forms/Types';
 
 import { graphql, ChildProps, compose, MutationFunc, FetchResult } from 'react-apollo';
-import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMetaRelation, deleteMetaRel, findBizObjsWithMetaRelation } from './queries';
+import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMRWithoutOppRelation, createMetaRelation, deleteMetaRel, findBizObjsWithMetaAttribute, updateMRWithOppRel } from './queries';
 
 type FormValues = MOEditFormData;   // RH TODO temporär
 
 interface Props {
-    allMetaObjects: MOPropertiesType[];
-    allMetaAttributes: MOAttributeItemType[];
+    metaObjects: MOPropertiesType[];
+    metaAttributes: MOAttributeItemType[];
     // allMetaRelations: MORelationItemType[];
 }
 
@@ -39,25 +39,30 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         this.moName = value;
     }
     createMO = async () => {
-        await this.props.createMO({
-            variables: {
-                name: this.moName, 
-                attrs: [],
-                rels: []
-            }, /*
-            update: (store, { data: createMetaObject }) => {
-                const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
-                data.allMetaObjects.splice(0, 0, createMetaObject);
-                store.writeQuery({ query: allMetaObjectsQuery, data });
-            },*/
-            refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
-                query: allMetaObjectsQuery,
-                // variables: { repoFullName: 'apollographql/apollo-client' },
-            }],
-        });
+        try {
+            // RH TODO Check that name is unique before or after...???
+            await this.props.createMO({
+                variables: {
+                    name: this.moName, 
+                    attrs: null,
+                    rels: null
+                }, /*
+                update: (store, { data: createMetaObject }) => {
+                    const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
+                    data.allMetaObjects.splice(0, 0, createMetaObject);
+                    store.writeQuery({ query: allMetaObjectsQuery, data });
+                },*/
+                refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                    query: allMetaObjectsQuery,
+                    // variables: { repoFullName: 'apollographql/apollo-client' },
+                }],
+            });
+        } catch (e) {
+            alert('Error when creating meta object: ' + e);
+        }
     }
 
-    updateMOAttrs = async (moId: string, attrs: string[]) => {
+    updateMOAttrs = async (moId: string, attrs: {id: string}[]) => {
 
         // RH TODO
         // 1. Check if any existing attributes are removed
@@ -65,7 +70,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         this.state.selectedMO.attributes.forEach(async ma => {
             var found = false;
             for (var i = 0; i < attrs.length; i++ ) {
-                if (ma.id === attrs[i]) {
+                if (ma.id === attrs[i].id) {
                     found = true;
                     break;
                 }
@@ -74,11 +79,11 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                 //
                 try {
                     const { data } = await apolloClient.query({
-                        query: findBizObjsWithMetaRelation,
+                        query: findBizObjsWithMetaAttribute,
                         fetchPolicy: 'network-only',
                         variables: { maid: ma.id }
                     });
-                    if (data.allBusinessObjects.length > 0) {
+                    if (data.businessObjects.length > 0) {
                         // RH TODO: bättre logik om BO har värde i attrbutet som kriterie för varningen?
                         alert('Some business objects are using the meta attribute: ' + ma.name + '\n\nRemove attribute anyway?');
                     }
@@ -88,25 +93,28 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
             }
 
         });
-
-        await this.props.updateMOAttrs({
-            variables: {
-                id: moId, 
-                attrs: attrs
-            },
-            refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
-                query: allMetaObjectsQuery,
-                // variables: { repoFullName: 'apollographql/apollo-client' },
-            }],            /*
-            update: (store, { data: { createMetaObject }}) => {
-                const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
-                data.allMetaObjects.splice(0, 0, createMetaObject);
-                store.writeQuery({ query: allMetaObjectsQuery, data });
-            },
-            */
-        });
+        try {
+            await this.props.updateMOAttrs({
+                variables: {
+                    id: moId, 
+                    attrs: attrs
+                },
+                refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                    query: allMetaObjectsQuery,
+                    // variables: { repoFullName: 'apollographql/apollo-client' },
+                }],            /*
+                update: (store, { data: { createMetaObject }}) => {
+                    const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
+                    data.allMetaObjects.splice(0, 0, createMetaObject);
+                    store.writeQuery({ query: allMetaObjectsQuery, data });
+                },
+                */
+            });
+        } catch (e) {
+            alert('Error when updating meta attributes: ' + e);
+        }
     }
-
+/* RH TODO Not used?
     findMRinMetaRelations(mrid: string): boolean {
         var found = false;
         this.state.selectedMO.outgoingRelations.forEach(mr => {
@@ -116,7 +124,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         });
         return found;
     }
-
+*/
     addMORels = async (moId: string, newValues: FormValues) => {
 
         // Find any added relations
@@ -124,7 +132,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
             if (rel.id === undefined) {
                 // Create new doublelinked relation
                 try {
-                    await this.props.createMR({
+                    await this.props.createMRWOOpprel({
                         variables: {
                             incomingid: moId,
                             oppositeId: rel.oppositeObject.id,
@@ -132,25 +140,32 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                             multiplicity: rel.multiplicity,
                         },
                     }).then(async (response: FetchResult<{createMetaRelation: { id: string; }}>) => {
-
+                        // Create opposite relation and connect to previously created MetaRelation and vice versa
+                        var firstMRId = response.data.createMetaRelation.id;
                         await this.props.createMR({
                             variables: {
                                 incomingid: rel.oppositeObject.id,
                                 oppositeId: moId,
                                 oppName: rel.oppositeRelation.oppositeName,
                                 multiplicity: rel.oppositeRelation.multiplicity,
-                                opprelid: response.data.createMetaRelation.id
-                            },
-                            refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
-                                query: allMetaObjectsQuery,
-                                // variables: { repoFullName: 'apollographql/apollo-client' },
-                            }],            /*
-                            update: (store, { data: { createMetaObject }}) => {
-                                const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
-                                data.allMetaObjects.splice(0, 0, createMetaObject);
-                                store.writeQuery({ query: allMetaObjectsQuery, data });
-                            },
-                            */
+                                opprelid: firstMRId
+                            }                          
+                        }).then(async (response2: FetchResult<{createMetaRelation: { id: string; }}>) => {
+                            await this.props.updateMR({
+                                variables: {
+                                    id: firstMRId,
+                                    oppositeId: response2.data.createMetaRelation.id,
+                                },
+                                refetchQueries: [{     // TODO: optimize!!! T.ex. getMO(moId)
+                                    query: allMetaObjectsQuery,
+                                    // variables: { repoFullName: 'apollographql/apollo-client' },
+                                }],            
+                                // update: (store, { data: { createMetaObject }}) => {
+                                //    const data: MOEditType = store.readQuery({query: allMetaObjectsQuery });
+                                //    data.allMetaObjects.splice(0, 0, createMetaObject);
+                                //    store.writeQuery({ query: allMetaObjectsQuery, data });
+                                // },   
+                            });
                         });
                     });
                 } catch (e) {
@@ -193,9 +208,9 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
     
     formSaved = async (values: FormValues) => {
         this.hideEditForm();
-        var attrs = new Array<string>(0);
+        var attrs = new Array<{id: string}>(0);
         values.attributes.map(a =>
-            attrs.push(a.id)
+            attrs.push({id: a.id})
         );
         await this.updateMOAttrs(this.state.selectedMO.id, attrs);
         await this.addMORels(this.state.selectedMO.id, values);
@@ -205,7 +220,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
     switchEditOnOff = (event: React.MouseEvent<HTMLElement>) => {
         this.setState(
             {
-                selectedMO: this.props.allMetaObjects[event.currentTarget.id], 
+                selectedMO: this.props.metaObjects[event.currentTarget.id], 
                 showEditForm: !this.state.showEditForm
             });
     }    
@@ -240,7 +255,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                         <Button raised={true} primary={true} onClick={this.createMO}>Add</Button>
                     </Cell>
                 </Grid>
-                {this.props.allMetaObjects.map((obj, index) =>
+                {this.props.metaObjects.map((obj, index) =>
                     <div key={obj.name}>
                         <Grid className="md-block-centered">
                             <Cell size={2}>
@@ -267,8 +282,8 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                 )}
                 <EditPropertiesModal
                     metaObject={this.state.selectedMO}
-                    metaAttributes={this.props.allMetaAttributes}
-                    metaObjects={this.props.allMetaObjects}
+                    metaAttributes={this.props.metaAttributes}
+                    metaObjects={this.props.metaObjects}
                     onFormSave={this.formSaved}
                     visible={this.state.showEditForm}
                     hide={this.hideEditForm}
@@ -286,6 +301,8 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
 }
 
 interface MyMutations {
+    updateMR: MutationFunc<{ id: string; }>;
+    createMRWOOpprel: MutationFunc<{ id: string; }>;
     createMR: MutationFunc<{ id: string; }>;
     updateMOAttrs: MutationFunc<{ id: string; }>;
     createMO: MutationFunc<{}>;
@@ -293,6 +310,8 @@ interface MyMutations {
 }
 
 export default compose(
+    graphql<{}, Props>(updateMRWithOppRel, { name: 'updateMR' }),
+    graphql<{}, Props>(createMRWithoutOppRelation, { name: 'createMRWOOpprel' }),
     graphql<{}, Props>(createMetaRelation, { name: 'createMR' }),
     graphql<{}, Props>(deleteMetaRel, { name: 'deleteMR' }),
     graphql<{}, Props>(updateMOAttributes, { name: 'updateMOAttrs' }),

@@ -29,7 +29,7 @@ const formikEnhancer = withFormik<Props, FormValues>({
         
         // Attributes
 
-        const { attributes: metaAttrs } = props.metaObject.MetaObject;
+        const { attributes: metaAttrs } = props.metaObject.metaObject;
         var formAttrs = new Array<FormAttribute>(0);
         
         if (props.newObject) {
@@ -56,7 +56,7 @@ const formikEnhancer = withFormik<Props, FormValues>({
 
         // Relations
 
-        const { outgoingRelations: metaRels } = props.metaObject.MetaObject;
+        const { outgoingRelations: metaRels } = props.metaObject.metaObject;
         var formRels = new Array<FormRelation>(0);
         
         if (props.newObject) {
@@ -147,7 +147,7 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
     constructor(props: Props & FormikProps<FormValues>) {
         super(props);
         this.state = { tabval: 0 };
-        props.metaObject.MetaObject.outgoingRelations.map(mr => {
+        props.metaObject.metaObject.outgoingRelations.map(mr => {
             if (this.options[mr.id] === undefined) {
                 this.options[mr.id] = { multiplicity: mr.multiplicity, bizobjects: mr.oppositeObject.businessObjects };
             }

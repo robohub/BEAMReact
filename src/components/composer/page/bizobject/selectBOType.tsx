@@ -11,7 +11,7 @@ import {
 
 const allMOQuery = gql`
 query allMetaObjects {
-  allMetaObjects {
+  metaObjects {
     id
     name
   }
@@ -23,7 +23,7 @@ interface RObject {
 }
 
 interface Response {
-    allMetaObjects: RObject[];
+    metaObjects: RObject[];
 }
 
 type DropType = {
@@ -46,7 +46,7 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
     render() {
         return (
             <Query query={allMOQuery}>
-                {({ loading, data: { allMetaObjects }, error }) => {
+                {({ loading, data: { metaObjects }, error }) => {
                     if (loading) {
                         return <div>Loading</div>;
                     }
@@ -55,7 +55,7 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                     } 
                       
                     var objs = new Array<DropType>(0);
-                    allMetaObjects.map((o: RObject) => {
+                    metaObjects.map((o: RObject) => {
                         objs.push({label: o.name, value: o.id});
                     });
                     

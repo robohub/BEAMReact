@@ -19,8 +19,8 @@ export default class ManageMOView extends React.Component {
                     
                     return (
                         <MOEditView
-                            allMetaObjects={data.allMetaObjects}
-                            allMetaAttributes={data.allMetaAttributes}
+                            metaObjects={data.metaObjects}
+                            metaAttributes={data.metaAttributes}
                             // allMetaRelations={allMetaRelations}
                         />
                     );

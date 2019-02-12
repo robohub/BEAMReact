@@ -2,7 +2,57 @@ import gql from 'graphql-tag';
 
 export const allBOQuery = gql`
 query allBusinessObjects {
-    allBusinessObjects {
+    businessObjects {
+        id
+        name
+        state
+        metaObject {
+            id
+            name
+        }
+        bizAttributes {
+            id
+            metaAttribute
+            {
+                id
+                name
+            }
+            value
+        }
+        outgoingRelations {
+            id
+            oppositeObject {
+                id
+                name
+            }
+            metaRelation {
+                id
+                multiplicity
+                oppositeName
+
+            }
+        }
+    }
+}
+`;
+
+export const createBizObject = gql`
+mutation CreateBO (
+    $moid: ID!, 
+    $name: String!, 
+    $state: String!,
+    $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
+    $rels: [BizRelationCreateWithoutIncomingObjectInput!]   
+) 
+{
+    createBusinessObject(data: {
+        metaObject: { connect: { id: $moid}},
+        name: $name,
+        state: $state,
+        bizAttributes: {create: $attrs},
+        outgoingRelations: { create: $rels}}
+    )
+    {
         id
         name
         state
@@ -38,21 +88,29 @@ query allBusinessObjects {
 
 export const updateBizObject = gql`
 mutation updateBO($id: ID!, $name: String) {
-    updateBusinessObject(
-        id: $id
-        name: $name
-    )
+    updateBusinessObject(data: {name: $name}, where: {id: $id})
     {id}
 }
 `;
 
 export const createBizRelation = gql`
-mutation createBizRel($incoming: ID!, $oppositeObj: ID!, $metarelation: ID!, $oppRelId: ID) {
-    createBizRelation(
-        incomingObjectId: $incoming
-        oppositeObjectId: $oppositeObj
-        metaRelationId: $metarelation
-        oppositeRelationId: $oppRelId
+mutation createBizRel($incomingId: ID!, $oppositeObjId: ID!, $metarelationId: ID!, $opprelId: ID!) {
+    createBizRelation(data: {
+        incomingObject: {connect: { id: $incomingId}}
+        oppositeObject: {connect: {id:$oppositeObjId}}
+        metaRelation: {connect: {id: $metarelationId}}
+        oppositeRelation: {connect: {id: $opprelId}}}
+    )
+    {id}
+}
+`;
+
+export const createBRWithoutOpprelation = gql`
+mutation createBizRel($incomingId: ID!, $oppositeObjId: ID!, $metarelationId: ID!) {
+    createBizRelation(data: {
+        incomingObject: {connect: { id: $incomingId}}
+        oppositeObject: {connect: {id:$oppositeObjId}}
+        metaRelation: {connect: {id: $metarelationId}}}
     )
     {id}
 }
@@ -60,14 +118,14 @@ mutation createBizRel($incoming: ID!, $oppositeObj: ID!, $metarelation: ID!, $op
 
 export const deleteBizObject = gql`
 mutation deleteBO($id: ID!) {
-    deleteBusinessObject(id: $id) 
+    deleteBusinessObject(where: {id: $id}) 
     {id}
 }
 `;
 
 export const deleteBizRelation = gql`
 mutation removeBR($bizRelId: ID!)  {
-    deleteBizRelation(id: $bizRelId )
+    deleteBizRelation(where: {id: $bizRelId} )
     {id}
 }
 `;
@@ -81,10 +139,7 @@ mutation removeBA($bizAttrId: ID!)  {
 
 export const updateBizAttribute = gql`
 mutation updateBA($id: ID!, $value: String) {
-    updateBizAttribute(
-        id: $id
-        value: $value
-    )
+    updateBizAttribute(data: {value: $value}, where: {id: $id})
     {id}
 }
 `;
@@ -92,9 +147,11 @@ mutation updateBA($id: ID!, $value: String) {
 export const updateBizRelation = gql`
 mutation updateBRel($brid: ID!, $oppBoId: ID, $oppRelId: ID) {
     updateBizRelation(
-        id: $brid
-        oppositeObjectId: $oppBoId
-        oppositeRelationId: $oppRelId
+      data: 
+        { oppositeObject: { connect: {id: $oppBoId}} 
+        	oppositeRelation: { connect: {id: $oppRelId}}}
+      where:
+      	{id: $brid}
     )
     {id}
 }
@@ -102,7 +159,7 @@ mutation updateBRel($brid: ID!, $oppBoId: ID, $oppRelId: ID) {
 
 export const findBizRelation = gql`
 query findBRel($metaid: ID!, $oppBoId: ID) {
-	allBizRelations(filter: {
+	bizRelations(where: {
         metaRelation: { id: $metaid },
         incomingObject: { id: $oppBoId }}
     )
@@ -111,6 +168,14 @@ query findBRel($metaid: ID!, $oppBoId: ID) {
         oppositeRelation {
             id
         }
+    }
+}
+`;
+
+export const updateBRWithOppRel = gql`
+mutation updateBRWithOppRel($id: ID!, $oppRelId: ID!) {
+    updateBizRelation(data: {oppositeRelation: { connect: {id: $oppRelId}}}, where: {id: $id} ) {
+        id
     }
 }
 `;

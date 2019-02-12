@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 
 export const allMetaObjectsQuery = gql`
 query allMetaObjects {
-    allMetaObjects {
+    metaObjects {
         id
         name
         attributes {
@@ -23,7 +23,7 @@ query allMetaObjects {
             multiplicity
         }
     }
-    allMetaAttributes {
+    metaAttributes {
         id
         name
         type
@@ -34,10 +34,10 @@ query allMetaObjects {
 export const createMetaObj = gql`
 mutation createMO(
     $name: String!,
-    $attrs: [MetaObjectattributesMetaAttribute!],
-    $rels: [MetaObjectoutgoingRelationsMetaRelation!]) {
+    $attrs: MetaAttributeCreateManyWithoutObjectsInput,
+    $rels: MetaRelationCreateManyWithoutIncomingObjectInput) {
         
-        createMetaObject(name: $name, attributes: $attrs, outgoingRelations: $rels) {
+        createMetaObject(data: {name: $name, attributes: $attrs, outgoingRelations: $rels}) {
             id
             name
             attributes {
@@ -51,12 +51,32 @@ mutation createMO(
 `;
     
 export const updateMOAttributes = gql`
-mutation updateMOAttrs($id: ID!, $attrs: [ID!]) {
-    updateMetaObject(id: $id, attributesIds: $attrs) {
+mutation updateMOAttrs($id: ID!, $attrs: [MetaAttributeWhereUniqueInput!]) {
+    updateMetaObject(data: {attributes: {set: $attrs}}, where: {id: $id} ) {
         id
     }
 }
 `;
+
+export const createMRWithoutOppRelation = gql`
+mutation createMR(
+    $incomingid: ID!, 
+    $oppositeId: ID!,
+    $oppName: String!,
+    $multiplicity: MultiplicityType!) {
+
+        createMetaRelation(data: {
+            incomingObject: { connect: { id: $incomingid }},
+            oppositeObject: { connect: { id: $oppositeId }},
+            oppositeName: $oppName,
+            multiplicity: $multiplicity}
+        )
+            {
+                id
+            }
+    }
+`;
+
 export const createMetaRelation = gql`
 mutation createMR(
     $incomingid: ID!, 
@@ -65,12 +85,13 @@ mutation createMR(
     $multiplicity: MultiplicityType!,
     $opprelid: ID) {
 
-        createMetaRelation(
-            incomingObjectId: $incomingid
-            oppositeObjectId: $oppositeId,
+        createMetaRelation(data: {
+            incomingObject: { connect: { id: $incomingid }},
+            oppositeObject: { connect: { id: $oppositeId }},
             oppositeName: $oppName,
             multiplicity: $multiplicity,
-            oppositeRelationId: $opprelid)
+            oppositeRelation: { connect: { id: $opprelid }}}
+        )
             {
                 id
             }
@@ -79,14 +100,14 @@ mutation createMR(
             
 export const deleteMetaRel = gql`
 mutation removeMR($mrid: ID!)  {
-    deleteMetaRelation(id: $mrid )
+    deleteMetaRelation(where: {id: $mrid })
     {id}
 }
 `;
 
-export const findBizObjsWithMetaRelation = gql`
+export const findBizObjsWithMetaAttribute = gql`
 query bizObjsWithMetaRelation($maid: ID!) {
-    allBusinessObjects( filter: {
+    businessObjects( where: {
         bizAttributes_some: {
             metaAttribute: {
                 id: $maid
@@ -100,94 +121,10 @@ query bizObjsWithMetaRelation($maid: ID!) {
 }
 `;
 
-            /*
-            export const allBOQuery = gql`
-            query allBusinessObjects {
-                allBusinessObjects {
-                    id
-                    name
-                    state
-                    metaObject {
-                        id
-                        name
-                    }
-                    bizAttributes {
-                        id
-                        metaAttribute
-                        {
-                            id
-                            name
-                        }
-                        value
-                    }
-                    outgoingRelations {
-                        id
-                        oppositeObject {
-                            id
-                            name
-                        }
-                        metaRelation {
-                            id
-                            multiplicity
-                            oppositeName
-                            oppositeRelation {
-                                id
-                            }
-                        }
-                    }
-                }
-            }
-            `;
-            
-            export const updateBizObject = gql`
-            mutation updateBO($id: ID!, $name: String) {
-                updateBusinessObject(
-                    id: $id
-                    name: $name
-                )
-                {id}
-            }
-            `;
-            
-            export const createBizRelation = gql`
-            mutation createBizRel($incoming: ID!, $oppositeObj: ID!, $metarelation: ID!) {
-                createBizRelation(
-                    incomingObjectId: $incoming
-                    oppositeObjectId: $oppositeObj
-                    metaRelationId: $metarelation
-                )
-                {id}
-            }
-            `;
-            
-            export const deleteBizObject = gql`
-            mutation deleteBO($id: ID!) {
-                deleteBusinessObject(id: $id) 
-                {id}
-            }
-            `;
-            
-            export const deleteBizRelation = gql`
-            mutation removeBR($bizRelId: ID!)  {
-                deleteBizRelation(id: $bizRelId )
-                {id}
-            }
-            `;
-            
-            export const deleteBizAttr = gql`
-            mutation removeBA($bizAttrId: ID!)  {
-                deleteBizAttribute(id: $bizAttrId )
-                {id}
-            }
-            `;
-            
-            export const updateBizAttribute = gql`
-            mutation updateBA($id: ID!, $value: String) {
-                updateBizAttribute(
-                    id: $id
-                    value: $value
-                )
-                {id}
-            }
-            `;
-            */
+export const updateMRWithOppRel = gql`
+mutation updateMRWithOppRel($id: ID!, $oppositeId: ID!) {
+    updateMetaRelation(data: {oppositeRelation: { connect: {id: $oppositeId}}}, where: {id: $id} ) {
+        id
+    }
+}
+`;
