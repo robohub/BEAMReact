@@ -1,0 +1,6 @@
+endpoint: https://eu1.prisma.sh/robohub-c21015/BEAM/dev
+datamodel: datamodel.prisma
+
+generate:
+  - generator: typescript-client
+    output: ./generated/prisma-client/

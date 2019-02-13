@@ -7,7 +7,7 @@ import { Button } from 'react-md';
 
 const getBO = gql`
 query getBO($id: ID) {
-    BusinessObject(id: $id)
+    businessObject(where: {id: $id})
     {
         id
         name
@@ -82,7 +82,7 @@ export default class BOGraphView extends React.Component<Props> {
                 query: getBO,
                 variables: { id: params.nodes[0] }
             });
-            this.drawSubTree(data.BusinessObject);
+            this.drawSubTree(data.businessObject);
         }
         if (params.edges.length > 0) {
             // tslint:disable-next-line:no-console

@@ -176,18 +176,11 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, Creat
                             console.log('Found existing old opposite Bizrelation!!! ', result[0].oppositeRelation);
                             // tslint:disable-next-line:no-console
                             console.log('Removing existing old opposite Bizrelation!!! ', result[0].oppositeRelation.id);
-                            await this.props.deleteBR({
+                            await this.props.deleteBR({   // RH TODO Ok with async or sync? Remove await? General strategy to be worked out?
                                 variables: {
                                     bizRelId: result[0].oppositeRelation.id 
                                 }
                             });
-                            /*// tslint:disable-next-line:no-console
-                            console.log('Opposite relation multiplicity = ONE...UPDATE existing Bizrelation: ', result[0].id);
-                            await this.props.updateBR({
-                                variables: {
-                                    brid: result[0].id, oppBoId: boId, oppRelId: incomingBizrelId
-                                }
-                            });*/
                             // tslint:disable-next-line:no-console
                             console.log('Deleting single side relation NEW STUFF ', result[0].id);
                             await this.props.deleteBR({
@@ -195,15 +188,10 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, Creat
                                     bizRelId: result[0].id 
                                 }
                             });
-                            // tslint:disable-next-line:no-console
-                            console.log('Connecting opp by ONE...CREATE a new Bizrelation');
-                            await this.connectOppRels(added.oppositeObjectId, boId, rel.oppositeRelation.id, incomingBizrelId);
-
-                        } else {
-                            // tslint:disable-next-line:no-console
-                            console.log('Opposite relation multiplicity = ONE...CREATE a new Bizrelation');
-                            await this.connectOppRels(added.oppositeObjectId, boId, rel.oppositeRelation.id, incomingBizrelId);
                         }
+                        // tslint:disable-next-line:no-console
+                        console.log('Opposite relation multiplicity = ONE...CREATE a new Bizrelation');
+                        await this.connectOppRels(added.oppositeObjectId, boId, rel.oppositeRelation.id, incomingBizrelId);
                     }
                   
                     break;
@@ -262,14 +250,14 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, Creat
                 });
 
                 // Fix relations for save
-                var rels = new Array<{metaRelationId: string, oppositeObjectId: string}>(0);
+                var rels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>(0);
 
                 bizRelations.map(rel => {
                     if (typeof rel.bizrelbizobjs === 'string' && rel.bizrelbizobjs !== '') {
-                        rels.push({metaRelationId: rel.metarelid, oppositeObjectId: rel.bizrelbizobjs as string});
+                        rels.push({metaRelation: {connect: {id: rel.metarelid}}, oppositeObject: {connect: {id: rel.bizrelbizobjs as string}}});
                     } else {
                         for (let e = 0; e < rel.bizrelbizobjs.length; e++) {
-                            rels.push({metaRelationId: rel.metarelid, oppositeObjectId: rel.bizrelbizobjs[e]});
+                            rels.push({metaRelation: {connect: {id: rel.metarelid}}, oppositeObject: {connect: {id: rel.bizrelbizobjs[e]}}});
                         }
                     }
                 });
@@ -286,7 +274,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations, Creat
                         name: objName, 
                         attrs: attrs,
                         state: 'Created',
-                        rels: null
+                        rels: rels
                     },
                     // refetchQueries: [{
                     //    query: allBOQuery,

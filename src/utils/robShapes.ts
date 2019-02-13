@@ -1,4 +1,4 @@
-import * as joint from 'jointjs';
+/*import * as joint from 'jointjs';
 
 export namespace beam {
     
@@ -21,6 +21,8 @@ export namespace beam {
             );
         }
     }
+}
+*/
 /* OLD
     export let Organization = joint.dia.Element.extend({
 
@@ -38,5 +40,3 @@ export namespace beam {
     }, joint.dia.Element.prototype.defaults)
     });
 */
-
-}

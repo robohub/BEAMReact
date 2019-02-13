@@ -1,0 +1,108 @@
+﻿enum AttributeType {
+  String
+  Int
+  Float
+  DateTime
+  Boolean
+}
+
+type BizAttribute {
+  businessObject: BusinessObject @relation(name: "BOBizAttribute")
+  createdAt: DateTime!
+  id: ID! @unique
+  metaAttribute: MetaAttribute @relation(name: "BizAttributeOnMetaAttribute")
+  updatedAt: DateTime!
+  value: String!
+}
+
+type BizRelation {
+  createdAt: DateTime!
+  id: ID! @unique
+  incomingObject: BusinessObject @relation(name: "BOOutgoingBizRelation")
+  metaRelation: MetaRelation @relation(name: "BizRelationOnMetaRelation",)
+  oppositeObject: BusinessObject @relation(name: "BOInComingBizRelation")
+  oppositeRelation: BizRelation @relation(name: "BizRelationOnBizRelation", link: INLINE)
+  updatedAt: DateTime!
+}
+
+type BusinessObject {
+  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute", link: INLINE)
+  createdAt: DateTime!
+  id: ID! @unique
+  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", link: INLINE)
+  metaObject: MetaObject @relation(name: "BusinessObjectOnMetaObject")
+  name: String
+  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", link: INLINE)
+  state: String
+  tags: [String!]
+  updatedAt: DateTime!
+}
+
+type File {
+  contentType: String!
+  createdAt: DateTime!
+  id: ID! @unique
+  name: String!
+  secret: String! @unique
+  size: Int!
+  updatedAt: DateTime!
+  url: String! @unique
+}
+
+type MetaAttribute {
+  bizAttributes: [BizAttribute!]! @relation(name: "BizAttributeOnMetaAttribute", link: INLINE)
+  createdAt: DateTime!
+  id: ID! @unique
+  name: String @unique
+  objects: [MetaObject!]! @relation(name: "AttributeOnObject")
+  type: AttributeType
+  updatedAt: DateTime!
+}
+
+type MetaObject {
+  attributes: [MetaAttribute!]! @relation(name: "AttributeOnObject", link: INLINE)
+  businessObjects: [BusinessObject!]! @relation(name: "BusinessObjectOnMetaObject", link: INLINE)
+  createdAt: DateTime!
+  id: ID! @unique
+  incomingRelations: [MetaRelation!]! @relation(name: "MetaRelationOnMetaObject", link: INLINE)
+  name: String!
+  outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
+  updatedAt: DateTime!
+}
+
+type MetaRelation {
+  bizRelations: [BizRelation!]! @relation(name: "BizRelationOnMetaRelation", link: INLINE)
+  createdAt: DateTime!
+  id: ID! @unique
+  incomingObject: MetaObject @relation(name: "MetaObjectOnMetaRelation")
+  multiplicity: MultiplicityType!
+  oppositeName: String!
+  oppositeObject: MetaObject @relation(name: "MetaRelationOnMetaObject")
+  oppositeRelation: MetaRelation @relation(name: "MetaRelationOnMetaRelation", link: INLINE)
+  updatedAt: DateTime!
+}
+
+enum MultiplicityType {
+  One
+  Many
+}
+
+type SMTransition {
+  createdAt: DateTime!
+  event: String!
+  from: String!
+  id: ID! @unique
+  stateMachineSchema: StateMachineSchema @relation(name: "StateMachineSchemaOnSMTransition")
+  to: String!
+  updatedAt: DateTime!
+}
+
+type StateMachineSchema {
+  createdAt: DateTime!
+  finalState: String!
+  id: ID! @unique
+  initialState: String!
+  name: String! @unique
+  sMTransitions: [SMTransition!]! @relation(name: "StateMachineSchemaOnSMTransition", link: INLINE)
+  updatedAt: DateTime!
+}

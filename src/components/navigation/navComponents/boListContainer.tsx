@@ -6,7 +6,7 @@ import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell }
 
 const allBOQuery = gql`
 query allBusinessObjects {
-    allBusinessObjects {
+    businessObjects {
         id
         name
         metaObject {
@@ -25,7 +25,7 @@ interface BoItem {
 }
 
 interface Response {
-    allBusinessObjects: BoItem[];
+    businessObjects: BoItem[];
 }
 
 interface Props {
@@ -59,7 +59,7 @@ export default class BOListContainer extends React.Component<ChildProps<Props, R
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {data.allBusinessObjects.map((o: BoItem) => 
+                                        {data.businessObjects.map((o: BoItem) => 
                                             <TableRow key={o.id} onClick={this.handleItemClick} id={o.id} hover={true} >
                                                 <TableCell>{o.metaObject.name} </TableCell>
                                                 <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>

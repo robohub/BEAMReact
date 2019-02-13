@@ -8,7 +8,8 @@ import { InMemoryCache } from 'apollo-cache-inmemory';
 const APOLLO = {
   // uri: 'http://localhost:4000/',     // Local dgraph - ROB (starta server frÃ¥n dgraphql-master/example)
   // uri: 'https://api.graph.cool/simple/v1/cj5s0jl17534v016007jclvnw',     // graphCool!
-  uri: 'http://localhost:4466',     // Local PRISMA server!
+  // uri: 'http://localhost:4466',     // Local PRISMA server!
+  uri: 'https://eu1.prisma.sh/robohub-c21015/BEAM/dev'  // Prisma Cloud server!
 };
 
 export function createClient() {

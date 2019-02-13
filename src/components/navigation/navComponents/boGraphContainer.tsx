@@ -7,7 +7,7 @@ import BOGraphView from './boGraphView';
 
 const getBO = gql`
 query getBO($id: ID) {
-    BusinessObject(id: $id)
+    businessObject(where: {id: $id})
     {
         id
         name
@@ -50,7 +50,7 @@ interface BoItem {
 }
 
 interface Response {
-    BusinessObject: BoItem;
+    businessObject: BoItem;
 }
 
 interface Props {
@@ -62,21 +62,25 @@ export default class BOGraphContainer extends React.Component<ChildProps<Props, 
 
     render() {  
         let id = this.props.selectedBO;
-        return (
-            <Query query={getBO} variables={{id: id}}>
-                {({ data, loading, error }) => {
-    
-                    if (loading) { return <div>Loading</div>; }
-                    
-                    if (error) { 
-                        return <h1>ERROR</h1>;
-                    }             
-    
-                    return (
-                        <BOGraphView selectedListBO={data.BusinessObject} selectedBOchange={this.props.updateInfoView}/>
-                    );
-                }}
-            </Query>
-        );
+        if (id === '') {
+            return 'Select an object in the list...';
+        } else {
+            return (
+                <Query query={getBO} variables={{id: id}}>
+                    {({ data, loading, error }) => {
+        
+                        if (loading) { return <div>Loading</div>; }
+                        
+                        if (error) { 
+                            return <h1>ERROR: {error}</h1>;
+                        }             
+        
+                        return (
+                            <BOGraphView selectedListBO={data.businessObject} selectedBOchange={this.props.updateInfoView}/>
+                        );
+                    }}
+                </Query>
+            );
+        }
     }
 }  
