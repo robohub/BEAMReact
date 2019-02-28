@@ -143,7 +143,7 @@ class RenderRelations extends React.Component<RelProps> {
                     </TableHeader>
                     <TableBody>
                         {this.props.values && this.props.values.length !== 0 ?
-                            this.props.values.map((rel, index, r) =>
+                            this.props.values.map((rel, index) =>
                                 <TableRow key={index}>
                                     <TableColumn>{rel.oppositeName}</TableColumn>
                                     <TableColumn>{rel.oppositeObject.name}</TableColumn>

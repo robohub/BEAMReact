@@ -18,11 +18,16 @@ import {
     // Switch,
 } from 'react-router-dom';
 
+import PlannerAdmin from './components/admin/page/plannerConfigPage';
 import Example from './components/charting/chartsample';
 import Admin from './components/admin/page/AdminPage';
 import Composer from './components/composer/page/ComposerPage';
 import Navigation from './components/navigation/navigationPage';
+import Planner from './components/planner/landingPage';
+
 import NavLink from '@material-ui/icons/Navigation';
+import Settings from '@material-ui/icons/Settings';
+import Map from '@material-ui/icons/Map';
 
 import Diagram from './components/diagramming/Rappid/rappid';
 
@@ -36,7 +41,8 @@ import { Button, Grid, Cell, ListItem, FontIcon, NavigationDrawer, SelectionCont
 } from 'react-md';
 
 import * as loremIpsum from 'lorem-ipsum';
-import { Typography } from '@material-ui/core';
+import { Typography, MuiThemeProvider, createMuiTheme } from '@material-ui/core';
+import { blue } from '@material-ui/core/colors';
 
 type TrelloBoardType = { name: string, url: string };
 type TrelloCardType = { name: string, desc: string, id: string };
@@ -186,33 +192,46 @@ class Home extends React.Component {
     }
 }
 
+const theme = createMuiTheme({
+    palette: {
+        primary: { main: blue[500] }, // Purple and green play nicely together.
+    },
+    typography: { useNextVariants: true },
+});
+  
 class App extends React.Component<{}> {
     
     render() {
         return (
-            <NavigationDrawer
-                toolbarTitle={'BEAM'} 
-                drawerTitle={'Main Menu'}
-                mobileDrawerType={NavigationDrawer.DrawerTypes.TEMPORARY_MINI}
-                tabletDrawerType={NavigationDrawer.DrawerTypes.PERSISTENT_MINI}
-                desktopDrawerType={NavigationDrawer.DrawerTypes.PERSISTENT_MINI}
-                navItems={
-                    [
-                        <ListItem key={0} primaryText="Home" leftIcon={<FontIcon>home</FontIcon>} component={Link} to="/"/>,
-                        <ListItem key={1} primaryText="Chart & Timeplan" leftIcon={<FontIcon>insert_chart</FontIcon>} component={Link} to="/Chart"/>,
-                        <ListItem key={2} primaryText="Diagram Editor" leftIcon={<FontIcon>domain</FontIcon>} component={Link} to="/Diagram"/>,
-                        <ListItem key={3} primaryText="Admin" leftIcon={<FontIcon>phonelink_setup</FontIcon>} component={Link} to="/Admin"/>,
-                        <ListItem key={4} primaryText="Composer" leftIcon={<FontIcon>view_compact</FontIcon>} component={Link} to="/Composer"/>,
-                        <ListItem key={5} primaryText="Navigation" leftIcon={<NavLink/>} component={Link} to="/Navigation"/>
-                    ]}
-            >
-                <Route exact={true} path="/" component={Home} />
-                <Route exact={true} path="/Chart" component={Example} />
-                <Route exact={true} path="/Diagram" component={Diagram} />
-                <Route exact={true} path="/Admin" component={Admin} />
-                <Route path="/Composer" component={Composer} />
-                <Route path="/Navigation" component={Navigation} />
-            </NavigationDrawer>
+            <MuiThemeProvider theme={theme}>
+                <NavigationDrawer
+                    toolbarTitle={'BEAM'} 
+                    drawerTitle={'Main Menu'}
+                    mobileDrawerType={NavigationDrawer.DrawerTypes.TEMPORARY_MINI}
+                    tabletDrawerType={NavigationDrawer.DrawerTypes.PERSISTENT_MINI}
+                    desktopDrawerType={NavigationDrawer.DrawerTypes.PERSISTENT_MINI}
+                    navItems={
+                        [
+                            <ListItem key={0} primaryText="Home" leftIcon={<FontIcon>home</FontIcon>} component={Link} to="/"/>,
+                            <ListItem key={10} primaryText="Planner Admin" leftIcon={<Settings/>} component={Link} to="/PlannerAdmin"/>,
+                            <ListItem key={20} primaryText="Chart & Timeplan" leftIcon={<FontIcon>insert_chart</FontIcon>} component={Link} to="/Chart"/>,
+                            <ListItem key={30} primaryText="Diagram Editor" leftIcon={<FontIcon>domain</FontIcon>} component={Link} to="/Diagram"/>,
+                            <ListItem key={40} primaryText="Meta Objects" leftIcon={<FontIcon>phonelink_setup</FontIcon>} component={Link} to="/Admin"/>,
+                            <ListItem key={45} primaryText="Business Objects" leftIcon={<FontIcon>view_compact</FontIcon>} component={Link} to="/Composer"/>,
+                            <ListItem key={50} primaryText="Navigation" leftIcon={<NavLink/>} component={Link} to="/Navigation"/>,
+                            <ListItem key={60} primaryText="Planner" leftIcon={<Map/>} component={Link} to="/Planner"/>
+                        ]}
+                >
+                    <Route exact={true} path="/" component={Home} />
+                    <Route exact={true} path="/PlannerAdmin" component={PlannerAdmin} />
+                    <Route exact={true} path="/Chart" component={Example} />
+                    <Route exact={true} path="/Diagram" component={Diagram} />
+                    <Route exact={true} path="/Admin" component={Admin} />
+                    <Route path="/Composer" component={Composer} />
+                    <Route path="/Navigation" component={Navigation} />
+                    <Route path="/Planner" component={Planner} />
+                </NavigationDrawer>
+            </MuiThemeProvider>
         );
     }
 }

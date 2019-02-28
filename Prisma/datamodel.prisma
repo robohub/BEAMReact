@@ -106,3 +106,11 @@ type StateMachineSchema {
   sMTransitions: [SMTransition!]! @relation(name: "StateMachineSchemaOnSMTransition", link: INLINE)
   updatedAt: DateTime
 }
+
+type PlannerAdminConfig {
+  id: ID! @id
+  UiMoPlan: BusinessObject @relation(name: "UIMOPlanBizObject", link: INLINE)
+  UiMoItem: [BusinessObject] @relation(name: "UIMOItemBizObjects", link: INLINE)
+  createdAt: DateTime
+  updatedAt: DateTime
+}

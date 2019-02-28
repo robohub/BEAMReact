@@ -26,6 +26,7 @@ interface State {
     selectedMO: MOPropertiesType;
     toasts: { text: React.ReactNode }[];
 }
+
 class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State> {
     
     private moName = '';
@@ -38,6 +39,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
     handleInput = (value: string) => {
         this.moName = value;
     }
+    
     createMO = async () => {
         try {
             // RH TODO Check that name is unique before or after...???

@@ -24,9 +24,7 @@ export default class NavigationView extends React.Component<Props, State> {
     }
 
     updateListBO = (id: string) => {
-        if (this.state.selectedListBO !== id) {
-            this.setState({ selectedListBO: id });
-        }
+        this.setState({ selectedListBO: id });
     }
 
     updateInfoBO = (id: string) => {
@@ -61,32 +59,6 @@ export default class NavigationView extends React.Component<Props, State> {
                     </Paper>
                 </Grid>
         </Grid>
-/*                <Grid >
-                <Cell size={2}>
-                    <Paper>
-                        <BOListContainer
-                            selectedListBO={this.state.selectedListBO}
-                            selectedBOchange={this.updateListBO}
-                            selectedInfoBOchange={this.updateInfoBO}
-                        />
-                    </Paper>
-                </Cell>
-                <Cell size={10}>
-                    <Paper>
-                        <BOGraphContainer
-                            selectedBO={this.state.selectedListBO}
-                            updateInfoView={this.updateInfoBO}
-                        />
-                    </Paper>
-                </Cell>
-                <Cell size={12}>
-                    <Paper>
-                        <BOInfoContainer
-                            selectedBO={this.state.selectedGraphBO}
-                        />
-                    </Paper>
-                </Cell>
-                </Grid>*/
         );
     }
 }

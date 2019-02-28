@@ -1,6 +1,6 @@
 rh 2017
 
-BEAM with React, Typescript, Redux, Graphql
+BEAM with React, Typescript, Graphql
 
 
 Efter npm install -->
@@ -18,3 +18,6 @@ node_modules/react-script-ts/config...
 
 Lokal graphql server med Prisma och Docker: se biblioteket "/Prisma"
 där finns även Prisma Cloud definition under "/Prisma/Prisma Cloud"
+
+Konsol på Prisma Cloud:      https://app.prisma.io/robohub-c21015/services
+

@@ -36,6 +36,7 @@ type BusinessObject {
   state: String
   tags: [String!]
   updatedAt: DateTime!
+  plan: Plan @relation(name: "PlanBizObject", link: INLINE)
 }
 
 type File {
@@ -68,6 +69,7 @@ type MetaObject {
   name: String!
   outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
   updatedAt: DateTime!
+  planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
 }
 
 type MetaRelation {
@@ -104,5 +106,21 @@ type StateMachineSchema {
   initialState: String!
   name: String! @unique
   sMTransitions: [SMTransition!]! @relation(name: "StateMachineSchemaOnSMTransition", link: INLINE)
+  updatedAt: DateTime!
+}
+
+type PlanConfig {
+  id: ID! @unique
+  uiMoPlan: MetaObject @relation(name: "UIMOPlanMetaObject", link: INLINE)
+  uiMoRelations: [MetaRelation] @relation(name: "UIMORelationMetaRelations", link: INLINE)
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Plan {
+  id: ID! @unique
+  planData: Json
+  planBO: BusinessObject @relation(name: "PlanBizObject")
+  createdAt: DateTime!
   updatedAt: DateTime!
 }

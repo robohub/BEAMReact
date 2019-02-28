@@ -35,10 +35,14 @@ interface Props {
 }
 
 export default class BOListContainer extends React.Component<ChildProps<Props, Response>> {
+    private selectedBO = '';
 
     handleItemClick = (e: React.MouseEvent) => {
-        this.props.selectedBOchange(e.currentTarget.id);
-        this.props.selectedInfoBOchange(e.currentTarget.id);
+        if (this.selectedBO !== e.currentTarget.id) {
+            this.selectedBO = e.currentTarget.id;
+            this.props.selectedBOchange(e.currentTarget.id);
+            this.props.selectedInfoBOchange(e.currentTarget.id);
+        }
     }
 
     render() {
@@ -63,7 +67,7 @@ export default class BOListContainer extends React.Component<ChildProps<Props, R
                                             <TableRow key={o.id} onClick={this.handleItemClick} id={o.id} hover={true} >
                                                 <TableCell>{o.metaObject.name} </TableCell>
                                                 <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                    <Typography variant="subheading">{o.name}</Typography>
+                                                    <Typography variant="body1">{o.name}</Typography>
                                                 </TableCell>
                                             </TableRow>
                                         )}

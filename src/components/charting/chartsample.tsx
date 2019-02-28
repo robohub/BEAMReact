@@ -146,7 +146,10 @@ class Example extends React.Component {
         // create visualization
         var container2 = document.getElementById('visualization2');
         var options2 = {
-          groupOrder: 'content'  // groupOrder can be a property name or a sorting function
+          groupOrder: 'content',  // groupOrder can be a property name or a sorting function
+          margin: {
+            item: 40,
+          }
         };
       
         var timeline2 = new vis.Timeline(container2, items, groups, options2);
