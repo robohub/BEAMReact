@@ -17,10 +17,6 @@ query allPlanConfigs {
             }
         }
     }
-    metaObjects {
-        id
-        name
-    }
 }
 `;
 

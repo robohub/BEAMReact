@@ -5,3 +5,13 @@
 
 
 /* @import url('https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.11/semantic.min.css'); */
+
+.vis-item.orange {
+    background-color: gold;
+    border-color: orange;
+  }
+  .vis-item.vis-selected.orange {
+    /* custom colors for selected orange items */
+    background-color: orange;
+    border-color: orangered;
+  }

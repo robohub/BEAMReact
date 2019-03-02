@@ -149,7 +149,8 @@ class PlannerView extends React.Component<Props, State> {
                                                 
                                                 return (
                                                     <div>
-                                                        <DialogTitle id="simple-dialog-title">ROBERTS DIALOG.....</DialogTitle>
+                                                        <DialogTitle id="simple-dialog-title">Select plannable objects for: {this.state.selectedPc.uiMoPlan.name}</DialogTitle>
+                                                        <Divider/>
                                                         {props.data.metaRelations ?
                                                             <MappingForm
                                                                 open={this.state.dialogOpen}

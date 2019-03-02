@@ -37,6 +37,7 @@ type BusinessObject {
   tags: [String!]
   updatedAt: DateTime!
   plan: Plan @relation(name: "PlanBizObject", link: INLINE)
+  plannedIn: Plan @relation(name: "ItemBOsBizObject")
 }
 
 type File {
@@ -123,4 +124,5 @@ type Plan {
   planBO: BusinessObject @relation(name: "PlanBizObject")
   createdAt: DateTime!
   updatedAt: DateTime!
+  itemBOs: [BusinessObject] @relation(name: "ItemBOsBizObject")
 }

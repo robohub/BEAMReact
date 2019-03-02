@@ -21,48 +21,57 @@ query getPlan($boid: ID!) {
             name
         }
         planData
+        itemBOs {
+            id
+            name
+        }
     }
 }
 `;
 
+type PlansType = {
+    plans: PlanType[]
+};
+
 type PlanType = {
-    plans: {
-        id: string;
-        planBO: { id: string },
-        planData: { items: string, groups: string};
-    }[]
+    id: string;
+    planBO: { id: string },
+    planData: { items: {}[], groups: string}
+    itemBOs: {id: string, name: string}[]
 };
 
 const updatePlan = gql`
-mutation updatePlan($planId: ID!, $planData: Json, $boId: ID) {
+mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [BusinessObjectWhereUniqueInput!]) {
     upsertPlan(
-        where: {
-            id: $planId
-        }
-        create: {
-            planData: $planData, planBO: {connect: {id: $boId}}
-        }
-        update: {
-            planData: $planData, planBO: {connect: {id: $boId}}
-        }
-    ) {
-        id
+    where: {
+      id: $planId
     }
+    create: {
+			planData: $planData, planBO: {connect: {id: $boId}}, itemBOs: {connect: $itemBOs}
+    }
+    update: {
+			planData: $planData, planBO: {connect: {id: $boId}}, itemBOs: {set: $itemBOs}
+    }
+  ) {
+        id
+  }
 }
 `;
 
 interface Props extends WithStyles<typeof styles> {
     selectedBO: string;
+    selectedBoName: string;
+    updateSelectedBO: (boId: string) => void;
 }
 
 interface State {
     snackbarOpen: boolean;
-    selectedBO: string;
+    selectedBOId: string;
 }
 
 class TimeLine extends React.Component<Props, State> {
     state = {
-        snackbarOpen: false, selectedBO: ''
+        snackbarOpen: false, selectedBOId: ''
     };
       
     private container: HTMLElement;
@@ -97,18 +106,60 @@ class TimeLine extends React.Component<Props, State> {
             },
             margin: {
                 item: 20,
-            }
+            },
+            stack: true
         };
-        this.timeline = new vis.Timeline(this.container, null, null, this.options); 
+
+        this.timeline = new vis.Timeline(this.container, null, null, this.options);
+
+        this.timeline.on('doubleClick', (event => {
+            // tslint:disable-next-line:no-console
+            console.log(event);
+            if (event.item && this.state.selectedBOId !== event.item) {
+                // this.selectedObjId = e.currentTarget.id;
+                this.props.updateSelectedBO(event.item);  // Will lead to change of plan...
+            }            
+        }));
     }
 
     componentDidUpdate() {
-        if (this.props.selectedBO !== null && this.props.selectedBO !== this.state.selectedBO) {
-            this.setState({selectedBO: this.props.selectedBO});
+        if (this.props.selectedBO !== null && this.props.selectedBO !== this.state.selectedBOId) {
+            this.setState({selectedBOId: this.props.selectedBO});
             this.items.clear();
             this.groups.clear();
             this.drawTimeLine();
         }
+    }
+
+    generateId() {
+        var timestamp = (new Date().getTime() / 1000 ).toString();
+        return timestamp + (Math.random() * 16).toString();
+    }
+
+    validateItems(dataItems: {}[], plan: PlanType) {
+        var newDataItems = new Array<{}>();
+
+        dataItems.map((item: {id: string, content: string, bizobject: boolean, className: string}) => {
+            var found = false;
+            var newItem = item;
+            var newContent = item.content;
+            for (var i = 0; i < plan.itemBOs.length; i++) {  // As of now the ID of an object is 25-character string...
+                if (item.bizobject && item.id === plan.itemBOs[i].id ) {
+                    found = true;
+                    newContent = plan.itemBOs[i].name;  // Update content, may have changed
+                    break;
+                }
+            }
+            if (!found && item.bizobject) {
+                newContent = '-REMOVED- ' + item.content;
+                newItem.bizobject = false;
+                newItem.id = this.generateId();
+                newItem.className = 'orange';   // See App.css for CSS classes
+            }
+            newItem.content = newContent;
+            newDataItems.push(newItem);
+        });
+        return newDataItems;
     }
 
     async drawTimeLine() {
@@ -119,13 +170,15 @@ class TimeLine extends React.Component<Props, State> {
                 variables: { 
                     boid: this.props.selectedBO
                 }
-            }).then((response: ApolloQueryResult<PlanType>) => {
+            }).then((response: ApolloQueryResult<PlansType>) => {
                 if (response.data.plans.length === 0) {
                     this.initTimeLineWithData();
+                    this.selectedPlanId = '';
                 } else {
                     let data = response.data.plans[0].planData;
+                    let validatedItems = this.validateItems(data.items, response.data.plans[0]);  // Check for removed items...
                     this.items.clear();
-                    this.items.add(data.items);
+                    this.items.add(validatedItems);
                     this.groups.clear();
                     this.groups.add(data.groups);
                     this.selectedPlanId = response.data.plans[0].id;
@@ -144,21 +197,34 @@ class TimeLine extends React.Component<Props, State> {
         var d = new Date();
         var start = d.getFullYear() + '-01-01';
         var end = d.getFullYear() + '-12-31';
-    
+        var milestonesId = this.generateId();
+
         this.groups.add([
             {
-                id: 2,
-                content: 'Header',
-                stacking: false
+                id: milestonesId,
+                content: 'Milestones',
+                style: 'background-color: orange; padding-right: 10px; padding-left: 5px'
             },
             {
-                id: 1,
-                content: 'Milestones',
+                id: this.generateId(),
+                content: 'Header',
+                style: 'background-color: orange; padding-right: 10px; padding-left: 5px'
             },
+
         ]);
 
-        this.items.add({ id: 5, content: 'Start of this year', start: start, type: 'point', group: 1 });
-        this.items.add({ id: 6, content: 'End of this year', start: end, type: 'point', group: 1 });
+        this.items.add({ id: this.generateId(), content: 'Start of this year', start: start, type: 'point', group: milestonesId });
+        this.items.add({ id: this.generateId(), content: 'End of this year', start: end, type: 'point', group: milestonesId });
+    }
+
+    createGroup = () => {
+        this.groups.add(
+            {
+                id: this.generateId(),
+                content: 'En ny grupp med långt namn, eller ännu längre...',
+                style: 'background-color: gainsboro; padding-right: 10px; padding-left: 5px'
+            },
+        );
     }
 
     saveClicked = () => {
@@ -170,13 +236,21 @@ class TimeLine extends React.Component<Props, State> {
         });
         let groupData = this.groups.get();
 
+        var itemBOs = new Array<{id: string}>();
+        this.items.map((item: {id: string, bizobject: boolean}) => {
+            if (item.bizobject) {
+                itemBOs.push({id: item.id});
+            }
+        });
+
         client.mutate({
             mutation: updatePlan,
             // fetchPolicy: 'network-only',
             variables: { 
                 planId: this.selectedPlanId,
                 planData: { items: itemData, groups: groupData },
-                boId: this.props.selectedBO
+                boId: this.props.selectedBO,
+                itemBOs: itemBOs
             }
         }).then(() => {
             this.snackbarMessage = 'Timeplan saved';
@@ -224,13 +298,14 @@ class TimeLine extends React.Component<Props, State> {
                         </IconButton>,
                     ]}*/
                 />
-                <Typography variant="h6">{this.state.selectedBO !== '' ? 'Selected Plan: ' + this.state.selectedBO : 'No Plan selected...'}</Typography>
+                <Typography variant="h6">{this.state.selectedBOId !== '' ? 'Selected Plan: ' + this.props.selectedBoName : 'No Plan selected...'}</Typography>
                 
                 <Divider/>
 
                 <div id="timeline" />
                 <Button variant="contained" color="primary" className={this.props.classes.button} onClick={this.saveClicked} disabled={this.props.selectedBO === null}>Save</Button>
-                <Button variant="contained" color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO === null}>Fit</Button>
+                <Button color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO === null}>Fit</Button>
+                <Button color="primary" className={this.props.classes.button} onClick={this.createGroup} disabled={this.props.selectedBO === null}>Create Group</Button>
             </div>
         );
     }
