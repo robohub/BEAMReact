@@ -1,8 +1,7 @@
 import * as React from 'react';
+import { Redirect } from 'react-router-dom';
+import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell, Button } from '@material-ui/core';
 
-import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core';
-
-        businessObjects {
 import { PlanConfig, BoType } from './types';
 
 import { WithStyles, withStyles } from '@material-ui/core/styles';
@@ -14,6 +13,10 @@ interface Props extends WithStyles<typeof styles> {
 }
 
 class PlanListContainer extends React.PureComponent<Props> {
+    state = {
+        gotoPlanConfig: false
+    };
+
     private selectedObjId = '';
 
     handleItemClick = (e: React.MouseEvent) => {
@@ -57,7 +60,19 @@ class PlanListContainer extends React.PureComponent<Props> {
                 </div>
             );
         } else {
-            return <h1>Plan is not connected to any meta object...</h1>;
+            return (
+                this.state.gotoPlanConfig ?
+                    <Redirect to="/PlannerAdmin" />
+                    :
+                    (
+                        <div className={this.props.classes.root}>
+                            <h3>No Plan configurations exists...</h3>
+                            <Button variant={'contained'} color={'primary'} className={this.props.classes.button} onClick={e => this.setState({gotoPlanConfig: true})}>  {/* TODO RH */}
+                                Click here to define!
+                            </Button>
+                        </div>
+                    )
+            );
         }
 
     }

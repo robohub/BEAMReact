@@ -121,7 +121,7 @@ class PlannerView extends React.Component<Props, State> {
                                                         'No relations defined'
                                                         :
                                                         pc.uiMoRelations.map(r  =>
-                                                            <Chip key={r.id} label={r.oppositeName + ': ' + r.incomingObject.name} className={classes.button}/>
+                                                            <Chip key={r.id} label={r.oppositeName + ': ' + r.oppositeRelation.incomingObject.name} className={classes.button}/>
                                                         )
                                                     }
                                                 </Grid>

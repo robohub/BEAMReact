@@ -14,25 +14,22 @@ query itemBOsFromPlanMO($moid: ID!) {
             id
             oppositeName
           	bizRelations {
-              incomingObject {
-                id name plannedIn { planBO { id name }}
-              }
-            }
-            incomingObject {
-                id name
+                id
+                oppositeObject {
+                    id name plannedIn { planBO { id name }}
+                }
             }
         }
-  }
+    }
 }
 `;
 
 type MoRelType = {
-    name: string
-    incomingObject: {
-        name: string
-    }
+    id: string;
+    oppositeName: string
+
     bizRelations: {
-        incomingObject: {
+        oppositeObject: {
             id: string
             name: string
             plannedIn: {
@@ -56,13 +53,14 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
     }
 */
 
-    handleDragStart = (event: React.DragEvent<HTMLElement>,  data: {id: string, name: string}) => {
+    handleDragStart = (event: React.DragEvent<HTMLElement>,  data: {id: string, name: string, mrid: string}) => {
         event.dataTransfer.effectAllowed = 'move';
         var item = {
             id: data.id,
             type: 'range',
             content: data.name,
-            bizobject: true    // To be able to differ to timeline-only objects
+            bizobject: true,    // To be able to differ to timeline-only objects
+            mrid: data.mrid
 /*            start: new Date(),
             end : new Date(1000 * 3600 * 24 * 7 + (new Date()).valueOf())*/
         };
@@ -94,18 +92,27 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                                                 {data.planConfigs[0].uiMoRelations.map((rel: MoRelType ) =>
                                                     rel.bizRelations.map(o => 
                                                         <TableRow
-                                                            key={o.incomingObject.id}
+                                                            key={o.oppositeObject.id}
                                                             /* onClick={this.handleItemClick} */
-                                                            id={o.incomingObject.id}
+                                                            id={o.oppositeObject.id}
                                                             hover={true}
                                                             draggable={true}
-                                                            onDragStart={(e) => this.handleDragStart(e, {id: o.incomingObject.id, name: o.incomingObject.name})}
+                                                            onDragStart={
+                                                                (e) => this.handleDragStart(
+                                                                    e,
+                                                                    {
+                                                                        id: o.oppositeObject.id,
+                                                                        name: o.oppositeObject.name,
+                                                                        mrid: rel.id
+                                                                    }
+                                                                )
+                                                            }
                                                         >
                                                             <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                                <Typography variant="body1">{o.incomingObject.name}</Typography>
+                                                                <Typography variant="body1">{o.oppositeObject.name}</Typography>
                                                             </TableCell>
-                                                            <TableCell>{rel.incomingObject.name} </TableCell>
-                                                            <TableCell>{o.incomingObject.plannedIn ? o.incomingObject.plannedIn.planBO.name : '-Not planned-'}</TableCell>
+                                                            <TableCell>{rel.oppositeName} </TableCell>
+                                                            <TableCell>{o.oppositeObject.plannedIn ? o.oppositeObject.plannedIn.planBO.name : '-Not planned-'}</TableCell>
                                                         </TableRow>
                                                     )
                                                 )}

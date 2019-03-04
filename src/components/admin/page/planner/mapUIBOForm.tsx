@@ -109,7 +109,7 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Item</TableCell>
-                                                <TableCell>Relation to Plan</TableCell>
+                                                <TableCell>Plan Relation</TableCell>
                                                 <TableCell>Action</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -118,7 +118,7 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
                                                 values.available.map((mr, index) => 
                                                     <TableRow key={index} id={mr.id} >
                                                         <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                            <Typography variant="body1">{mr.incomingObject.name}</Typography>
+                                                            <Typography variant="body1">{mr.oppositeRelation.incomingObject.name}</Typography>
                                                         </TableCell>
                                                         <TableCell>{mr.oppositeName} </TableCell>
                                                         <TableCell>
@@ -158,7 +158,7 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Item</TableCell>
-                                                <TableCell>Relation to Plan</TableCell>
+                                                <TableCell>Plan Relation</TableCell>
                                                 <TableCell>Action</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -167,7 +167,7 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
                                                 values.selected.map((mr, index) => 
                                                     <TableRow key={index} id={mr.id} >
                                                         <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                            <Typography variant="body1">{mr.incomingObject.name}</Typography>
+                                                            <Typography variant="body1">{mr.oppositeRelation.incomingObject.name}</Typography>
                                                         </TableCell>
                                                         <TableCell>{mr.oppositeName} </TableCell>
                                                         <TableCell>

@@ -236,12 +236,14 @@ class TimeLine extends React.Component<Props, State> {
         });
         let groupData = this.groups.get();
 
-        var itemBOs = new Array<{id: string}>();
-        this.items.map((item: {id: string, bizobject: boolean}) => {
+        var itemBOs = new Array<{id: string}>();  // Filter out BOs
+        this.items.map((item: {id: string, bizobject: boolean, mrid: string}) => {
             if (item.bizobject) {
+                // itemBOs.push({id: item.id, mrid: item.mrid});
                 itemBOs.push({id: item.id});
             }
         });
+        // var ids: {id: string}[] = itemBOs;  // Format for mutation - doesn't work 
 
         client.mutate({
             mutation: updatePlan,

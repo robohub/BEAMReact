@@ -11,9 +11,11 @@ query allPlanConfigs {
         uiMoRelations {
             id
             oppositeName
-            incomingObject {
-                id
-                name
+            oppositeRelation {
+                incomingObject {
+                    id
+                    name
+                }
             }
         }
     }
@@ -30,20 +32,25 @@ query unmappedMOs {
 `;
 
 export const getItemRelations = gql`
-query getItemRelations($moid: ID!) {
+query getItemRelations2($moid: ID!) {
     metaRelations(
-        where: {
-            AND: [
-                {oppositeObject: { id: $moid}},
-                {multiplicity: One}
-            ]
-        }
+      where: {
+        AND: [
+          {incomingObject: { id: $moid}},
+          {oppositeRelation: { multiplicity: One}}
+        ]
+      }
     ) {
         id
         oppositeName
-    		incomingObject {
+
+        oppositeRelation {
+            id
+            oppositeName
+            incomingObject {
                 id
-            name
+                name
+            }
         }
     }
 }

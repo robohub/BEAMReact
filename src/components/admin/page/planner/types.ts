@@ -11,11 +11,15 @@ export type PlanConfig = {
 export type MetaRelation = {
     id: string
     oppositeName: string
-    incomingObject: {
-        id: string
-        name: string
-    }
-};
+
+    oppositeRelation: {
+        // id: string
+        oppositeName: string
+        incomingObject: {
+            // id: string
+            name: string
+        }
+    }};
 
 export type FormValues = {
     available: MetaRelation[]
