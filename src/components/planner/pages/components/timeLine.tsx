@@ -12,6 +12,8 @@ import { styles } from '../../../shared/style';
 
 import { ApolloQueryResult } from 'apollo-client';
 
+import { updateBORelations } from '../../../../domain/businessObject';
+
 const getPlan = gql`
 query getPlan($boid: ID!) {
     plans (where: {planBO: {id: $boid}}) {
@@ -39,7 +41,7 @@ type PlanType = {
     planData: { items: {}[], groups: string}
     itemBOs: {id: string, name: string}[]
 };
-
+/*
 const updatePlan = gql`
 mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [BusinessObjectWhereUniqueInput!]) {
     upsertPlan(
@@ -57,7 +59,7 @@ mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [Busines
   }
 }
 `;
-
+*/
 interface Props extends WithStyles<typeof styles> {
     selectedBO: string;
     selectedBoName: string;
@@ -236,15 +238,18 @@ class TimeLine extends React.Component<Props, State> {
         });
         let groupData = this.groups.get();
 
-        var itemBOs = new Array<{id: string}>();  // Filter out BOs
+        var itemBOs = new Array<{id: string, mrid: string}>();  // Filter out BOs
         this.items.map((item: {id: string, bizobject: boolean, mrid: string}) => {
             if (item.bizobject) {
-                // itemBOs.push({id: item.id, mrid: item.mrid});
-                itemBOs.push({id: item.id});
+                itemBOs.push({id: item.id, mrid: item.mrid});
             }
         });
-        // var ids: {id: string}[] = itemBOs;  // Format for mutation - doesn't work 
+        
+        updateBORelations(this.props.selectedBO, itemBOs, this.selectedPlanId, {items: itemData, groups: groupData});        
+        this.snackbarMessage = 'Timeplan saved';
+        this.setState({snackbarOpen: true});
 
+/*
         client.mutate({
             mutation: updatePlan,
             // fetchPolicy: 'network-only',
@@ -260,6 +265,7 @@ class TimeLine extends React.Component<Props, State> {
         }).catch(e => {
             alert('Error when saving plan: ' + e);
         });
+*/
     }
 
     fitClicked = () => {

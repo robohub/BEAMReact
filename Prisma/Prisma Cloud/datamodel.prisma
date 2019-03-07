@@ -26,13 +26,13 @@ type BizRelation {
 }
 
 type BusinessObject {
-  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute", link: INLINE)
+  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute", link: INLINE, onDelete: CASCADE)
   createdAt: DateTime!
   id: ID! @unique
-  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", link: INLINE)
+  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", link: INLINE, onDelete: CASCADE)
   metaObject: MetaObject @relation(name: "BusinessObjectOnMetaObject")
   name: String
-  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", link: INLINE)
+  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", link: INLINE, onDelete: CASCADE)
   state: String
   tags: [String!]
   updatedAt: DateTime!

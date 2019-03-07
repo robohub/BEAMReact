@@ -20,24 +20,24 @@ const styles = ({ mixins, spacing }: Theme) => createStyles({    // TODO RH: coo
     stepper: {
             width: '90%',
         },
-        button: {
-            marginRight: spacing.unit,
-            marginTop: spacing.unit * 2,
-            marginBottom: spacing.unit * 2,
-        },
-        instructions: {
-            marginLeft: spacing.unit * 4,
-            marginTop: spacing.unit,
-            marginBottom: spacing.unit * 4,
-        },
-        paper: {
-            paddingTop: spacing.unit,
-            paddingBottom: spacing.unit,
-        },
-        select: {
-            minWidth: 300
-        }
-  });
+    button: {
+        marginRight: spacing.unit,
+        marginTop: spacing.unit * 2,
+        marginBottom: spacing.unit * 2,
+    },
+    instructions: {
+        marginLeft: spacing.unit * 4,
+        marginTop: spacing.unit,
+        marginBottom: spacing.unit * 4,
+    },
+    paper: {
+        paddingTop: spacing.unit,
+        paddingBottom: spacing.unit,
+    },
+    select: {
+        minWidth: 300
+    }
+});
 
 interface SProps extends WithStyles<typeof styles> {
     planObjects: {id: string, name: string}[];

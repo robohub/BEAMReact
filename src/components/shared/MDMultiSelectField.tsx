@@ -7,7 +7,16 @@ import InputLabel from '@material-ui/core/InputLabel';
 import FormControl from '@material-ui/core/FormControl';
 import Chip from '@material-ui/core/Chip';
 
-interface SelectFieldProps {
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { createStyles } from '@material-ui/core/styles';
+
+const styles = () => createStyles({    // TODO RH: coordinate styles!!!
+    select: {
+        minWidth: 300,
+    }
+});
+
+interface SelectFieldProps extends WithStyles<typeof styles> {
     label: string;
     options: {
         id: string;
@@ -40,6 +49,7 @@ class MDMultiSelectField extends React.Component<FieldProps & SelectFieldProps> 
             <FormControl>
                 <InputLabel htmlFor="select-multiple-chip">{this.props.label}</InputLabel>
                 <Select
+                    className={this.props.classes.select}
                     multiple={true}
                     value={this.props.field.value}
                     onChange={newValue => this.changeVal(newValue)}
@@ -65,9 +75,9 @@ class MDMultiSelectField extends React.Component<FieldProps & SelectFieldProps> 
     }
 }
 
-export default ((props: SelectFieldProps) => (
+export default withStyles(styles)(((props: SelectFieldProps) => (
     <Field
         {...props}
         component={MDMultiSelectField}
     />
-));
+)));

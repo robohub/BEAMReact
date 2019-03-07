@@ -31,11 +31,12 @@ query allBusinessObjects {
                 oppositeName
 
             }
+            oppositeRelation { id }
         }
     }
 }
 `;
-
+/*
 export const createBizObject = gql`
 mutation CreateBO (
     $moid: ID!, 
@@ -81,8 +82,66 @@ mutation CreateBO (
                 oppositeName
 
             }
+            oppositeRelation { id }
         }
     }
+}
+`;
+*/
+
+export const upsertBO = gql`
+mutation upsertBO(
+    $boid: ID,
+    $moid: ID,
+    $name: String,
+    $state: String,
+    $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
+    $rels: [BizRelationCreateWithoutIncomingObjectInput!]
+  ) {
+    upsertBusinessObject(
+        where: {id: $boid}
+        create: {
+            metaObject: { connect: { id: $moid}},
+            name: $name,
+            state: $state,
+            bizAttributes: {create: $attrs},
+            outgoingRelations: { create: $rels}
+        }
+        update: {
+            outgoingRelations: { create: $rels },
+        }
+    ) {
+        id
+        name
+        state
+        metaObject {
+            id
+            name
+        }
+        bizAttributes {
+            id
+            metaAttribute
+            {
+                id
+                name
+            }
+            value
+        }
+        outgoingRelations {
+            id
+            oppositeObject {
+                id
+                name
+            }
+            metaRelation {
+                id
+                multiplicity
+                oppositeName
+
+            }
+            oppositeRelation { id }
+        }
+    } 
 }
 `;
 

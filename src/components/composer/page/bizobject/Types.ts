@@ -15,6 +15,9 @@ export type BizRelationsType = {
         name: string;
 
     }
+    oppositeRelation: {
+        id: string
+    }
     metaRelation: {
         id: string;
         oppositeName: string;

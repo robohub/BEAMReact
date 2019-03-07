@@ -3,10 +3,12 @@ import { Query, ChildProps, /*QueryProps*/ } from 'react-apollo';
 import BOEditContainer from './BOEditContainer';
 import { BizObjectsType, BOEditType } from './Types';
 import SelectBOType from './selectBOType';
-import { allBOQuery } from './queries';
+import { allBOQuery, deleteBizObject } from './queries';
 import EditIcon from '@material-ui/icons/Edit';
 import AttachementIcon from '@material-ui/icons/AttachFile';
 import LinkIcon from '@material-ui/icons/Link';
+import DeleteIcon from '@material-ui/icons/Delete';
+import { client } from '../../../../index';
 
 import {
     Table,
@@ -27,6 +29,7 @@ import {
     Typography,
     Chip,
     Avatar,
+    Button,
   } from '@material-ui/core';
 
 type Response = BizObjectsType;
@@ -36,6 +39,27 @@ interface InputProps {
 }
 
 export default class BOTableView extends React.Component<ChildProps<InputProps, Response>> {
+    
+    deleteBO = (boid: string) => {
+        client.mutate({
+            mutation: deleteBizObject,
+            variables: {
+                id: boid
+            },
+            update: (cache) => {
+                const data: BizObjectsType = cache.readQuery({query: allBOQuery });
+                data.businessObjects.forEach((el, index) => {
+                    if (el.id === boid) {
+                        data.businessObjects.splice(index, 1);
+                        return;
+                    }
+                });
+                cache.writeQuery({ query: allBOQuery, data });
+            },
+            refetchQueries: [ { query: allBOQuery } ]
+        });
+    }
+    
     render() {
         return (
             <Query
@@ -50,6 +74,9 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         return <h1>ERROR</h1>;
                     }
 
+                    // tslint:disable-next-line:no-console
+                    console.log('Nummer x...Updating TabeView');
+
                     return (
                         <div>
                             <SelectBOType />
@@ -57,6 +84,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                 <Table padding="dense">
                                     <TableHead>
                                         <TableRow>
+                                            <TableCell><Typography variant="h6">{' '}</Typography></TableCell>
                                             <TableCell><Typography variant="h6">Object Name</Typography></TableCell>
                                             <TableCell><Typography variant="h6">Type</Typography></TableCell>
                                             <TableCell><Typography variant="h6">State</Typography></TableCell>
@@ -66,6 +94,14 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                     <TableBody>
                                         {businessObjects.map((o: BOEditType, index: number) =>
                                             <TableRow key={o.id}>
+                                                <TableCell>
+                                                    <Button
+                                                        onClick={() => this.deleteBO(o.id)}
+                                                        color={'secondary'}
+                                                    >
+                                                        <DeleteIcon/>
+                                                    </Button>
+                                                </TableCell>
                                                 <TableCell>
                                                     <List>
                                                         <ListItemText>

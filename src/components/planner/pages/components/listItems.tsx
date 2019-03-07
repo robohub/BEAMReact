@@ -18,6 +18,9 @@ query itemBOsFromPlanMO($moid: ID!) {
                 oppositeObject {
                     id name plannedIn { planBO { id name }}
                 }
+                incomingObject {
+                  id name 
+              }  
             }
         }
     }
@@ -38,6 +41,7 @@ type MoRelType = {
                 }
             }
         }
+        incomingObject: { name: string }
     }[]
 };
 
@@ -86,6 +90,7 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                                                     <TableCell>Name</TableCell>
                                                     <TableCell>Item Type</TableCell>
                                                     <TableCell>Planned</TableCell>
+                                                    <TableCell>Connected</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -113,6 +118,7 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                                                             </TableCell>
                                                             <TableCell>{rel.oppositeName} </TableCell>
                                                             <TableCell>{o.oppositeObject.plannedIn ? o.oppositeObject.plannedIn.planBO.name : '-Not planned-'}</TableCell>
+                                                            <TableCell>{o.incomingObject.name} </TableCell>
                                                         </TableRow>
                                                     )
                                                 )}
