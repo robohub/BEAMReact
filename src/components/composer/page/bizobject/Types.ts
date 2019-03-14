@@ -10,10 +10,10 @@ export type BizAttributeType = {
 
 export type BizRelationsType = {
     id: string;
+
     oppositeObject: {
         id: string;
         name: string;
-
     }
     oppositeRelation: {
         id: string
@@ -22,7 +22,6 @@ export type BizRelationsType = {
         id: string;
         oppositeName: string;
         multiplicity: string;
-
     }
 };
 
@@ -32,7 +31,7 @@ export type BOEditType = {
     state: string;
     metaObject: { 
         id: string;
-        name: string 
+        name: string  
     };
     bizAttributes: BizAttributeType[];
     outgoingRelations: BizRelationsType[];
@@ -50,18 +49,30 @@ export interface MOResponse {
             id: string;
             name: string;
         }[],
+        businessObjects: { id: string; }[]
         outgoingRelations: {
-            id: string;
-            oppositeName: string;
+            id: string
+            oppositeName: string
             oppositeObject: {
-                name: string;
+                name: string
                 businessObjects: {
-                    id: string;
+                    id: string
                     name: string
+                    outgoingRelations: {
+                        id: string
+                        metaRelation: {
+                          id: string
+                          multiplicity: string
+                        }
+                        oppositeRelation: {
+                          id: string
+
+                        }
+                    }[]
                 }[]
             }
             multiplicity: string
-        }[]
+        }[];
     };
 }
 

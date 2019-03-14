@@ -3,23 +3,15 @@ import { client } from '../../../../index';
 
 import { graphql, ChildProps, compose, MutationFunc, FetchResult } from 'react-apollo';
 import gql from 'graphql-tag';
-import { /*allBOQuery,*/ upsertBO, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject,
-        updateBizRelation, findBizRelation, createBRWithoutOpprelation , updateBRWithOppRel } from './queries';
+import { allBOQuery, upsertBO, deleteBizRelation, createBizRelation, updateBizAttribute, updateBizObject,
+        updateBizRelation, /*findBizRelation, createBRWithoutOpprelation ,*/ updateBRWithOppRel, allMOQuery, MOQuery } from './queries';
 
-import { MOResponse, BOEditType, BizRelationsType, BizAttributeType, FormValues, FormRelation, FormAttribute, /*BizObjectsType,*/ AllMRResponse } from './Types';
+import { MOResponse, BOEditType, BizRelationsType, BizAttributeType, FormValues, FormRelation, FormAttribute, BizObjectsType, AllMRResponse } from './Types';
 
 import { BOEditForm } from './BOEditForm';
-/*
-const allBizRels = gql`
-query getAllBizRels {
-bizRelations {
-  id
-  incomingObject { id name }
-  oppositeObject { id name }
-}
-}
-`;
-*/
+import { Snackbar, IconButton } from '@material-ui/core';
+import CloseIcon from '@material-ui/icons/Close';
+
 const deleteBRPairs = gql`
 mutation deleteBRPairs($brids:[ID!]) {
     deleteManyBizRelations (
@@ -37,7 +29,15 @@ interface UpsertBOResult {
 type BizRelPenta = { mrid: string, oppositeObjectId: string, bizrelId?: string, oppBRid?: string, oppMRid?: string };
 type UpdateBizRelPair = { bizRelId: string, value: string };
 
+type MyProps = {
+    newObject: boolean;
+    metaobject: MOResponse;
+    bizObject?: BOEditType;
+    allMetaRels: AllMRResponse;
+};
+
 class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
+    state = { snackbarOpen: false};
 /*
     updateBizObject = async () => {
         try {
@@ -57,6 +57,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
     }
 */
     onSave = async (values: FormValues) => {
+
         const { newObject, bizObject } = this.props;
         const { bizAttributes, bizRelations } = values;
 
@@ -104,7 +105,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         });
 
         // 2. Add, if any, INDIRECT relations to be deleted
-        const indirectRels = await this.findIndirectDeletions(createRels);
+        const indirectRels = this.findIndirectDeletions(createRels);
         deleteRels = deleteRels.concat(indirectRels);
         
         // tslint:disable-next-line:no-console
@@ -123,14 +124,13 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         console.log('Deleted STRING to mutation ' + JSON.stringify(deleteRelIds, null, 2));
 
         /* try { } catch ... */
-
-        await client.mutate({
-            mutation: deleteBRPairs,
-            variables: {
-                brids: deleteRelIds 
-            },
-
-        });
+        if (deleteRelIds.length > 0) {
+            this.props.delBRPairs({
+                variables: {
+                    brids: deleteRelIds 
+                },
+            });
+        }
         // 4. upsertBO(createRels)
 
         var addedRels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
@@ -139,44 +139,56 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         });
 
         // tslint:disable-next-line:no-console
-        console.log('Nummer 0');
+        console.log('1 Update BO........');
+        try {
+            await this.props.upsertBO({     // RH TODO, check when this should be executed!!!
+                variables: {
+                    boid: newObject ? '' : bizObject.id,                          // MySQL, ...?
+//                    boid: newObject ? '53cb6b9b4f4ddef1ad47f943' : bizObject.id,    // MongoDB!!
+                    moid: this.props.metaobject.metaObject.id,
+                    name: objName, 
+                    attrs: attrs,
+                    state: 'Created',
+                    rels: addedRels
+                },
+                update: async (cache, mutationResult ) => {
+                    // tslint:disable-next-line:no-console
+                    console.log('2 ...Updated BO........ = ', objName);
 
-        await this.props.upsertBO({
-            variables: {
-                boid: newObject ? '' : bizObject.id,
-                moid: this.props.metaobject.metaObject.id,
-                name: objName, 
-                attrs: attrs,
-                state: 'Created',
-                rels: addedRels
-            },
-            update: async (store, mutationResult ) => {
-                const newBO = mutationResult.data.upsertBusinessObject;
-                // tslint:disable-next-line:no-console
-                console.log('Nummer 1 ');
-                
-                // tslint:disable-next-line:no-console
-                console.log(store);
-                
-                // 5. Create and connect opposite biz relations
-                await this.syncCreateAndConnectOppositeBizRels(newBO, createRels);
+                    const resultBO = mutationResult.data.upsertBusinessObject;
 
-                // tslint:disable-next-line:no-console
-                console.log(store);
+                    if (newObject) {
+                        /*const id = 'MetaObject:' + this.props.metaobject.metaObject.id;
+                        const oppositeMetaRels = cache.readFragment({
+                            id: id,
+                            fragment: gql`
+                                fragment myMeta on MOQuery {
+                                    id
+                                    businessObjects {
+                                        id
+                                    }
+                              }
+                            `,
+                        });*/
+                        const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: this.props.metaobject.metaObject.id} });
+                        data.metaObject.businessObjects.push(resultBO);  // Will push id
+                        cache.writeQuery({ query: MOQuery, variables: {id: this.props.metaobject.metaObject.id} , data});
+                    }
+                    
+                    // 5. Create and connect opposite biz relations
+                    await this.syncCreateAndConnectOppositeBizRels(resultBO, createRels);
 
-                // tslint:disable-next-line:no-console
-                console.log('Nummer 7: ');
-                // Update cache...
-                // const data: BizObjectsType = store.readQuery({query: allBOQuery });
-                // data.businessObjects.splice(0, 0, newBO);
-                // store.writeQuery({ query: allBOQuery, data });
-                // client.resetStore();
+                    this.setState({snackbarOpen: true});
 
-            }
-        });
-        // tslint:disable-next-line:no-console
-        console.log('Nummer 8');
+                    // tslint:disable-next-line:no-console
+                    console.log('3 ...BO update klar!');
 
+                },
+                refetchQueries: [{query: allBOQuery}, {query: allMOQuery}]
+            });
+        } catch (e) {
+            alert('Error when updating/creating BO:' + e);
+        }
     }
 
     getChangedRelations = (oldrels: BizRelationsType[], newrels: FormRelation[]): {added: BizRelPenta[], toDelete: BizRelPenta[]} => {
@@ -217,7 +229,31 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         return deleted;
     }
 
-    findIndirectDeletions = async (createRels: BizRelPenta[]) => {
+    findIndirectDeletions = (createRels: BizRelPenta[]): BizRelPenta[] => {
+        let indirectRels = new Array<BizRelPenta>();
+        createRels.map(added => {
+            this.props.metaobject.metaObject.outgoingRelations.forEach(mRel => {
+                let found = false;
+                if (mRel.id === added.mrid) {
+                    mRel.oppositeObject.businessObjects.forEach(oppBo => {
+                        if (oppBo.id === added.oppositeObjectId && oppBo.outgoingRelations.length && oppBo.outgoingRelations[0].metaRelation.multiplicity === 'One') {
+                            indirectRels.push({  // These two bizrels to be deleted
+                                bizrelId: oppBo.outgoingRelations[0].oppositeRelation.id,
+                                oppBRid: oppBo.outgoingRelations[0].id,
+                                mrid: '', oppositeObjectId: ''
+                            });
+                            found = true;
+                            return;
+                        }
+                    });
+                }
+                if (found)  { return; }
+            });
+        });
+        return indirectRels;
+    }
+
+/*    findIndirectDeletions = async (createRels: BizRelPenta[]) => {
         let singleFindBizrelPromises = new Array<Promise<BizRelPenta>>();
 
         createRels.map(added => {
@@ -234,7 +270,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         const indirectDelRels = await Promise.all(singleFindBizrelPromises);
         return indirectDelRels.filter(el => {  // Remove elements with null (indirect relations not connected on "other" side)
             return el.bizrelId !== null;
-        });
+        })
     }
 
     findBizrel = async (boid: string, mrid: string) => {
@@ -248,32 +284,73 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
             return {bizrelId: null, oppBRid: null, mrid: '', oppositeObjectId: ''};  // No connection on other side...
         }
     }
+*/
 
+/*    syncCreateAndConnectOppositeBizRels = (newBO: BOEditType, createRels: BizRelPenta[]) => {   // Without promises sync
+
+        createRels.map(newRel => {
+            newBO.outgoingRelations.forEach( async dbRel => {
+                if (dbRel.metaRelation.id === newRel.mrid && dbRel.oppositeObject.id === newRel.oppositeObjectId) {
+
+                    await this.props.createBR({
+                        variables: {
+                            incomingId: newRel.oppositeObjectId, 
+                            oppositeObjId: newBO.id,
+                            metarelationId: newRel.oppMRid,
+                            opprelId: dbRel.id
+                        }
+                    }).then(async (response: FetchResult<{createBizRelation: BizRelationsType}>) => {
+                        // tslint:disable-next-line:no-console
+                        console.log('2 CREATED IN DB, BR: ' + response.data.createBizRelation.id);
+                        await this.props.updateBROppRel({
+                            variables: {
+                                id: dbRel.id,
+                                oppRelId: response.data.createBizRelation.id,
+                            },
+                            // refetchQueries : [{query: MOQuery, variables: {id: this.props.bizObject.id}}],
+                            update: (cache, result) => {
+                                // tslint:disable-next-line:no-console
+                                console.log('Update for opposite relation ' + result.data.updateBizRelation.id);
+            
+                                // Update cache - add new BR to BO
+                                // const data2: BizObjectsType = cache.readQuery({query: allBOQuery });
+                                // alert(data2);
+            
+                            }
+                        });
+                        // Update cache - add new BR to BO
+                        const data: BizObjectsType = client.readQuery({query: allBOQuery });
+                        const newBR = response.data.createBizRelation;
+                        data.businessObjects.forEach(bo => {
+                            if (bo.id === newRel.oppositeObjectId) {
+                                if (newBR.metaRelation.multiplicity  === 'One') {
+                                    bo.outgoingRelations = [];
+                                }
+                                bo.outgoingRelations.push(newBR);
+                                return;
+                            }
+                        });
+                        client.writeQuery({ query: allBOQuery, data });
+                        return;
+                    });
+                }
+            });
+        });
+    }
+*/
     syncCreateAndConnectOppositeBizRels = async (newBO: BOEditType, createRels: BizRelPenta[]) => {
         let singleCreateConnectPromises = new Array<Promise<void>>();
-
-        // tslint:disable-next-line:no-console
-        console.log('Nummer 2: ');
 
         createRels.map(newRel => {
             newBO.outgoingRelations.forEach(async dbRel => {
                 if (dbRel.metaRelation.id === newRel.mrid && dbRel.oppositeObject.id === newRel.oppositeObjectId) {
-                    
-                    // tslint:disable-next-line:no-console
-                    console.log('Nummer 3: ' + dbRel.id);
                     let promise = this.createAndConnectOppositeBizRels(newRel.oppositeObjectId, newBO.id, newRel.oppMRid, dbRel.id);
                     singleCreateConnectPromises.push(promise);
-                    
-                    // tslint:disable-next-line:no-console
-                    console.log('Push promise 1');
-
                     return;
                 }
             });
         });
         await Promise.all(singleCreateConnectPromises);
-        // tslint:disable-next-line:no-console
-        console.log('Nummer 6');
     }
 
     createAndConnectOppositeBizRels = async (incboid: string, oppboid: string, mrid: string, oppmrid: string ) => {
@@ -281,8 +358,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         let singleCreationPromises = new Array<Promise<void | Record<string, any>>>();
 
         // tslint:disable-next-line:no-console
-        console.log('Nummer 4');
-
+        console.log('1 starting BR creation...');
         await this.props.createBR({
             variables: {
                 incomingId: incboid,
@@ -290,21 +366,38 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                 metarelationId: mrid,
                 opprelId: oppmrid
             }
-        }).then(async (response: FetchResult<{createBizRelation: { id: string; }}>) => {
+        }).then(async (response: FetchResult<{createBizRelation: BizRelationsType}>) => {
+            // tslint:disable-next-line:no-console
+            console.log('2 CREATED IN DB, BR: ' + response.data.createBizRelation.id);
+
+            // Update cache - add new BR to BO
+            const data: BizObjectsType = client.readQuery({query: allBOQuery });
+            const newBR = response.data.createBizRelation;
+            data.businessObjects.forEach(bo => {
+                if (bo.id === incboid) {
+                    if (newBR.metaRelation.multiplicity  === 'One') {
+                        bo.outgoingRelations = [newBR];
+                    } else {
+                        bo.outgoingRelations.push(newBR);
+                    }
+                    return;
+                }
+            });
+            client.writeQuery({ query: allBOQuery, data });
+
             let promise = this.props.updateBROppRel({
                 variables: {
                     id: oppmrid,
                     oppRelId: response.data.createBizRelation.id,
+                },
+                update: (cache, result) => {
+                    // tslint:disable-next-line:no-console
+                    console.log('Update for opposite relation ' + result.data.updateBizRelation.id);
                 }
             });
             singleCreationPromises.push(promise);
-            // tslint:disable-next-line:no-console
-            console.log('Push promise 2');
         });
         await Promise.all(singleCreationPromises);
-        // tslint:disable-next-line:no-console
-        console.log('Nummer 5: ');
-
     }
 
     getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType[]): UpdateBizRelPair[] => {
@@ -358,8 +451,16 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         this.setState( {tabval: value});
     }
 
+    snackbarClose = () => {
+        this.setState({snackbarOpen: false});
+    }
+
     render() {
-            return (
+        // tslint:disable-next-line:no-console
+        console.log(' ------ ------  ------ BOEDitView renderar...');
+
+        return (
+            <div>
                 <BOEditForm
                     newObject={this.props.newObject}
                     onSubmit={this.onSave}
@@ -367,35 +468,44 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                     metaObject={this.props.metaobject}
                     bizObject={this.props.newObject ? null : this.props.bizObject}
                 />
-            );
-        }
+                <Snackbar
+                    anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                    open={this.state.snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={this.snackbarClose}
+                    ContentProps={{'aria-describedby': 'message-id'}}
+                    message={<span id="message-id">Saved Business Object</span>}
+                    action={[
+                        <IconButton key="close" aria-label="Close" color="inherit" /* className={classes.close} */ onClick={this.snackbarClose}>
+                            <CloseIcon/>
+                        </IconButton>,
+                    ]}
+                />               
+            </div>
+        );
     }
-
-type MyProps = {
-    newObject: boolean;
-    metaobject: MOResponse;
-    bizObject?: BOEditType;
-    allMetaRels: AllMRResponse;
-};
+}
 
 interface MyMutations {
-    updateBROppRel: MutationFunc<{ id: string; }>;
-    createBRWithoutOpprel: MutationFunc<{ id: string; }>;
+    updateBROppRel: MutationFunc<{ updateBizRelation: {id: string; oppositeRelation: {id: string}}}>;
+    createBRWithoutOpprel: MutationFunc<{createBizRelation: {id: string}}>;
     updateBR: MutationFunc<{ id: string; }>;
     updateBO: MutationFunc<{ id: string; }>;
     updateBA: MutationFunc<{ id: string; }>;
     createBR: MutationFunc<{ id: string; }>;
     deleteBR: MutationFunc<{ id: string; }>;
+    delBRPairs: MutationFunc<{ deleteManyBizRelations: {count: number}}>;
     upsertBO: MutationFunc<UpsertBOResult>;
 }
 
 export default compose(
     graphql<{}, MyProps>(updateBRWithOppRel, { name: 'updateBROppRel' }),
-    graphql<{}, MyProps>(createBRWithoutOpprelation, { name: 'createBRWithoutOpprel' }),
+//    graphql<{}, MyProps>(createBRWithoutOpprelation, { name: 'createBRWithoutOpprel' }),
     graphql<{}, MyProps>(updateBizRelation, { name: 'updateBR' }),
     graphql<{}, MyProps>(updateBizObject, { name: 'updateBO' }),
     graphql<{}, MyProps>(updateBizAttribute, { name: 'updateBA' }),
     graphql<{}, MyProps>(createBizRelation, { name: 'createBR' }),
     graphql<{}, MyProps>(deleteBizRelation, { name: 'deleteBR' }),
+    graphql<{}, MyProps>(deleteBRPairs, { name: 'delBRPairs' }),
     graphql<{}, MyProps>(upsertBO, { name: 'upsertBO'})
 )(EditBOView);

@@ -160,25 +160,29 @@ mutation createBizRel($incomingId: ID!, $oppositeObjId: ID!, $metarelationId: ID
         metaRelation: {connect: {id: $metarelationId}}
         oppositeRelation: {connect: {id: $opprelId}}}
     )
-    {id}
-}
-`;
+    {
+        id
 
-export const createBRWithoutOpprelation = gql`
-mutation createBizRel($incomingId: ID!, $oppositeObjId: ID!, $metarelationId: ID!) {
-    createBizRelation(data: {
-        incomingObject: {connect: { id: $incomingId}}
-        oppositeObject: {connect: {id:$oppositeObjId}}
-        metaRelation: {connect: {id: $metarelationId}}}
-    )
-    {id}
+        oppositeObject {
+            id
+            name
+        }
+        metaRelation {
+            id
+            multiplicity
+            oppositeName
+        }
+        oppositeRelation { id }
+    }
 }
 `;
 
 export const deleteBizObject = gql`
 mutation deleteBO($id: ID!) {
     deleteBusinessObject(where: {id: $id}) 
-    {id}
+    {
+        id
+    }
 }
 `;
 
@@ -215,7 +219,7 @@ mutation updateBRel($brid: ID!, $oppBoId: ID, $oppRelId: ID) {
     {id}
 }
 `;
-
+/*
 export const findBizRelation = gql`
 query findBRel($metaid: ID!, $oppBoId: ID) {
 	bizRelations(where: {
@@ -230,11 +234,70 @@ query findBRel($metaid: ID!, $oppBoId: ID) {
     }
 }
 `;
-
+*/
 export const updateBRWithOppRel = gql`
 mutation updateBRWithOppRel($id: ID!, $oppRelId: ID!) {
     updateBizRelation(data: {oppositeRelation: { connect: {id: $oppRelId}}}, where: {id: $id} ) {
         id
+        oppositeRelation { id }
     }
+}
+`;
+
+export const MOQuery = gql`
+query MOQuery($id: ID!) {
+    metaObject(where: {id: $id}) {
+        id
+        name
+        attributes {
+          id
+          name
+        }
+        businessObjects { id }
+    	outgoingRelations {
+          id
+          oppositeName
+          oppositeObject {
+            id
+            name
+            businessObjects {
+              id
+              name
+              outgoingRelations {
+                id
+                metaRelation {
+                  id
+                  multiplicity
+                }
+                oppositeRelation {
+                  id
+
+                }
+              }
+            }
+          }
+          multiplicity
+        }
+
+    }
+    metaRelations {
+        id
+        oppositeName
+        oppositeObject { id }
+        oppositeRelation {
+            id
+            oppositeName
+            multiplicity
+        }
+    }
+}
+`;
+
+export const allMOQuery = gql`
+query allMetaObjects {
+  metaObjects {
+    id
+    name
+  }
 }
 `;

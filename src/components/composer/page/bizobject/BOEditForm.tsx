@@ -147,13 +147,6 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
     constructor(props: Props & FormikProps<FormValues>) {
         super(props);
         this.state = { tabval: 0 };
-        props.metaObject.metaObject.outgoingRelations.map(mr => {
-            if (this.options[mr.id] === undefined) {
-                this.options[mr.id] = { multiplicity: mr.multiplicity, bizobjects: mr.oppositeObject.businessObjects };
-            }
-        });
-        // tslint:disable-next-line:no-console
-        console.log('OPTIONS: ', this.options);
     }
 
     handleTabChange = (e: React.ChangeEvent, value: number) => {
@@ -161,6 +154,15 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
     }
 
     render() {
+        // tslint:disable-next-line:no-console
+        console.log(' ------ ------  ------ ----- BOEditForm renderar...');
+
+        this.props.metaObject.metaObject.outgoingRelations.map(mr => {
+            if (this.options[mr.id] === undefined) {
+                this.options[mr.id] = { multiplicity: mr.multiplicity, bizobjects: mr.oppositeObject.businessObjects };
+            }
+        });
+        
         return (
             <Form>
                 <div>

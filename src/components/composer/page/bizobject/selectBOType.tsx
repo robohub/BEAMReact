@@ -1,22 +1,14 @@
 import * as React from 'react';
 import { Query, ChildProps } from 'react-apollo';
 // import { Segment, Dropdown } from 'semantic-ui-react';
-import gql from 'graphql-tag';
 import { DialogContainer } from 'react-md';
 import BOEditContainer from './BOEditContainer';
+import { allMOQuery } from './queries';
 
 import {
     SelectField, Grid, Cell, Button,
 } from 'react-md';
-
-const allMOQuery = gql`
-query allMetaObjects {
-  metaObjects {
-    id
-    name
-  }
-}
-`;
+import { BOEditType } from './Types';
 
 interface RObject {
     id: string; name: string;
@@ -31,12 +23,17 @@ type DropType = {
     value: string;
 };
 
-export default class SelectBOType extends React.Component<ChildProps<{}, Response>> {
+interface Props {
+    setSelectedBO: (bo: BOEditType) => void;
+}
+
+export default class SelectBOType extends React.Component<ChildProps<{}, Response> & Props> {
 
     state = { selected: false, selectedId: '', boType: '', visible: false };
     
     show = () => {
         this.setState({ visible: true });
+        this.props.setSelectedBO(null); // Close any other editing form
       }
     
     hide = () => {
@@ -46,13 +43,16 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
     render() {
         return (
             <Query query={allMOQuery}>
-                {({ loading, data: { metaObjects }, error }) => {
+                {({ loading, data: { metaObjects }, error, refetch }) => {
                     if (loading) {
                         return <div>Loading</div>;
                     }
                     if (error) {
                         return <h1>ERROR</h1>;
-                    } 
+                    }
+
+                    // tslint:disable-next-line:no-console
+                    console.log('SelectBOTYpe , nytt BO, renderar...');
                       
                     var objs = new Array<DropType>(0);
                     metaObjects.map((o: RObject) => {
@@ -85,7 +85,8 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                                     focusOnMount={false}
                                     width={480}
                                 >
-                                    {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
+                                    {this.state.selected ?
+                                         <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
                                 </DialogContainer >
 
                             </Cell>

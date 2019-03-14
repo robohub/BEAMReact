@@ -26,16 +26,18 @@ type BizRelation {
 }
 
 type BusinessObject {
-  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute", link: INLINE)
+  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute", link: INLINE, onDelete: CASCADE)
   createdAt: DateTime
   id: ID! @id
-  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", link: INLINE)
+  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", link: INLINE, onDelete: CASCADE)
   metaObject: MetaObject @relation(name: "BusinessObjectOnMetaObject")
   name: String
-  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", link: INLINE)
+  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", link: INLINE, onDelete: CASCADE)
   state: String
   tags: [String!]
   updatedAt: DateTime
+  plan: Plan @relation(name: "PlanBizObject", link: INLINE)
+  plannedIn: Plan @relation(name: "ItemBOsBizObject", link: INLINE)
 }
 
 type File {
@@ -68,6 +70,7 @@ type MetaObject {
   name: String!
   outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
   updatedAt: DateTime
+  planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
 }
 
 type MetaRelation {
@@ -107,10 +110,19 @@ type StateMachineSchema {
   updatedAt: DateTime
 }
 
-type PlannerAdminConfig {
+type PlanConfig {
   id: ID! @id
-  UiMoPlan: BusinessObject @relation(name: "UIMOPlanBizObject", link: INLINE)
-  UiMoItem: [BusinessObject] @relation(name: "UIMOItemBizObjects", link: INLINE)
+  uiMoPlan: MetaObject @relation(name: "UIMOPlanMetaObject", link: INLINE)
+  uiMoRelations: [MetaRelation] @relation(name: "UIMORelationMetaRelations", link: INLINE)
   createdAt: DateTime
   updatedAt: DateTime
+}
+
+type Plan {
+  id: ID! @id
+  planData: Json
+  planBO: BusinessObject @relation(name: "PlanBizObject")
+  createdAt: DateTime
+  updatedAt: DateTime
+  itemBOs: [BusinessObject] @relation(name: "ItemBOsBizObject")
 }

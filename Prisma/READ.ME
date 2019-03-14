@@ -1,6 +1,8 @@
 Här finns en datamodel och setup för MongoDB i Docker:
     1. Starta Docker
-    2. Starta Prisma (i det här biblioteket): docker-compose op -d
+    2. Starta Prisma (i det här biblioteket): docker-compose up -d
+    2.1 Om det blir error: typ portarna redan upptagna, så har Docker startat upp dessa automatiskt, sedan första gången 'docker-compose up- d'
+    2.2 Kör 'docker ps' för att kolla processerna, kan stoppas med 'docker rm --force <process-id>'
     3. Anslut browser via localhost:4466
 
 I underliggande biblioteket Prisma Cloud, finns datamodel och setup för mysql i Prisma Cloud
