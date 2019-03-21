@@ -5,7 +5,6 @@ import BOInfoContainer from './boInfoContainer';
 import BOGraphContainer from './boGraphContainer';
 
 import { Grid, Paper } from '@material-ui/core';
-// import { Grid, Paper, Cell } from 'react-md';
 
 interface Props {
     defaultBO: string;

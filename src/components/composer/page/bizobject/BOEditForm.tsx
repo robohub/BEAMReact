@@ -12,8 +12,10 @@ import MDInputField from '../../../shared/MDInputField';
 import MDSelectField from '../../../shared/MDSelectField';
 import MDMultiSelectField from '../../../shared/MDMultiSelectField';
 import { FormValues, FormAttribute, FormRelation } from './Types';
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './../../../shared/style';
 
-interface Props {
+interface Props extends WithStyles<typeof styles> {
     newObject: boolean;
     metaObject: MOResponse;
     bizObject?: BOEditType;
@@ -230,10 +232,11 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
                             />
                     }
                 </div>
-                <Button variant="contained" color="primary" type="submit">Save</Button>
+                <Button variant="contained" color="primary" type="submit" className={this.props.classes.button}>Save</Button>
             </Form>
         );
     }
 }
 
-export const BOEditForm = formikEnhancer(InnerForm);
+// const BOEditForm = formikEnhancer(InnerForm);
+export const BOEditForm = withStyles(styles)(formikEnhancer(InnerForm));

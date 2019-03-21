@@ -98,11 +98,11 @@ class PlannerView extends React.Component<Props, State> {
                             <Typography variant="h5" className={classes.root}>Mapped Meta Objects</Typography>
                             <Paper className={classes.root}>
                                 {data.planConfigs.length === 0 ?
-                                    'No mappings done yet...'
+                                    <Typography variant="body1">No mappings done yet...</Typography>
                                     :
                                     data.planConfigs.map((pc: PlanConfig, index: string) =>
                                         <div key={pc.id}>
-                                            <Grid container={true} className="md-block-centered">
+                                            <Grid container={true}>
                                                 <Grid item={true} xs={2}>
                                                     <Typography variant="h6">{pc.uiMoPlan.name}</Typography>
                                                     <Button 

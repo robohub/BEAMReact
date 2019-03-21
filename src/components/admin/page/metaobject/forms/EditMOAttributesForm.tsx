@@ -1,19 +1,27 @@
 import * as React from 'react';
-import { FieldArray, /* ArrayHelpers */ } from 'formik';
+import { FieldArray } from 'formik';
 
-import { FontIcon, Divider, SelectField, Button, Grid, Cell, DataTable, TableBody, TableRow, TableColumn, TableHeader } from 'react-md';
 import { MOAttributeItemType } from './../Types';
+import { Grid, Select, Button, Divider, TableRow, TableBody, Table, TableHead, TableCell, MenuItem, FormControl, InputLabel, Input, Typography } from '@material-ui/core';
+import DeleteIcon from '@material-ui/icons/DeleteForeverOutlined';
 
-type FormValues = MOAttributeItemType[];  // RH temporärt?
+type FormValues = MOAttributeItemType[];  // RH TODO: temporärt?
 
-interface MOEditFormProps {
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './../../../../shared/style';
+
+interface MOEditFormProps extends WithStyles<typeof styles> {
     values: FormValues;
     metaAttributes: MOAttributeItemType[];    
 }
 
-export default class MOEditAttributesForm extends React.Component<MOEditFormProps> {
+class MOEditAttributesForm extends React.Component<MOEditFormProps> {
 
     state = { selectedMOId: '', selectedMOIndex: 0};
+
+    handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        this.setState( {selectedMOId: event.target.value, selectedMOIndex: event.currentTarget.id});
+    }
 
     render() {
         const { metaAttributes } = this.props;
@@ -28,24 +36,31 @@ export default class MOEditAttributesForm extends React.Component<MOEditFormProp
                 name="attributes" // Check mapPropsToValues in MOEditForm
                 render={arrayHelpers => 
                     <div>
-                        <Grid >
-                            <Cell size={6} >
-                                <SelectField
-                                    id="moSelect"
-                                    label="Select Attribute"
-                                    value={this.state.selectedMOId}
-                                    placeholder="Select Attribute"
-                                    menuItems={dropList}
-                                    onChange={(value, index) => {
-                                        this.setState( {selectedMOId: value, selectedMOIndex: index});
-                                    }}
-                                    fullWidth={true}
-                                />
-                            </Cell>
-                            <Cell size={6} align="bottom">
+                        <Grid container={true}>
+                            <Grid item={true}>
+                                <FormControl className={this.props.classes.button}>  {/* RH TODO: coordinate styles with better context driven names! */}
+                                    <InputLabel htmlFor="input" className={this.props.classes.select}>
+                                        Selected Attribute
+                                    </InputLabel>
+                                    <Select
+                                        className={this.props.classes.select}
+                                        value={this.state.selectedMOId}
+                                        onChange={this.handleChange}
+                                        input={<Input id="input"/>}
+                                    >
+                                        {dropList.map((opt, index) => (
+                                            <MenuItem key={index} value={opt.value} id={index.toString()}>
+                                                {opt.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item={true}>
                                 <Button
-                                    primary={true}
-                                    raised={true}
+                                    className={this.props.classes.selectButton}
+                                    color={'primary'}
+                                    variant={'contained'}
                                     onClick={() =>
                                         arrayHelpers.push(metaAttributes[this.state.selectedMOIndex])
                                     }
@@ -53,46 +68,49 @@ export default class MOEditAttributesForm extends React.Component<MOEditFormProp
                                 >
                                     Add Attribute
                                 </Button>
-                            </Cell>
+                            </Grid>
                         </Grid>
-                        <Divider/>
-                        <DataTable plain={true}>
-                            <TableHeader>
+                        <Divider style={{marginTop: 10}}/>
+                        <Table className={this.props.classes.button}>
+                            <TableHead>
                                 <TableRow>
-                                    <TableColumn>Name</TableColumn>
-                                    <TableColumn>Type</TableColumn>
-                                    <TableColumn>Action</TableColumn>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Type</TableCell>
+                                    <TableCell>Action</TableCell>
                                 </TableRow>
-                            </TableHeader>
+                            </TableHead>
                             <TableBody>
                                 {this.props.values && this.props.values.length !== 0 ?
                                     this.props.values.map((attr, index) =>
                                         <TableRow key={index}>
-                                            <TableColumn>
-                                                {attr.name}
-                                            </TableColumn>
-                                            <TableColumn>
+                                            <TableCell>
+                                                <Typography variant="body1">{attr.name}</Typography>
+                                            </TableCell>
+                                            <TableCell>
                                                 {attr.type}
-                                            </TableColumn>
-                                            <TableColumn>
-                                                <Button size="small" onClick={() => arrayHelpers.remove(index)} secondary={true} flat={true} iconEl={<FontIcon>delete_forever</FontIcon>}>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button size="small" onClick={() => arrayHelpers.remove(index)} color={'secondary'} variant={'text'}>
+                                                    <DeleteIcon/>
                                                     Delete
                                                 </Button>
-                                            </TableColumn>
+                                            </TableCell>
                                         </TableRow>
                                     )
                                     :
                                     <TableRow>
-                                        <TableColumn>
+                                        <TableCell>
                                             No attributes defined...
-                                        </TableColumn>
+                                        </TableCell>
                                     </TableRow>
                                 }
                             </TableBody>
-                        </DataTable>
+                        </Table>
                     </div>
                 }
             />
         );
     }
 }
+
+export default withStyles(styles)(MOEditAttributesForm);

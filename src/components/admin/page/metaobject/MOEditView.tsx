@@ -5,7 +5,9 @@ import { client as apolloClient } from '../../../../index';
 
 import MOListAttributes from './MOListAttributes';
 import MOListRelations from './MOListRelations';
-import { FontIcon, Divider, Button, TextField, /*FontIcon,*/ Grid, Cell, Snackbar } from 'react-md';
+import { Divider, Button, TextField, Grid, Snackbar, IconButton, Paper, Typography } from '@material-ui/core';
+import EditIcon from '@material-ui/icons/Edit';
+import CloseIcon from '@material-ui/icons/Close';
 
 import EditPropertiesModal from './modals/propertiesModal';
 import { MOEditFormData } from './forms/Types';
@@ -15,7 +17,10 @@ import { allMetaObjectsQuery, createMetaObj, updateMOAttributes, createMRWithout
 
 type FormValues = MOEditFormData;   // RH TODO temporär
 
-interface Props {
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './../../../shared/style';
+
+interface Props extends WithStyles<typeof styles> {
     metaObjects: MOPropertiesType[];
     metaAttributes: MOAttributeItemType[];
     // allMetaRelations: MORelationItemType[];
@@ -24,20 +29,19 @@ interface Props {
 interface State {
     showEditForm: boolean;
     selectedMO: MOPropertiesType;
-    toasts: { text: React.ReactNode }[];
+    snackbarOpen: boolean;
 }
 
 class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State> {
-    
-    private moName = '';
-    
+    private moName: string = '';
+
     constructor(props: ChildProps<Props & MyMutations, {}>) {
         super(props);
-        this.state = { showEditForm: false, selectedMO: null, toasts: []};
-    }    
-    
-    handleInput = (value: string) => {
-        this.moName = value;
+        this.state = { showEditForm: false, selectedMO: null, snackbarOpen: false };
+    }
+
+    handleInput = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+        this.moName = event.target.value;
     }
     
     createMO = async () => {
@@ -216,7 +220,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         );
         await this.updateMOAttrs(this.state.selectedMO.id, attrs);
         await this.addMORels(this.state.selectedMO.id, values);
-        this.toastSaved();
+        this.setState({snackbarOpen: true});
     }
         
     switchEditOnOff = (event: React.MouseEvent<HTMLElement>) => {
@@ -230,58 +234,42 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
         this.setState({ showEditForm: false });
     }
 
-    dismissToast = () => {
-        const [, ...toasts] = this.state.toasts;
-        this.setState({ toasts });    }
-    
-    toastSaved = () => {
-        this.addToast('Saved the Meta Object...');
-    }
-
-    addToast = (text: string) => {
-        this.setState((state) => {
-            const toasts = state.toasts.slice();
-            toasts.push({ text });
-            return { toasts };
-        });
+    snackbarClose = () => {
+        this.setState({snackbarOpen: false});
     }
 
     render() {
         return (
-            <div>
-                <Grid className="md-paper--1">
-                    <Cell size={2}>
-                        <TextField id="input" /*leftIcon={<FontIcon>plus</FontIcon>}*/ placeholder="Add Meta Object" onChange={this.handleInput}/> 
-                    </Cell>
-                    <Cell align="middle" size={10}>
-                        <Button raised={true} primary={true} onClick={this.createMO}>Add</Button>
-                    </Cell>
-                </Grid>
-                {this.props.metaObjects.map((obj, index) =>
-                    <div key={obj.name}>
-                        <Grid className="md-block-centered">
-                            <Cell size={2}>
-                                <div className="md-title">{obj.name}</div>
-                                <Button 
-                                    id={index}
-                                    size="small"
-                                    onClick={this.switchEditOnOff}
-                                    primary={true}
-                                    flat={true}
-                                    iconEl={<FontIcon>create</FontIcon>}
-                                >
-                                    Edit
-                                </Button>
-                            </Cell>
-                            <Cell size={10}>
-                                <MOListAttributes name={obj.name} attributes={obj.attributes} />
-                                <Divider style={{marginTop: 10, marginBottom: 10}}/>
-                                <MOListRelations name={obj.name} outgoingRelations={obj.outgoingRelations}/>
-                            </Cell>
-                        </Grid>        
-                        <Divider/>
-                    </div>
-                )}
+            <div className={this.props.classes.root}>
+                <TextField id="input" placeholder="Add Meta Object" onChange={this.handleInput} className={this.props.classes.textField}/>
+                <Button variant={'contained'} color={'primary'} onClick={this.createMO}>Add</Button>
+                <Paper>
+                    {this.props.metaObjects.map((obj, index) =>
+                        <div key={obj.name} className={this.props.classes.root}>
+                            <Grid container={true} style={{paddingTop: 10}}>
+                                <Grid item={true} xs={2}>
+                                    <Typography variant="h6">{obj.name}</Typography>
+                                    <Button 
+                                        id={index.toString()}
+                                        size="small"
+                                        onClick={this.switchEditOnOff}
+                                        variant={'text'}
+                                        color={'primary'}
+                                    >
+                                        <EditIcon/>
+                                        Edit
+                                    </Button>
+                                </Grid>
+                                <Grid item={true} xs={10}>
+                                    <MOListAttributes name={obj.name} attributes={obj.attributes} />
+                                    <Divider style={{marginTop: 10, marginBottom: 10}}/>
+                                    <MOListRelations name={obj.name} outgoingRelations={obj.outgoingRelations}/>
+                                </Grid>
+                            </Grid>        
+                            <Divider style={{marginTop: 10}}/>
+                        </div>
+                    )}
+                </Paper>
                 <EditPropertiesModal
                     metaObject={this.state.selectedMO}
                     metaAttributes={this.props.metaAttributes}
@@ -291,11 +279,18 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                     hide={this.hideEditForm}
                 />
                 <Snackbar
-                    id="example-snackbar"
-                    toasts={this.state.toasts}
-                    autohide={true}
-                    onDismiss={this.dismissToast}
-                />
+                    anchorOrigin={{vertical: 'top', horizontal: 'right'}}
+                    open={this.state.snackbarOpen}
+                    autoHideDuration={6000}
+                    onClose={this.snackbarClose}
+                    ContentProps={{'aria-describedby': 'message-id'}}
+                    message={<span id="message-id">Saved Business Object</span>}
+                    action={[
+                        <IconButton key="close" aria-label="Close" color="inherit" /* className={classes.close} */ onClick={this.snackbarClose}>
+                            <CloseIcon/>
+                        </IconButton>,
+                    ]}
+                />    
             </div>
 
         );
@@ -310,12 +305,11 @@ interface MyMutations {
     createMO: MutationFunc<{}>;
     deleteMR: MutationFunc<{ id: string; }>;
 }
-
-export default compose(
+export default withStyles(styles)(compose(
     graphql<{}, Props>(updateMRWithOppRel, { name: 'updateMR' }),
     graphql<{}, Props>(createMRWithoutOppRelation, { name: 'createMRWOOpprel' }),
     graphql<{}, Props>(createMetaRelation, { name: 'createMR' }),
     graphql<{}, Props>(deleteMetaRel, { name: 'deleteMR' }),
     graphql<{}, Props>(updateMOAttributes, { name: 'updateMOAttrs' }),
     graphql<{}, Props>(createMetaObj, { name: 'createMO' })  
-)(MOEdit);
+)(MOEdit));

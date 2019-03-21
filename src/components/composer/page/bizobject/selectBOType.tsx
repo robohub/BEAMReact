@@ -1,13 +1,11 @@
 import * as React from 'react';
 import { Query, ChildProps } from 'react-apollo';
-// import { Segment, Dropdown } from 'semantic-ui-react';
-import { DialogContainer } from 'react-md';
+import { Dialog, DialogTitle, Button, Select, MenuItem, Input, FormControl, InputLabel } from '@material-ui/core';
 import BOEditContainer from './BOEditContainer';
 import { allMOQuery } from './queries';
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './../../../shared/style';
 
-import {
-    SelectField, Grid, Cell, Button,
-} from 'react-md';
 import { BOEditType } from './Types';
 
 interface RObject {
@@ -23,11 +21,11 @@ type DropType = {
     value: string;
 };
 
-interface Props {
+interface Props extends WithStyles<typeof styles> {
     setSelectedBO: (bo: BOEditType) => void;
 }
 
-export default class SelectBOType extends React.Component<ChildProps<{}, Response> & Props> {
+class SelectBOType extends React.Component<ChildProps<{}, Response> & Props> {
 
     state = { selected: false, selectedId: '', boType: '', visible: false };
     
@@ -58,42 +56,48 @@ export default class SelectBOType extends React.Component<ChildProps<{}, Respons
                     metaObjects.map((o: RObject) => {
                         objs.push({label: o.name, value: o.id});
                     });
-                    
-                    const changeSelected = ((value: string, index: number, event: React.MouseEvent<HTMLElement>) => {
-                        this.setState({selected: true, selectedId: value, boType: objs[index].label});
-                    });
-                    
-                    return (
-                        <Grid className="md-paper--1">
-                            <Cell size={2}>
-                                <SelectField
-                                    id="moSelect"
-                                    value={this.state.selectedId}
-                                    placeholder="Select Type"
-                                    menuItems={objs}
-                                    onChange={changeSelected}
-                                    fullWidth={true}
-                                />
-                            </Cell>
-                            <Cell align="middle" size={10}>
-                                <Button disabled={!this.state.selected} raised={true} primary={true} onClick={this.show}>Create BO</Button>
-                                <DialogContainer
-                                    id="createBODialog"
-                                    visible={this.state.visible}
-                                    onHide={this.hide}
-                                    title={'Add Business Object: ' + this.state.boType}
-                                    focusOnMount={false}
-                                    width={480}
-                                >
-                                    {this.state.selected ?
-                                         <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
-                                </DialogContainer >
 
-                            </Cell>
-                        </Grid>
+                    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>, child: React.ReactNode) => {
+                        this.setState({selected: true, selectedId: event.target.value, boType: child.valueOf.toString});
+                    };
+    
+                    return (
+                        <div className={this.props.classes.root}>
+                            <FormControl>
+                                <InputLabel htmlFor="input">Select Type</InputLabel>
+                                <Select 
+                                    className={this.props.classes.select}
+                                    value={this.state.selectedId}
+                                    onChange={handleChange}
+                                    input={<Input name="MetaObject" id="input"/>}
+                                >
+                                    {objs.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <Button disabled={!this.state.selected} variant={'contained'} color={'primary'} onClick={this.show} className={this.props.classes.button}>Create BO</Button>
+                            <Dialog 
+                                open={this.state.visible}
+                                onClose={this.hide}
+                                fullWidth={true}
+                                maxWidth={'sm'}
+                            >
+                                <DialogTitle>
+                                    {'Add Business Object: ' + this.state.boType}
+                                </DialogTitle>
+                                <div className={this.props.classes.root}>
+                                    {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
+                                    </div>
+                            </Dialog >
+                        </div>
                     );
                 }}
             </Query>
         );
     }
 }
+
+export default withStyles(styles)(SelectBOType);

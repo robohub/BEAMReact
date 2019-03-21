@@ -7,7 +7,7 @@ import { allBOQuery, deleteBizObject, MOQuery } from './queries';
 import EditIcon from '@material-ui/icons/Edit';
 import AttachementIcon from '@material-ui/icons/AttachFile';
 import LinkIcon from '@material-ui/icons/Link';
-import DeleteIcon from '@material-ui/icons/Delete';
+import DeleteIcon from '@material-ui/icons/DeleteForeverOutlined';
 import CloseIcon from '@material-ui/icons/Close';
 
 import { client } from '../../../../index';
@@ -24,8 +24,6 @@ import {
     ExpansionPanelSummary,
     ExpansionPanelDetails,
     Divider,
-//    ExpansionPanelActions,
-//    Button,
     List,
     ListItem,
     ListItemText,
@@ -56,7 +54,7 @@ interface InputProps {
 export default class BOTableView extends React.Component<ChildProps<InputProps, Response>> {
     state = {
         selectedBO: null as BOEditType,
-        snackbarOpen: false
+        snackbarOpen: false,
     };
 
     deleteBO = (bo: BOEditType) => {
@@ -130,6 +128,10 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         } catch {
                             alert('Error when trying to update cache for deleted object!');
                         }
+                        
+                        // tslint:disable-next-line:no-console
+                        console.log('Deleted BO finished.....');
+
                         // Cache updates doesn't trigger re-render of this component!?!? Use state change solution for re-render...
                         // Is it due to cache update is in same component?
                         // Does cache changes in BOEditView update components because of showing the Snackbar!? IMPLEMENTED Snackbar -> updates...
@@ -157,7 +159,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
     snackbarClose = () => {
         this.setState({snackbarOpen: false});
     }
-   
+
     render() {
         return (
             <Query
@@ -214,7 +216,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                                         </ListItemText>
                                                         <ListItem>
                                                             <ExpansionPanel onChange={(event, expanded) => this.uiSelectBO(event, expanded, o)} expanded={this.state.selectedBO === o}>
-                                                                <ExpansionPanelSummary expandIcon={<EditIcon />}>
+                                                                <ExpansionPanelSummary expandIcon={<EditIcon color={'primary'}/>}>
                                                                     <Typography variant="button" >Edit</Typography>
                                                                 </ExpansionPanelSummary>
                                                                 <Divider/>

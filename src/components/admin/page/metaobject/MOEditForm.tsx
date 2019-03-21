@@ -12,10 +12,12 @@ import { withFormik, Form, FormikProps } from 'formik';
 import EditMOAttributesForm from './forms/EditMOAttributesForm';
 import EditMORelationsForm from './forms/EditMORelationsForm';
 import { MOEditFormData } from './forms/Types';
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './../../../shared/style';
 
 type FormValues = MOEditFormData;
 
-interface Props {
+interface Props extends WithStyles<typeof styles> {
     metaObject: MOPropertiesType;
     metaAttributes: MOAttributeItemType[];
     metaObjects: MOPropertiesType[];
@@ -75,10 +77,10 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
                         />
                     }
                 </div>
-                <Button variant="contained" color="primary" type="submit">Save</Button>
+                <Button variant="contained" color="primary" type="submit" className={this.props.classes.button}>Save</Button>
             </Form>
         );
     }
 }
 
-export const MOEditForm = formikEnhancer(InnerForm);
+export const MOEditForm = withStyles(styles)(formikEnhancer(InnerForm));

@@ -1,32 +1,34 @@
 import * as React from 'react';
 import { FieldProps, Field } from 'formik';
-import { TextField } from 'react-md';
+import TextField from '@material-ui/core/Input';
 
-interface TextFieldProps {
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './style';
+
+interface TextFieldProps extends WithStyles<typeof styles> {
     label: string;
 }
 
 class MDInputField extends React.Component<FieldProps & TextFieldProps> {
-// const MDInputField: React.SFC<FieldProps & TextFieldProps> = ({field: { onChange, ...field }, label, form: { setFieldValue }}) => {
-    
-    changeVal(newValue: React.ReactText) {
-        this.props.form.setFieldValue(this.props.field.name, newValue);
+
+    changeVal(event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) {
+        this.props.form.setFieldValue(this.props.field.name, event.target.value);
     }
 
     render() {
         return (
             <TextField
+                className={this.props.classes.textField}
                 id="boEdit"
-                label={this.props.label}
                 placeholder={this.props.label}
-                {...this.props.field}
                 onChange={newValue => this.changeVal(newValue)}
+                {...this.props.field}
             />
         );
     }
 }
 
-export default ((props: FieldProps) => (
+export default withStyles(styles)((props: FieldProps) => (
     <Field
         {...props}
         component={MDInputField}

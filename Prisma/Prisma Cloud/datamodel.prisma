@@ -63,12 +63,12 @@ type MetaAttribute {
 
 type MetaObject {
   attributes: [MetaAttribute!]! @relation(name: "AttributeOnObject", link: INLINE)
-  businessObjects: [BusinessObject!]! @relation(name: "BusinessObjectOnMetaObject", link: INLINE)
+  businessObjects: [BusinessObject!]! @relation(name: "BusinessObjectOnMetaObject", link: INLINE, onDelete: CASCADE)
   createdAt: DateTime!
   id: ID! @unique
-  incomingRelations: [MetaRelation!]! @relation(name: "MetaRelationOnMetaObject", link: INLINE)
+  incomingRelations: [MetaRelation!]! @relation(name: "MetaRelationOnMetaObject", link: INLINE, onDelete: CASCADE)
   name: String!
-  outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
+  outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE, onDelete: CASCADE)
   updatedAt: DateTime!
   planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
 }

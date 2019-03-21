@@ -65,8 +65,8 @@ class PlanListContainer extends React.PureComponent<Props> {
                     <Redirect to="/PlannerAdmin" />
                     :
                     (
-                        <div className={this.props.classes.root}>
-                            <h3>No Plan configurations exists...</h3>
+                        <div>
+                            <Typography variant="h5" className={this.props.classes.button}>No Plan configurations exists...</Typography>
                             <Button variant={'contained'} color={'primary'} className={this.props.classes.button} onClick={e => this.setState({gotoPlanConfig: true})}>  {/* TODO RH */}
                                 Click here to define!
                             </Button>

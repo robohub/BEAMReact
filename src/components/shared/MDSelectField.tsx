@@ -1,13 +1,16 @@
 import * as React from 'react';
 import { FieldProps, Field } from 'formik';
-import { SelectField } from 'react-md';
+import { Select, FormControl, InputLabel, Input, MenuItem } from '@material-ui/core';
+
+import { WithStyles, withStyles } from '@material-ui/core/styles';
+import { styles } from './style';
 
 interface DropType {
     label: string;
     value: string;
 }
 
-interface SelectFieldProps {
+interface SelectFieldProps extends WithStyles<typeof styles> {
     label: string;
     options: {
         id: string;
@@ -15,10 +18,7 @@ interface SelectFieldProps {
     }[];
 }
 
-// const MDSelectField: React.SFC<FieldProps & SelectFieldProps> = ({field: { /* onChange*/ ...field }, options, label, form: { setFieldValue }}) => {
-
 class MDSelectField extends React.Component<FieldProps & SelectFieldProps> {
-    // const MDInputField: React.SFC<FieldProps & TextFieldProps> = ({field: { onChange, ...field }, label, form: { setFieldValue }}) => {
 
     private dropList = new Array<DropType>(0);
 
@@ -29,27 +29,34 @@ class MDSelectField extends React.Component<FieldProps & SelectFieldProps> {
         });
     }
 
-    changeVal(newValue: React.ReactText) {
-        this.props.form.setFieldValue(this.props.field.name, newValue);
+    changeVal(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.props.form.setFieldValue(this.props.field.name, event.target.value);
     }
     
     render() {
         return (
-            <SelectField
-                id="moSelect"
-                label={this.props.label}
-                value={this.props.field.value}
-                placeholder="Select Type"
-                menuItems={this.dropList}
-                onChange={newValue => this.changeVal(newValue)}
-                fullWidth={true}
-                // defaultValue="ROB"
-            />
+            <FormControl className={this.props.classes.button}>  {/* RH TODO: coordinate styles with better context driven names! */}
+                <InputLabel htmlFor="input" className={this.props.classes.select}>
+                    {this.props.label}
+                </InputLabel>
+                <Select 
+                    className={this.props.classes.select}
+                    value={this.props.field.value}
+                    onChange={newValue => this.changeVal(newValue)}
+                    input={<Input name="moSelect" id="input"/>}
+                >
+                    {this.props.options.map(opt => (
+                        <MenuItem key={opt.id} value={opt.id}>
+                            {opt.name}
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
         );
     }
 }
 
-export default ((props: SelectFieldProps) => (
+export default withStyles(styles)((props: SelectFieldProps) => (
     <Field
         {...props}
         component={MDSelectField}

@@ -8,9 +8,7 @@ import * as joint from '../../vendor/rappid';
 
 import BOListContainer from './diagramComponents/boListContainer';
 
-import { Button, /*ButtonToolbar*/ } from 'react-md';
-import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
+import { Grid, Paper, Button } from '@material-ui/core';
 
 class Diagram extends React.Component {
     test: Number = 5;
@@ -159,9 +157,9 @@ class Diagram extends React.Component {
                     <Grid item={true} xs={4}>
                         <Paper square={true}>
                             {/* Standard button */}
-                            <Button onClick={this.handleAddClick} raised={true} primary={true}>Add rect</Button>{' '}
+                            <Button onClick={this.handleAddClick} variant={'contained'} color={'primary'}>Add rect</Button>{' '}
 
-                            <Button onClick={this.addLink} raised={true} secondary={true}>Add link</Button>{' '}
+                            <Button onClick={this.addLink} variant={'contained'} color={'secondary'}>Add link</Button>{' '}
                             <div onDragOver={(e) => this.onDragOver(e)} onDrop={(e) => { this.onDrop(e, 'DIAGRAM'); }}>
                                 {/* <div ref={(c) => this.placeholder = c as HTMLDivElement}/> */}
                             </div>

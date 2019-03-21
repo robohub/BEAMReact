@@ -3,7 +3,6 @@ import gql from 'graphql-tag';
 import { client } from '../../../index';
 
 import * as vis from 'vis';
-import { Button } from 'react-md';
 
 const getBO = gql`
 query getBO($id: ID) {
@@ -180,9 +179,6 @@ export default class BOGraphView extends React.Component<Props> {
             <div>
                 <div>
                     Selected BO = {name}
-                </div>
-                <div>
-                    <Button onClick={this.clicked} raised={true}>TRYCK HÄR</Button>
                 </div>
                 <div ref={this.myRef} style={{overflow: 'auto', height: '400'}}/>
             </div>

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { MOAttributeItemType, /*MOPropType*/ } from './Types';
-import { Avatar, Chip, FontIcon } from 'react-md';
+import AttachementIcon from '@material-ui/icons/AttachFile';
+import { Chip, Avatar } from '@material-ui/core';
 
 export default function MOAttributeItem({ name, type }: MOAttributeItemType) {
 
@@ -8,7 +9,7 @@ export default function MOAttributeItem({ name, type }: MOAttributeItemType) {
     return (
         <Chip
             label={name + ': ' + type}
-            avatar={<Avatar><FontIcon>attachment</FontIcon></Avatar>}
+            avatar={<Avatar><AttachementIcon/></Avatar>}
         />
   );
 }
