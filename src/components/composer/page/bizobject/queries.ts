@@ -96,7 +96,8 @@ mutation upsertBO(
     $name: String,
     $state: String,
     $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
-    $rels: [BizRelationCreateWithoutIncomingObjectInput!]
+    $rels: [BizRelationCreateWithoutIncomingObjectInput!],
+    $delRels: [BizRelationScalarWhereInput!]
   ) {
     upsertBusinessObject(
         where: {id: $boid}
@@ -108,7 +109,7 @@ mutation upsertBO(
             outgoingRelations: { create: $rels}
         }
         update: {
-            outgoingRelations: { create: $rels },
+            outgoingRelations: { create: $rels, deleteMany: $delRels },
         }
     ) {
         id

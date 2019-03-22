@@ -56,7 +56,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         }
     }
 */
-    onSave = (values: FormValues) => {
+    onSave = async (values: FormValues) => {
 
         const { newObject, bizObject } = this.props;
         const { bizAttributes, bizRelations } = values;
@@ -104,44 +104,62 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
             });            
         });
 
-        // 2. Add, if any, INDIRECT relations to be deleted
-        const indirectRels = this.findIndirectDeletions(createRels);
-        deleteRels = deleteRels.concat(indirectRels);
-        
         // tslint:disable-next-line:no-console
         console.log('Added: ' + JSON.stringify(createRels, null, 2));
         // tslint:disable-next-line:no-console
         console.log('Deleted: ' + JSON.stringify(deleteRels, null, 2));
     
-        // 3. deleteBRPairs(delRels)
+        await this.updateSaveBO(newObject, bizObject, objName, attrs, createRels, deleteRels);
+        // this.deleteBizRelations(deleteRels);
+        
+        // await Promise.all([this.updateSaveBO(newObject, bizObject, objName, attrs, createRels), this.deleteBizRelations(deleteRels)]);
+        
+        // tslint:disable-next-line:no-console
+        console.log('E. Exits onSAVE,.....');
 
-        //      3.1 Prepare ids[] with brid and oppositebrid pairs
-        var deleteRelIds = new Array<string>();  // Filter out ids
-        deleteRels.map(item => {
-            deleteRelIds = deleteRelIds.concat([item.bizrelId, item.oppBRid]);
-        });
+    }
+
+    deleteBizRelations = async (deleteRelIds: string[]) => {
+
         // tslint:disable-next-line:no-console
         console.log('Deleted STRING to mutation ' + JSON.stringify(deleteRelIds, null, 2));
 
         /* try { } catch ... */
         if (deleteRelIds.length > 0) {
-            this.props.delBRPairs({
+            await this.props.delBRPairs({
                 variables: {
                     brids: deleteRelIds 
                 },
             });
         }
-        // 4. upsertBO(createRels)
+        // tslint:disable-next-line:no-console
+        console.log('D. Exits deleteBizRelations,.....');
+        return deleteRelIds;
+    }
 
-        var addedRels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
-        createRels.map((item: BizRelPenta) => {
-            addedRels.push({metaRelation: {connect: {id: item.mrid}}, oppositeObject: {connect: {id: item.oppositeObjectId}}});
-        });
-
+    updateSaveBO =  async (
+        newObject: boolean,
+        bizObject: BOEditType,
+        objName: string,
+        attrs: {metaAttribute: {connect: {id: string}}, value: string}[],
+        createRels: BizRelPenta[],
+        deleteRels: BizRelPenta[] ) => {
+            
         // tslint:disable-next-line:no-console
         console.log('1 Update BO........');
         try {
-            this.props.upsertBO({     // RH TODO, check when this should be executed!!!
+
+            var addedRels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
+            createRels.map(item => {
+                addedRels.push({metaRelation: {connect: {id: item.mrid}}, oppositeObject: {connect: {id: item.oppositeObjectId}}});
+            });
+
+            var delRels = new Array<{id: string}>();
+            deleteRels.map(item => {
+                delRels.push({id: item.bizrelId});
+            });
+
+            await this.props.upsertBO({     // RH TODO, check when this should be executed!!!
                 variables: {
                     boid: newObject ? '' : bizObject.id,                          // MySQL, ...?
 //                    boid: newObject ? '53cb6b9b4f4ddef1ad47f943' : bizObject.id,    // MongoDB!!
@@ -149,7 +167,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                     name: objName, 
                     attrs: attrs,
                     state: 'Created',
-                    rels: addedRels
+                    rels: addedRels,
+                    delRels: delRels
                 },
                 update: async (cache, mutationResult ) => {
                     // tslint:disable-next-line:no-console
@@ -158,37 +177,59 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                     const resultBO = mutationResult.data.upsertBusinessObject;
 
                     if (newObject) {
-                        /*const id = 'MetaObject:' + this.props.metaobject.metaObject.id;
-                        const oppositeMetaRels = cache.readFragment({
-                            id: id,
-                            fragment: gql`
-                                fragment myMeta on MOQuery {
-                                    id
-                                    businessObjects {
-                                        id
-                                    }
-                              }
-                            `,
-                        });*/
                         const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: this.props.metaobject.metaObject.id} });
                         data.metaObject.businessObjects.push(resultBO);  // Will push id
                         cache.writeQuery({ query: MOQuery, variables: {id: this.props.metaobject.metaObject.id} , data});
+                        
+                        const data2: BizObjectsType = client.readQuery({query: allBOQuery });
+                        data2.businessObjects.push(resultBO);
+                        client.writeQuery({ query: allBOQuery, data: data2 });
                     }
                     
+                    // Prepare for deletion of opposite and indirect relations...
+                    //      3.1 Prepare ids[] with oppositebrid pairs
+                    var deleteRelIds = new Array<string>();  // Filter out ids
+                    deleteRels.map(item => {
+                        deleteRelIds.push(item.oppBRid);
+                    });
+                    //      3.2. Add, if any, INDIRECT relations to be deleted
+                    const indirectRels = this.findIndirectDeletions(createRels);
+                    deleteRelIds = deleteRelIds.concat(indirectRels);
+
                     // 5. Create and connect opposite biz relations
-                    await this.syncCreateAndConnectOppositeBizRels(resultBO, createRels);
+                    await Promise.all([this.syncCreateAndConnectOppositeBizRels(resultBO, createRels), this.deleteBizRelations(deleteRelIds)]);
+
+                    // Remove deleted BRs from cache
+                    const data3: BizObjectsType = client.readQuery({query: allBOQuery });
+                    deleteRelIds.forEach(delBrId => {
+                        data3.businessObjects.forEach(bo => {
+                            var found = false;
+                            bo.outgoingRelations.forEach((br, index) => {
+                                if (br.id === delBrId) {
+                                    bo.outgoingRelations.splice(index, 1);
+                                    found = true;
+                                    return;
+                                }                    
+                            });
+                            if (found) { return; }
+                        });
+                    });
+                    client.writeQuery({ query: allBOQuery, data: data3 });
 
                     // tslint:disable-next-line:no-console
                     console.log('3 ...BO update klar!');
-                    
+
                     this.setState({snackbarOpen: true});
+                    
                 },
-                // refetchQueries: [{query: allBOQuery}, {query: allMOQuery}]
                 refetchQueries: [{query: allMOQuery}]
             });
         } catch (e) {
             alert('Error when updating/creating BO:' + e);
         }
+        // tslint:disable-next-line:no-console
+        console.log('C. Exits updateSaveBO,.....');
+
     }
 
     getChangedRelations = (oldrels: BizRelationsType[], newrels: FormRelation[]): {added: BizRelPenta[], toDelete: BizRelPenta[]} => {
@@ -229,19 +270,17 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
         return deleted;
     }
 
-    findIndirectDeletions = (createRels: BizRelPenta[]): BizRelPenta[] => {
-        let indirectRels = new Array<BizRelPenta>();
+    findIndirectDeletions = (createRels: BizRelPenta[]): string[] => {
+        let indirectRels = new Array<string>();
         createRels.map(added => {
             this.props.metaobject.metaObject.outgoingRelations.forEach(mRel => {
                 let found = false;
                 if (mRel.id === added.mrid) {
                     mRel.oppositeObject.businessObjects.forEach(oppBo => {
                         if (oppBo.id === added.oppositeObjectId && oppBo.outgoingRelations.length && oppBo.outgoingRelations[0].metaRelation.multiplicity === 'One') {
-                            indirectRels.push({  // These two bizrels to be deleted
-                                bizrelId: oppBo.outgoingRelations[0].oppositeRelation.id,
-                                oppBRid: oppBo.outgoingRelations[0].id,
-                                mrid: '', oppositeObjectId: ''
-                            });
+                            // These two BRs to be removed
+                            indirectRels.push(oppBo.outgoingRelations[0].oppositeRelation.id);
+                            indirectRels.push(oppBo.outgoingRelations[0].id);
                             found = true;
                             return;
                         }
@@ -266,6 +305,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
             });
         });
         await Promise.all(singleCreateConnectPromises);
+        // tslint:disable-next-line:no-console
+        console.log('A. Exits syncCreateAndConnectOppositeBizRels, all synced!!!.....');
     }
 
     createAndConnectOppositeBizRels = async (incboid: string, oppboid: string, mrid: string, oppmrid: string ) => {
@@ -283,7 +324,7 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
             }
         }).then(async (response: FetchResult<{createBizRelation: BizRelationsType}>) => {
             // tslint:disable-next-line:no-console
-            console.log('2 CREATED IN DB, BR: ' + response.data.createBizRelation.id);
+            console.log('2... CREATED IN DB, BR: ' + response.data.createBizRelation.id);
 
             // Update cache - add new BR to BO
             const data: BizObjectsType = client.readQuery({query: allBOQuery });
@@ -293,6 +334,8 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                     if (newBR.metaRelation.multiplicity  === 'One') {
                         bo.outgoingRelations = [newBR];
                     } else {
+                        // tslint:disable-next-line:no-console
+                        console.log('Updating cache: OPP BizRel ' + newBR);
                         bo.outgoingRelations.push(newBR);
                     }
                     return;
@@ -307,12 +350,14 @@ class EditBOView extends React.Component<ChildProps<MyProps & MyMutations>> {
                 },
                 update: (cache, result) => {
                     // tslint:disable-next-line:no-console
-                    console.log('Update for opposite relation ' + result.data.updateBizRelation.id);
+                    console.log('3... Update for opposite relation ' + result.data.updateBizRelation.id);
                 }
             });
             singleCreationPromises.push(promise);
         });
         await Promise.all(singleCreationPromises);
+        // tslint:disable-next-line:no-console
+        console.log('B. Exits createAndConnectOppositeBizRels, all synced!!!.....');
     }
 
     getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType[]): UpdateBizRelPair[] => {

@@ -42,7 +42,7 @@ export default class BOEditContainer extends React.Component<ChildProps<InputPro
                                 console.log(' ------ ----- BOEditContainer renderar NEW BO !!!');
                             } else {
                                 // tslint:disable-next-line:no-console
-                                console.log(' ------ ----- BOEditContainer renderar BO !!! BO.id=' + id);
+                                console.log(' ------ ----- BOEditContainer renderar BO !!! BO.id=' + this.props.bizObject.id);
                             }
                             // tslint:disable-next-line:no-console
                             console.log(' ------ ----- BOEditContainer renderar med MQQuery !!! MO.id=' + id);

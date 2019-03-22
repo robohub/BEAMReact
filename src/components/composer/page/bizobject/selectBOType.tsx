@@ -25,7 +25,7 @@ interface Props extends WithStyles<typeof styles> {
     setSelectedBO: (bo: BOEditType) => void;
 }
 
-class SelectBOType extends React.Component<ChildProps<{}, Response> & Props> {
+class SelectBOType extends React.PureComponent<ChildProps<{}, Response> & Props> {
 
     state = { selected: false, selectedId: '', boType: '', visible: false };
     

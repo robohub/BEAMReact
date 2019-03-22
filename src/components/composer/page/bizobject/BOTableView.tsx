@@ -82,7 +82,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                 return;
                             }
                         });
-                        // Remove BO from relations i cache
+                        // Remove BO from relations in cache
                         var deletedBRs = new Array<string>();
                         data.businessObjects.forEach(el => {
                             for (var i = el.outgoingRelations.length - 1; i >= 0; i--) {
@@ -160,6 +160,21 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
         this.setState({snackbarOpen: false});
     }
 
+    componentDidMount() {
+        // tslint:disable-next-line:no-console
+        console.log('---> BOEditView skapades');
+    }
+
+    componentWillUpdate() {
+        // tslint:disable-next-line:no-console
+        console.log('---> BOEditView kommer uppdateras');
+    }
+
+    componentDidUpdate() {
+        // tslint:disable-next-line:no-console
+        console.log('---> BOEditView UPPDATERADES <-----');
+    }
+
     render() {
         return (
             <Query
@@ -175,7 +190,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                     }
 
                     // tslint:disable-next-line:no-console
-                    console.log('--- BOTabeView renderar ---');
+                    console.log('--- BOTableView renderar --- Selected BO:' + (this.state.selectedBO ? this.state.selectedBO.id : null) );
 
                     const data: BizObjectsType = client.readQuery({query: allBOQuery });
                     // tslint:disable-next-line:no-console
