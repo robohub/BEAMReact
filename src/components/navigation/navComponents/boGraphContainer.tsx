@@ -17,6 +17,7 @@ query getBO($id: ID) {
                 id
                 name
                 metaObject {
+                    id
                     name
                 }
                 outgoingRelations {
@@ -38,6 +39,7 @@ interface BoItem {
             id: string;
             name: string;
             metaObject: {
+                id: string;
                 name: string;
             };
             outgoingRelations: {

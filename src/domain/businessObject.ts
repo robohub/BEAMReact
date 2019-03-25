@@ -4,6 +4,10 @@ import { FetchResult } from 'react-apollo';
 
 import { client } from '../index';
 
+import { BizRelPenta, findIndirectDeletions, UpdateBizAttrPair, syncCreateAndConnectOppositeBizRels, deleteBizRelations } from './utils/boUtils';
+import { MOResponse, BOEditType, BizObjectsType } from './../components/composer/page/bizobject/Types';
+import { allBOQuery, upsertBO, allMOQuery, MOQuery, } from '../components/composer/page/bizobject/queries';
+
 const getBO = gql`
 query($id: ID) {
     businessObject(
@@ -150,3 +154,113 @@ export function updateBORelations(
         alert('Error in function updateBORelations: ' + e)
     );
 }
+
+export const updateSaveBO =  async (
+    newObject: boolean,
+    bizObject: BOEditType,
+    metaobject: MOResponse,
+    objName: string,
+    attrs: {metaAttribute: {connect: {id: string}}, value: string}[],
+    changedAttributeValues: UpdateBizAttrPair[],
+    createRels: BizRelPenta[],
+    deleteRels: BizRelPenta[],
+    saveFinished: () => void ) => {
+        
+    // tslint:disable-next-line:no-console
+    console.log('1 Update BO........');
+    try {
+        // Prepare relations for upsert
+        let addedRels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
+        createRels.map(item => {
+            addedRels.push({metaRelation: {connect: {id: item.mrid}}, oppositeObject: {connect: {id: item.oppositeObjectId}}});
+        });
+
+        let delRels = new Array<{id: string}>();
+        deleteRels.map(item => {
+            delRels.push({id: item.bizrelId});
+        });
+
+        // Prepare attributes for upsert
+        let inputBrVals = new Array<{where: {id: string}, data: {value: string}}>(); 
+        if (changedAttributeValues.length) {
+            for (let i = 0; i < changedAttributeValues.length; i++) {
+                inputBrVals.push({where: {id: changedAttributeValues[i].bizRelId}, data: {value: changedAttributeValues[i].value}});
+            }
+        }
+
+        await client.mutate({     // RH TODO, check when this should be executed!!!
+            mutation: upsertBO,
+            variables: {
+                boid: newObject ? '' : bizObject.id,                          // MySQL, ...?
+//                    boid: newObject ? '53cb6b9b4f4ddef1ad47f943' : bizObject.id,    // MongoDB!!
+                moid: metaobject.metaObject.id,
+                name: objName, 
+                attrs: attrs,
+                state: 'Created',
+                rels: addedRels,
+                delRels: delRels,
+                brValues: inputBrVals
+            },
+            update: async (cache, mutationResult ) => {
+                // tslint:disable-next-line:no-console
+                console.log('2 ...Updated BO........ = ', objName);
+
+                const resultBO = mutationResult.data.upsertBusinessObject;
+
+                if (newObject) {
+                    const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: metaobject.metaObject.id} });
+                    data.metaObject.businessObjects.push(resultBO);  // Will push id
+                    cache.writeQuery({ query: MOQuery, variables: {id: metaobject.metaObject.id} , data});
+                    
+                    const data2: BizObjectsType = client.readQuery({query: allBOQuery });
+                    data2.businessObjects.push(resultBO);
+                    client.writeQuery({ query: allBOQuery, data: data2 });
+                }
+                
+                // Prepare for deletion of opposite and indirect relations...
+                //      3.1 Prepare ids[] with oppositebrid pairs
+                var deleteRelIds = new Array<string>();  // Filter out ids
+                deleteRels.map(item => {
+                    deleteRelIds.push(item.oppBRid);
+                });
+                //      3.2. Add, if any, INDIRECT relations to be deleted
+                const indirectRels = findIndirectDeletions(createRels, metaobject);
+                deleteRelIds = deleteRelIds.concat(indirectRels);
+
+                // 5. Create and connect opposite biz relations
+                await Promise.all([syncCreateAndConnectOppositeBizRels(resultBO, createRels), deleteBizRelations(deleteRelIds)]);
+
+                // tslint:disable-next-line:no-console
+                console.log('Deleted BizRels: **** ', deleteRelIds);
+
+                // Remove deleted BRs from cache
+                const data3: BizObjectsType = client.readQuery({query: allBOQuery });
+                deleteRelIds.forEach(delBrId => {
+                    data3.businessObjects.forEach(bo => {
+                        var found = false;
+                        bo.outgoingRelations.forEach((br, index) => {
+                            if (br.id === delBrId) {
+                                bo.outgoingRelations.splice(index, 1);
+                                found = true;
+                                return;
+                            }                    
+                        });
+                        if (found) { return; }
+                    });
+                });
+                client.writeQuery({ query: allBOQuery, data: data3 });
+
+                // tslint:disable-next-line:no-console
+                console.log('3 ...BO update klar!');
+
+                saveFinished();
+                
+            },
+            refetchQueries: [{query: allMOQuery}]
+        });
+    } catch (e) {
+        alert('Error when updating/creating BO:' + e);
+    }
+    // tslint:disable-next-line:no-console
+    console.log('C. Exits updateSaveBO,.....');
+};

@@ -13,6 +13,7 @@ import { PlanConfig } from './components/types';
 
 export const getPlanBOs = gql`
 query configuredPlanBos {
+    id
     planConfigs {
       id
       uiMoPlan {

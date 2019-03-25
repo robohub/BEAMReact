@@ -97,7 +97,8 @@ mutation upsertBO(
     $state: String,
     $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
     $rels: [BizRelationCreateWithoutIncomingObjectInput!],
-    $delRels: [BizRelationScalarWhereInput!]
+    $delRels: [BizRelationScalarWhereInput!],
+    $brValues: [BizAttributeUpdateManyWithWhereNestedInput!]
   ) {
     upsertBusinessObject(
         where: {id: $boid}
@@ -110,6 +111,7 @@ mutation upsertBO(
         }
         update: {
             outgoingRelations: { create: $rels, deleteMany: $delRels },
+            bizAttributes: {updateMany: $brValues}
         }
     ) {
         id
@@ -188,23 +190,31 @@ mutation deleteBO($id: ID!) {
 `;
 
 export const deleteBizRelation = gql`
-mutation removeBR($bizRelId: ID!)  {
+mutation removeBR($bizRelId: ID!) {
     deleteBizRelation(where: {id: $bizRelId} )
     {id}
 }
 `;
 
 export const deleteBizAttr = gql`
-mutation removeBA($bizAttrId: ID!)  {
+mutation removeBA($bizAttrId: ID!) {
     deleteBizAttribute(id: $bizAttrId )
     {id}
 }
 `;
 
-export const updateBizAttribute = gql`
-mutation updateBA($id: ID!, $value: String) {
-    updateBizAttribute(data: {value: $value}, where: {id: $id})
-    {id}
+export const updateManyBRValues = gql`
+mutation updateManyBRValues($id: ID, $brValues: [BizAttributeUpdateManyWithWhereNestedInput!]) {
+    updateBusinessObject(
+    	where: {id: $id }
+        data: {bizAttributes:{updateMany: $brValues}}
+    )
+    {
+        id
+        bizAttributes {
+            id
+        }
+    }
 }
 `;
 
@@ -302,3 +312,13 @@ query allMetaObjects {
   }
 }
 `;
+
+export const deleteBRPairs = gql`
+mutation deleteBRPairs($brids:[ID!]) {
+    deleteManyBizRelations (
+       where: {id_in: $brids}
+    ) {
+       count
+    }
+}
+ `; 
