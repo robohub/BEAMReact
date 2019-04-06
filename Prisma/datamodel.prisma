@@ -71,6 +71,7 @@ type MetaObject {
   outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
   updatedAt: DateTime
   planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
+  templateConfig: TemplateConfig @relation(name: "TemplateConfigMetaObject")
 }
 
 type MetaRelation {
@@ -125,4 +126,34 @@ type Plan {
   createdAt: DateTime
   updatedAt: DateTime
   itemBOs: [BusinessObject] @relation(name: "ItemBOsBizObject")
+}
+
+type TemplateConfig {
+  id: ID! @id
+  moObject: MetaObject @relation(name: "TemplateConfigMetaObject", link: INLINE)
+  moRelation: MetaRelation @relation(name: "TemplateConfigMetaRelation", link: INLINE)
+  defaultTemplate: Template @relation(name: "TemplateConfigTemplate", link: INLINE)
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type TemplateMapping {
+  id: ID! @id
+  template: Template @relation(name: "TemplateMappingTemplate", link: INLINE)
+  businessObject: BusinessObject @relation(name: "TemplateMappingBO", link: INLINE)
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type Template {
+  id: ID! @id
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type SystemSetup {
+  id: ID! @id
+  systemUserMOMapping: MetaObject
+  createdAt: DateTime
+  updatedAt: DateTime
 }

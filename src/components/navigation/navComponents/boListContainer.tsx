@@ -10,6 +10,7 @@ query allBusinessObjects {
         id
         name
         metaObject {
+            id
             name
         }
     }
@@ -50,7 +51,7 @@ export default class BOListContainer extends React.Component<ChildProps<Props, R
             <Query query={allBOQuery}>
                 {({ data, loading, error }) => {
                     if (loading) { return <div>Loading</div>; }
-                    if (error) { return <h1>ERROR</h1>; }             
+                    if (error) { return <h1>ERROR: {error}</h1>; }             
                     
                     return (
                         <div>

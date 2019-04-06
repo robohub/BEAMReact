@@ -168,7 +168,7 @@ class TimeLine extends React.Component<Props, State> {
         if (this.props.selectedBO !== null) {
              await client.query({
                 query: getPlan,
-                fetchPolicy: 'network-only',    // TODO RH: fix cahce strategy!!!
+                fetchPolicy: 'network-only',    // TODO RH: fix cache strategy!!!
                 variables: { 
                     boid: this.props.selectedBO
                 }

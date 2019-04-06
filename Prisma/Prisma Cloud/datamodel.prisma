@@ -6,6 +6,15 @@
   Boolean
 }
 
+enum WidgetType {
+  Text
+  Plan
+  HTML
+  Diagram
+  Navigation
+  Tree
+}
+
 type BizAttribute {
   businessObject: BusinessObject @relation(name: "BOBizAttribute")
   createdAt: DateTime!
@@ -71,6 +80,7 @@ type MetaObject {
   outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", link: INLINE, onDelete: CASCADE)
   updatedAt: DateTime!
   planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
+  templateConfig: TemplateConfig @relation(name: "TemplateConfigMetaObject")
 }
 
 type MetaRelation {
@@ -125,4 +135,57 @@ type Plan {
   createdAt: DateTime!
   updatedAt: DateTime!
   itemBOs: [BusinessObject] @relation(name: "ItemBOsBizObject")
+}
+
+type TemplateConfig {
+  id: ID! @unique
+  moObject: MetaObject @relation(name: "TemplateConfigMetaObject", link: INLINE)
+  moRelation: MetaRelation @relation(name: "TemplateConfigMetaRelation", link: INLINE)
+  defaultTemplate: Template @relation(name: "TemplateConfigTemplate", link: INLINE)
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type TemplateMapping {
+  id: ID! @unique
+  template: Template @relation(name: "TemplateMappingTemplate", link: INLINE)
+  businessObject: BusinessObject @relation(name: "TemplateMappingBO", link: INLINE)
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Template {
+  id: ID! @unique
+  name: String!
+  widgets: [Widget]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Widget {
+  id: ID! @unique
+  name: String
+  type: WidgetType!
+  width: Int
+  boid: String
+  text: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SystemSetup {
+  id: ID! @unique
+  systemUserMOMapping: MetaObject
+  systemUseridMAMapping: MetaAttribute
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type User {
+  id: ID! @unique
+  userid: String @unique @default(value: "")
+  password: String @default(value: "")
+  name: String @unique @default(value: "")
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }

@@ -3,13 +3,9 @@ import './App.css';
 import '../node_modules/vis/dist/vis.css';
 
 import * as React from 'react';
+import { Link, Route, LinkProps } from 'react-router-dom';
 
-import {
-    Link,
-    Route,
-    LinkProps, 
-    // Switch,
-} from 'react-router-dom';
+import * as Globals from './components/shared/globals';
 
 import PlannerAdmin from './components/admin/page/plannerConfigPage';
 import Example from './components/charting/chartsample';
@@ -17,6 +13,8 @@ import Admin from './components/admin/page/AdminPage';
 import Composer from './components/composer/page/ComposerPage';
 import Navigation from './components/navigation/navigationPage';
 import Planner from './components/planner/landingPage';
+import Home from './components/home/homePage';
+import { LoginForm } from './components/login/loginForm';
 
 import PlannerIcon from '@material-ui/icons/ClearAllOutlined';
 import SettingsIcon from '@material-ui/icons/Settings';
@@ -24,13 +22,40 @@ import MapIcon from '@material-ui/icons/Map';
 import BubblesIcon from '@material-ui/icons/BubbleChartOutlined';
 import ChartIcon from '@material-ui/icons/InsertChart';
 import DiagramIcon from '@material-ui/icons/DeveloperBoardOutlined';
+import LoginIcon from '@material-ui/icons/Face';
 
 import classNames from 'classnames';
 
 import Diagram from './components/diagramming/Rappid/rappid';
 
 // import * as loremIpsum from 'lorem-ipsum';
-import { Typography, WithStyles, createStyles, Theme, withStyles, Divider } from '@material-ui/core';
+import { Typography, WithStyles, createStyles, Theme, withStyles, Divider, Menu, MenuItem } from '@material-ui/core';
+
+import gql from 'graphql-tag';
+
+const getSystemSetupQuery = gql`
+query getUserMapping {
+    systemSetups {
+      id
+      systemUserMOMapping {
+        id
+      }
+      systemUseridMAMapping {
+        id
+      }
+    }
+  }
+`;
+
+type SystemSetup = {
+    id: string;
+    systemUserMOMapping: {
+        id: string;
+    }
+    systemUseridMAMapping: {
+        id: string;
+    }    
+};
 
 /*
 type TrelloBoardType = { name: string, url: string };
@@ -117,17 +142,6 @@ class TrelloView extends React.Component<{}, State> {
 }
 */
 
-class Home extends React.Component {
-    
-    render() {
-        return (
-            <div>
-                HOME PAGE!
-            </div>
-        );
-    }
-}
-
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import AppBar from '@material-ui/core/AppBar';
@@ -141,12 +155,17 @@ import ListItem, { ListItemProps } from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import HomeIcon from '@material-ui/icons/Home';
+import { AccountCircle, LinearScale } from '@material-ui/icons';
+import { Query } from 'react-apollo';
 
 const drawerWidth = 240;
 
 export const styles = (theme: Theme) => createStyles({
     root: {
         display: 'flex',
+    },
+    grow: {
+        flexGrow: 1,
     },
     appBar: {
         transition: theme.transitions.create(['margin', 'width'], {
@@ -204,6 +223,7 @@ export const styles = (theme: Theme) => createStyles({
 interface Props extends WithStyles<typeof styles> {
 }
 
+const LoginLink: React.SFC<ListItemProps> = (props) => { return <Link to="/login" {...props as LinkProps} />; };
 const HomeLink: React.SFC<ListItemProps> = (props) => { return <Link to="/home" {...props as LinkProps} />; };
 const PlannerAdminLink: React.SFC<ListItemProps> = (props) => { return <Link to="/PlannerAdmin" {...props as LinkProps} />; };
 const ChartLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Chart" {...props as LinkProps} />; };
@@ -216,6 +236,7 @@ const PlannerLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Pla
 class PersistentDrawerLeft extends React.Component<Props> {
   state = {
     open: false,
+    anchorEl: null as HTMLElement,
   };
 
   handleDrawerOpen = () => {
@@ -226,9 +247,18 @@ class PersistentDrawerLeft extends React.Component<Props> {
     this.setState({ open: false });
   }
 
+  handleMenu = (event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    this.setState({ anchorEl: event.currentTarget });
+  }
+
+  handleClose = () => {
+    this.setState({ anchorEl: null });
+  }
+
   render() {
         const { classes } = this.props;
-        const { open } = this.state;
+        const { open, anchorEl } = this.state;
+        const menuOpen = Boolean(anchorEl);
 
         return (
             <div className={classes.root}>
@@ -244,13 +274,42 @@ class PersistentDrawerLeft extends React.Component<Props> {
                         color="inherit"
                         aria-label="Open drawer"
                         onClick={this.handleDrawerOpen}
-                        className={classNames(classes.menuButton, open && classes.hide)}
+                        className={classNames(classes.menuButton, menuOpen && classes.hide)}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" color="inherit" noWrap={true}>
+                    <Typography variant="h6" color="inherit" className={classes.grow}>
                         BEAM
                     </Typography>
+                        <div>
+                            <IconButton
+                                aria-owns={menuOpen ? 'menu-appbar' : undefined}
+                                aria-haspopup="true"
+                                onClick={this.handleMenu}
+                                color="inherit"
+                            >
+                                <AccountCircle />
+                            </IconButton>
+                            <Menu
+                                id="menu-appbar"
+                                anchorEl={anchorEl}
+                                anchorOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                                open={menuOpen}
+                                onClose={this.handleClose}
+                            >
+                                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
+                                <MenuItem onClick={this.handleClose}>My account</MenuItem>
+                                <Divider/>
+                                <MenuItem onClick={this.handleClose}>Logout</MenuItem>
+                            </Menu>
+                        </div>
                 </Toolbar>
             </AppBar>
                 <Drawer
@@ -269,6 +328,10 @@ class PersistentDrawerLeft extends React.Component<Props> {
                     </div>
                     <Divider />
                         <List>
+                        <ListItem button={true} key={5} component={LoginLink}>
+                                <ListItemIcon>{<LoginIcon/>}</ListItemIcon>
+                                <ListItemText primary={'Login'} />
+                            </ListItem>
                             <ListItem button={true} key={10} component={HomeLink}>
                                 <ListItemIcon>{<HomeIcon/>}</ListItemIcon>
                                 <ListItemText primary={'Home'} />
@@ -290,11 +353,11 @@ class PersistentDrawerLeft extends React.Component<Props> {
                                 <ListItemText primary={'Meta Objects'} />
                             </ListItem>
                             <ListItem button={true} key={60} component={ComposerLink}>
-                                <ListItemIcon>{<HomeIcon/>}</ListItemIcon>
+                                <ListItemIcon>{<BubblesIcon/>}</ListItemIcon>
                                 <ListItemText primary={'Business Objects'} />
                             </ListItem>
                             <ListItem button={true} key={70} component={NavigationLink}>
-                                <ListItemIcon>{<BubblesIcon/>}</ListItemIcon>
+                                <ListItemIcon>{<LinearScale/>}</ListItemIcon>
                                 <ListItemText primary={'Navigation'} />
                             </ListItem>
                             <ListItem button={true} key={80} component={PlannerLink}>
@@ -308,15 +371,40 @@ class PersistentDrawerLeft extends React.Component<Props> {
                         [classes.contentShift]: open,
                     })}
                 >
-                    <div className={classes.drawerHeader} />
-                    <Route exact={true} path="/" component={Home} />
-                    <Route exact={true} path="/PlannerAdmin" component={PlannerAdmin} />
-                    <Route exact={true} path="/Chart" component={Example} />
-                    <Route exact={true} path="/Diagram" component={Diagram} />
-                    <Route exact={true} path="/Admin" component={Admin} />
-                    <Route path="/Composer" component={Composer} />
-                    <Route path="/Navigation" component={Navigation} />
-                    <Route path="/Planner" component={Planner} />
+                    <div className={classes.drawerHeader}/>
+
+                    <Query query={getSystemSetupQuery}>
+                        {({ loading, data, error }) => {
+                            if (loading) {
+                                return <div>Loading System Setup...</div>;
+                            }
+                            if (error) {
+                                return <div>ERROR: {error.message}</div>;
+                            }
+
+                            let systemSetups: SystemSetup[] = data.systemSetups;
+                            if (systemSetups.length) {
+                                Globals.SystemConfigVars.SYSTEM_SETUP_ID = systemSetups[0].id;
+                                Globals.SystemConfigVars.SYSTEMUSER_METAOBJECT_MAPPING = systemSetups[0].systemUserMOMapping.id;
+                                Globals.SystemConfigVars.SYSTEMUSER_USERID_MA_MAPPING = systemSetups[0].systemUseridMAMapping.id;
+                            }
+
+                            return (
+                                <div>
+                                    <Route exact={true} path="/login" component={LoginForm} />
+                                    <Route exact={true} path="/" component={Home} />
+                                    <Route exact={true} path="/Home" component={Home} />
+                                    <Route exact={true} path="/PlannerAdmin" component={PlannerAdmin} />
+                                    <Route exact={true} path="/Chart" component={Example} />
+                                    <Route exact={true} path="/Diagram" component={Diagram} />
+                                    <Route exact={true} path="/Admin" component={Admin} />
+                                    <Route path="/Composer" component={Composer} />
+                                    <Route path="/Navigation" component={Navigation} />
+                                    <Route path="/Planner" component={Planner} />
+                                </div>
+                            );
+                        }}
+                    </Query>
                 </main>
             </div>
         );

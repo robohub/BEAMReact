@@ -284,7 +284,7 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
                     autoHideDuration={6000}
                     onClose={this.snackbarClose}
                     ContentProps={{'aria-describedby': 'message-id'}}
-                    message={<span id="message-id">Saved Business Object</span>}
+                    message={<span id="message-id">Saved Meta Object</span>}
                     action={[
                         <IconButton key="close" aria-label="Close" color="inherit" /* className={classes.close} */ onClick={this.snackbarClose}>
                             <CloseIcon/>

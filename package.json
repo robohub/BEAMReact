@@ -47,7 +47,7 @@
     "react-headroom": "^2.1.6",
     "react-router-dom": "^4.1.2",
     "react-scripts-ts": "3.1.0",
-    "typescript": "^3.2.2",
+    "typescript": "^3.4.1",
     "vis": "^4.20.1",
     "webfontloader": "^1.6.28",
     "ws": "6.1.0"

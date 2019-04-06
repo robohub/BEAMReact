@@ -13,7 +13,6 @@ import { PlanConfig } from './components/types';
 
 export const getPlanBOs = gql`
 query configuredPlanBos {
-    id
     planConfigs {
       id
       uiMoPlan {
@@ -86,7 +85,7 @@ class PlanningView extends React.Component<Props, State> {
             <Query query={getPlanBOs}>
                 {({ data, loading, error }) => {
                     if (loading) { return <div>Loading</div>; }
-                    if (error) { return <h1>ERROR</h1>; }
+                    if (error) { return <h1>{error.message}</h1>; }
 
                     this.planConfigs = data.planConfigs;
 

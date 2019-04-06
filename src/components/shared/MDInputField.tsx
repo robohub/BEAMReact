@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FieldProps, Field } from 'formik';
-import TextField from '@material-ui/core/Input';
+import TextField from '@material-ui/core/TextField';
 
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from './style';
@@ -21,7 +21,9 @@ class MDInputField extends React.Component<FieldProps & TextFieldProps> {
                 className={this.props.classes.textField}
                 id="boEdit"
                 placeholder={this.props.label}
-                onChange={newValue => this.changeVal(newValue)}
+                label={this.props.label}
+//                onChange={newValue => this.changeVal(newValue)}
+                onChange={event => this.props.form.setFieldValue(this.props.field.name, event.target.value)}
                 {...this.props.field}
             />
         );

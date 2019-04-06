@@ -16,6 +16,7 @@ query getBO($id: ID) {
                 id
                 name
                 metaObject {
+                    id
                     name
                 }
                 outgoingRelations {

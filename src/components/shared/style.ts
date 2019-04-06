@@ -28,4 +28,12 @@ export const styles = ({ mixins, spacing, typography }: Theme) => createStyles({
         marginBottom: spacing.unit,
         width: inputWidth,
       },
+      paperMargin: {
+        marginTop: spacing.unit * 2,
+        marginBottom: spacing.unit * 2,
+
+      },
+      errorText: {
+          color: 'red'
+      }
 });
