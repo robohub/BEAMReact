@@ -239,10 +239,11 @@ class MOEdit extends React.Component<ChildProps<Props & MyMutations, {}>, State>
     }
 
     render() {
+        const { classes } = this.props;
         return (
             <div className={this.props.classes.root}>
-                <TextField id="input" placeholder="Add Meta Object" onChange={this.handleInput} className={this.props.classes.textField}/>
-                <Button variant={'contained'} color={'primary'} onClick={this.createMO}>Add</Button>
+                <TextField id="input" placeholder="Add Meta Object" onChange={this.handleInput} className={classes.textField}/>
+                <Button variant={'contained'} color={'primary'} onClick={this.createMO} className={classes.button}>Add</Button>
                 <Paper>
                     {this.props.metaObjects.map((obj, index) =>
                         <div key={obj.name} className={this.props.classes.root}>

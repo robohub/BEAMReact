@@ -5,20 +5,13 @@ import { Query } from 'react-apollo';
 
 import { Grid, WithStyles, withStyles, Paper } from '@material-ui/core';
 
+import { LoginVars } from '../shared/globals';
+
 import { styles } from '../shared/style';
 import { GridSize } from '@material-ui/core/Grid';
 
 import TimeLine from '../planner/pages/components/timeLine';
 import BOGraphContainer from '../navigation/navComponents/boGraphContainer';
-
-// Login specified application variables
-export class LoginVars {
-    public static USER_ID = ''; // Set when user logs in, equals unique user name, eg. CDSID for VCC
-    public static DEFAULT_USER_TEMPLATE = 'cjtr7o7z5guht0b75ioan02dr'; // Read at logon from TemplateConfig (system setup config)
-    public static USER_TEMPLATE_NAME = ''; // The template associated with the logged on user
-    public static USER_TEMPLATE_ID = ''; // The template associated with the logged on user
-    public static USER_TEMPLATE_MAP = new Map<string, {id: string, name: string}>();
-}
 
 class DefaultTemplate extends React.Component {
     render() {  
@@ -30,65 +23,26 @@ class DefaultTemplate extends React.Component {
     }
 }
 
-export const getTemplateMapping = gql`
-query getTemplateMapping{
-    templateMappings{
-        id
-        template { id name }
-        businessObject { id }
-    }
-}
-`;
-
-export type MappingType = {
-    template: { id: string, name: string }
-    businessObject: { id: string }
-};
-
-export const getUserRelations = gql`
-query getUserRelations($moId: ID, $userId: String, $mrId: ID) {
-    businessObjects(
-        where: {
-            AND: [{metaObject: {id: $moId}},
-                {name: $userId},{outgoingRelations_some: {metaRelation: {id:$mrId}}}]
-        }
-    )
-    {
-        id
-        outgoingRelations {
-            id
-            metaRelation { id }
-            oppositeObject { id  }
-        }
-    }
-}
-`;
-
-export type UserRelationType = {
-    outgoingRelations: {
-        metaRelation: {
-            id: string
-        }
-        oppositeObject: { id: string }
-    }[]
-};
-
 const getTemplate = gql`
 query getTemplate($tid:ID){
-    template(
-        where: {id: $tid}
-    ) {
+  template(
+    where: {id: $tid}
+  ) {
+    id
+    name
+    renderColumns {
+      id
+	  width
+      widgets {
         id
         name
-        widgets {
-            id
-            name
-            type
-            width
-            boid
-            text
-        }
+        type
+        width
+        boid
+        text
+      }
     }
+  }
 }
 `;
 
@@ -102,7 +56,10 @@ type WidgetType = {
 };
 
 type TemplateType = {
-    widgets: WidgetType[];
+    renderColumns: {
+        width: GridSize;
+        widgets: WidgetType[];
+    }[]
 };
 
 interface WidgetProps  {
@@ -175,112 +132,65 @@ class UserBasedTemplate extends React.PureComponent<UserProps> {
         console.log('-- RENDER UserBasedTemplate ...');
 
         return (
-/*            <Query query={getTemplateMapping}> 
-                {({ loading, data: { templateMappings }, error }) => {
-                    if (loading) {
-                        return <div>Loading</div>;
-                    }
-                    if (error) {
-                        return <h1>ERROR</h1>;
-                    }
-                    // tslint:disable-next-line:no-console
-                    console.log('-- QUERY 1 ...');    // TODO RH: Denna Query ska ha gjorts t.ex. vid inloggning!?
+            <Grid container={true} spacing={16}>
 
-                    let userTemplateMap = new Map<string, {id: string, name: string}>();
-                    templateMappings.forEach((mapping: MappingType) => {
-                        userTemplateMap.set(mapping.businessObject.id, {id: mapping.template.id, name: mapping.template.name});
-                    });
-                    
-                    return (*/
-                        // TODO RH: Denna Query ska ha gjorts t.ex. vid inloggning!?
-/*                        <Query
-                            query={getUserRelations}
-                            variables={{
-                                moId: this.props.mappedUserMO,
-                                userId: this.props.userid,
-                                mrId: this.props.userTemplateMR
-                            }}
-                        > 
-                            {({ loading: loading2, data: data2, error: error2 }) => {
-                                if (loading2) {
-                                    return <div>Loading</div>;
-                                }
-                                if (error2) {
-                                    return <h1>ERROR</h1>;
-                                }
+                <Grid item={true} xs={12}>
+                    <div>
+                        Logged in user: {' ' + LoginVars.USER_ID}
+                    </div>
+                    <div>
+                        User Template: {' ' + this.props.templateName}
+                    </div>
+                </Grid>
+                {LoginVars.USER_ID !== '' ?
+                    <Query
+                        query={getTemplate}
+                        variables={{
+                            tid: this.props.templateId
+                        }}
+                    > 
+                        {({ loading: loading3, data: data3, error: error3 }) => {
+                            if (loading3) {
+                                return <div>Loading</div>;
+                            }
+                            if (error3) {
+                                return <h1>ERROR</h1>;
+                            }
 
-                                // tslint:disable-next-line:no-console
-                                console.log('-- QUERY 22 ...' + this.props.mappedUserMO + ' ' + this.props.userid + ' ' + this.props.userTemplateMR);
+                            const template = data3.template as TemplateType;
 
-                                let templateId = DEFAULT_USER_TEMPLATE;
-                                let templateName = 'Default template';    // Read from DB
-
-                                const businessObjects = data2.businessObjects as UserRelationType[];
-
-                                // tslint:disable-next-line:no-console
-                                console.log('Response: ' + businessObjects);
-
-                                if (businessObjects.length) {  // Check if userid is connected to BO via relation defined by TEMPLATE_CONFIG_MORELATION
-                                    businessObjects[0].outgoingRelations.forEach(rel => {
-                                        if (rel.metaRelation.id === this.props.userTemplateMR) {
-                                            const template = userTemplateMap.get(rel.oppositeObject.id);
-                                            if (template !== undefined) {  // Check if the BO is mapped to template
-                                                templateId = template.id;
-                                                templateName = template.name;
-                                                return;
-                                            }
-                                        }
-                                    });
-                                }
-
-                                return (*/
-                                    <Grid container={true}>
-
-                                        <Grid item={true} xs={12}>
-                                            User Template: {' ' + this.props.templateName}
-                                        </Grid>
-                                        <Query
-                                            query={getTemplate}
-                                            variables={{
-                                                tid: this.props.templateId
-                                            }}
-                                        > 
-                                            {({ loading: loading3, data: data3, error: error3 }) => {
-                                                if (loading3) {
-                                                    return <div>Loading</div>;
+                            if (template) {
+                                return (
+                                    template.renderColumns.length ?
+                                        template.renderColumns.map((col, i) =>
+                                            <Grid item={true} xs={col.width} key={i} style={{backgroundColor: (i + 1) % 2 ? 'grey' : 'yellow'}}>
+                                                {col.widgets.length > 0 ? 
+                                                    col.widgets.map((widget, j) => 
+                                                        <Grid item={true} xs={widget.width} key={j}>
+                                                            <Paper style={{ marginBottom: '10px'}}>
+                                                                <Widget render={widget}/>
+                                                            </Paper>
+                                                        </Grid>
+                                                    
+                                                    )
+                                                    :
+                                                    <div>-No widgets defined for this column-</div>
                                                 }
-                                                if (error3) {
-                                                    return <h1>ERROR</h1>;
-                                                }
-
-                                                // tslint:disable-next-line:no-console
-                                                console.log('-- QUERY 333 ...');
-                                
-                                                const template = data3.template as TemplateType;
-
-                                                return (
-                                                    template.widgets.length ? (
-                                                        template.widgets.map((widget, index) => {
-                                                            return (
-                                                                <Grid item={true} xs={widget.width} key={index}>
-                                                                    <Paper>
-                                                                        <Widget render={widget}/>
-                                                                    </Paper>
-                                                                </Grid>
-                                                            );
-                                                        }))
-                                                        :
-                                                        '-No widgets defined for this template-'
-                                                );
-                                            }}
-                                        </Query>
-                                    </Grid>
-/*                                );
-                            }}
-                        </Query>*/
-//                    );
-//                }}
-//            </Query>
+                                            </Grid>
+                                        )
+                                        :
+                                        <div>-No widgets defined for this template-</div>
+                                );
+                            } else {
+                                // RH TODO: decide if this is necessary
+                                return <div>-User template mapping setup not finished...-</div>;
+                            }
+                        }}
+                    </Query>
+                    :
+                    null
+                }
+            </Grid>
         );
     }
 }
@@ -299,21 +209,21 @@ class HomePage extends React.Component<Props> {
 
         // tslint:disable-next-line:no-console
         console.log('-- RENDER HOMEPAGE ...');
-        if (LoginVars.USER_ID === '') {
+/*        if (LoginVars.USER_ID === '') {
             return '-NOT LOGGED IN-';
-        }
+}*/
         const { classes } = this.props;
 
         return (
-            <Grid container={true} className={classes.root}>
-                <Grid item={true} xs={12}>
-                    <Paper><DefaultTemplate/></Paper>
+                <Grid container={true} className={classes.root}>
+                    <Grid item={true} xs={12}>
+                        <Paper><DefaultTemplate/></Paper>
+                    </Grid>
+                        <UserBasedTemplate
+                            templateName={LoginVars.USER_TEMPLATE_NAME}
+                            templateId={LoginVars.USER_TEMPLATE_ID}
+                        />
                 </Grid>
-                    <UserBasedTemplate
-                        templateName={LoginVars.USER_TEMPLATE_NAME}
-                        templateId={LoginVars.USER_TEMPLATE_ID}
-                    />
-            </Grid>
         );
     }
 }  

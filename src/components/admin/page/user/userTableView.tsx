@@ -119,8 +119,8 @@ class UserTable extends React.Component<Props> {
         return (
             <Paper className={classes.paperMargin}>
                 <Grid container={true} className={classes.root}>
-                    <Grid item={true} xs={1}>
-                        <Typography variant="h6">User Table</Typography>
+                    <Grid item={true} xs={2}>
+                        <Typography variant="h6">System Users</Typography>
                     </Grid>
                     {Globals.SystemConfigVars.SYSTEMUSER_USERID_MA_MAPPING !== '' ?
                         <Grid item={true}>
@@ -140,13 +140,12 @@ class UserTable extends React.Component<Props> {
                 <Divider style={{marginTop: 10, marginBottom: 10}}/>
                 {Globals.SystemConfigVars.SYSTEMUSER_USERID_MA_MAPPING !== '' ?
                     <div>
-                        <Table>
+                        <Table style={{tableLayout: 'fixed'}}>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Edit</TableCell>
+                                    <TableCell>{''}</TableCell>
                                     <TableCell>Name</TableCell>
                                     <TableCell>User ID</TableCell>
-                                    <TableCell>Delete</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -176,13 +175,11 @@ class UserTable extends React.Component<Props> {
                                             response.users.map(user => 
                                                 <TableRow key={user.id}>
                                                     <TableCell>
+                                                        <Button onClick={() => this.deleteUser(user.id)} color={'secondary'} ><Delete/></Button>
                                                         <Button onClick={() => this.editUser(user.id)} color={'primary'} ><Edit/></Button>
                                                     </TableCell>
                                                     <TableCell>{user.name}</TableCell>
                                                     <TableCell>{user.userid}</TableCell>
-                                                    <TableCell>
-                                                        <Button onClick={() => this.deleteUser(user.id)} color={'secondary'} ><Delete/></Button>
-                                                    </TableCell>
                                                 </TableRow>                            
                                             )
                                             :
@@ -204,7 +201,7 @@ class UserTable extends React.Component<Props> {
                             if (!loading) { this.noOfUsers = data.usersConnection.aggregate.count; }
 
                             return (
-                                <div>
+                                <div className={classes.button}>
                                     {this.state.currPage * this.state.pageSize + 1 + '-' + (this.state.currPage + 1) * this.state.pageSize + ' of ' + (loading ? 0 : this.noOfUsers)}
                                     <IconButton className={this.props.classes.button} aria-label="Back" onClick={() => this.pageBack()} disabled={this.state.currPage === 0}>
                                         <KeyboardArrowLeft />

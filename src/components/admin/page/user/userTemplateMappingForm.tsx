@@ -5,16 +5,19 @@ import { styles } from '../../../shared/style';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-const getMetaAttrsQuery = gql`
-query getMetaAttrs($moId: ID) {
+const getMetaRelsQuery = gql`
+query getMetaRels($moId: ID) {
     metaObject(
       where: {id: $moId}
     ) {
         id
-        attributes {
+        outgoingRelations {
             id
-            name
-            type
+            oppositeName
+            multiplicity
+            oppositeRelation {
+                id
+            }
         }
     }
 }
@@ -22,36 +25,37 @@ query getMetaAttrs($moId: ID) {
 
 interface Props extends WithStyles<typeof styles> {
     selectedMO: string;
-    selectedMA: string;
+    selectedMR: string;
     metaObjects: {id: string; name: string}[];
-    onSubmit: (moId: string, maId: string) => void;
+    onSubmit: (moId: string, mrId: string, oppMRId: string) => void;
 }
 
 interface State  {
     moId: string;
-    maId: string;
+    mrId: string;
 }
 
-class UserMgmt extends React.PureComponent<Props, State> {
+class MappingForm extends React.PureComponent<Props, State> {
 
     constructor(props: Props) {
         super(props);
-        this.state = {moId: props.selectedMO, maId: props.selectedMA};
+        this.state = {moId: props.selectedMO, mrId: props.selectedMR};
     }
 
     changeMoId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({moId: event.target.value, maId: ''});
+        this.setState({moId: event.target.value, mrId: ''});
     }
 
-    changeMaId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({maId: event.target.value});
+    changeMrId(event: React.ChangeEvent<HTMLSelectElement>) {
+        this.setState({mrId: event.target.value});
     }
 
     save = () => {
-        if (this.state.maId === '') {
+        if (this.state.mrId === '') {
             alert('Not saved... Please finish selection of mappings!');
         } else {
-            this.props.onSubmit(this.state.moId, this.state.maId);
+            let oppMRId = 'cjtr0alq1fdkj0b24684h2cn0';
+            this.props.onSubmit(this.state.moId, this.state.mrId, oppMRId);
         }
     }
     render() {
@@ -60,7 +64,7 @@ class UserMgmt extends React.PureComponent<Props, State> {
         return (
                 <Paper>
                     <div className={classes.root}>
-                        <Typography variant="h6">System User - Meta Domain mapping</Typography>
+                        <Typography variant="h6">User - Meta Object connection</Typography>
                     </div>
                     <Divider style={{marginTop: 10, marginBottom: 10}}/>
                     <div className={classes.root}>
@@ -86,7 +90,7 @@ class UserMgmt extends React.PureComponent<Props, State> {
                         </div>
                         <div>
                         {this.state.moId !== '' ?
-                            <Query query={getMetaAttrsQuery} variables={{moId: this.state.moId}}>
+                            <Query query={getMetaRelsQuery} variables={{moId: this.state.moId}}>
                                 {({ loading, data, error}) => {
                                     if (loading) {
                                         return <div>Loading options...</div>;
@@ -97,22 +101,22 @@ class UserMgmt extends React.PureComponent<Props, State> {
                                     return (
                                         <div>
                                             <FormControl className={this.props.classes.button}>  {/* RH TODO: coordinate styles with better context driven names! */}
-                                                <InputLabel htmlFor="mainput" className={this.props.classes.select}>
-                                                    Userid Mapped Meta Attribute
+                                                <InputLabel htmlFor="mrinput" className={this.props.classes.select}>
+                                                    Mapped Meta Relation
                                                 </InputLabel>
                                                 <Select 
                                                     className={this.props.classes.select}
-                                                    value={this.state.maId}
-                                                    onChange={newValue => this.changeMaId(newValue)}
-                                                    input={<Input name="maSelect" id="mainput"/>}
+                                                    value={this.state.mrId}
+                                                    onChange={newValue => this.changeMrId(newValue)}
+                                                    input={<Input name="mrSelect" id="mrinput"/>}
                                                 >
-                                                    {data.metaObject.attributes.map((ma: {id: string, name: string, type: string}) => (
-                                                        ma.type === 'String' ?
-                                                        <MenuItem key={ma.id} value={ma.id}>
-                                                            {ma.name}
+                                                    {data.metaObject.outgoingRelations.map((mr: {id: string, oppositeName: string, multiplicity: string}) => (
+                                                        // mr.multiplicity === 'One' ?
+                                                        <MenuItem key={mr.id} value={mr.id}>
+                                                            {mr.oppositeName}
                                                         </MenuItem>
-                                                        :
-                                                        null
+                                                        // :
+                                                        // null
                                                     ))}
                                                 </Select>
                                             </FormControl>
@@ -132,7 +136,7 @@ class UserMgmt extends React.PureComponent<Props, State> {
                                 style={{ textTransform: 'none' }}
                                 onClick={e => this.save()} 
                                 className={classes.button}
-                                disabled={this.state.maId === ''}
+                                disabled={this.state.mrId === ''}
                             >
                                 Save
                             </Button>
@@ -143,4 +147,4 @@ class UserMgmt extends React.PureComponent<Props, State> {
     }
 }
 
-export const UserMgmtForm = withStyles(styles)(UserMgmt);
+export const UserTemplateMappingForm = withStyles(styles)(MappingForm);

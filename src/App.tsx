@@ -3,8 +3,9 @@ import './App.css';
 import '../node_modules/vis/dist/vis.css';
 
 import * as React from 'react';
-import { Link, Route, LinkProps } from 'react-router-dom';
+import { Link, Route, LinkProps, RouteComponentProps, withRouter } from 'react-router-dom';
 
+import { client } from './index';
 import * as Globals from './components/shared/globals';
 
 import PlannerAdmin from './components/admin/page/plannerConfigPage';
@@ -30,32 +31,6 @@ import Diagram from './components/diagramming/Rappid/rappid';
 
 // import * as loremIpsum from 'lorem-ipsum';
 import { Typography, WithStyles, createStyles, Theme, withStyles, Divider, Menu, MenuItem } from '@material-ui/core';
-
-import gql from 'graphql-tag';
-
-const getSystemSetupQuery = gql`
-query getUserMapping {
-    systemSetups {
-      id
-      systemUserMOMapping {
-        id
-      }
-      systemUseridMAMapping {
-        id
-      }
-    }
-  }
-`;
-
-type SystemSetup = {
-    id: string;
-    systemUserMOMapping: {
-        id: string;
-    }
-    systemUseridMAMapping: {
-        id: string;
-    }    
-};
 
 /*
 type TrelloBoardType = { name: string, url: string };
@@ -156,7 +131,6 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import HomeIcon from '@material-ui/icons/Home';
 import { AccountCircle, LinearScale } from '@material-ui/icons';
-import { Query } from 'react-apollo';
 
 const drawerWidth = 240;
 
@@ -220,7 +194,7 @@ export const styles = (theme: Theme) => createStyles({
     },
 });
 
-interface Props extends WithStyles<typeof styles> {
+interface Props extends RouteComponentProps<{}>, WithStyles<typeof styles> {
 }
 
 const LoginLink: React.SFC<ListItemProps> = (props) => { return <Link to="/login" {...props as LinkProps} />; };
@@ -255,6 +229,18 @@ class PersistentDrawerLeft extends React.Component<Props> {
     this.setState({ anchorEl: null });
   }
 
+  handleLogout = () => {
+    Globals.LoginVars.USER_ID = '';
+    client.resetStore().then(() => {
+        this.props.history.push(`/login`);
+        this.setState({ anchorEl: null });
+    });
+
+/*    client.cache.reset().then(() => {
+        this.props.history.push(`/login`);
+    });*/
+  }
+
   render() {
         const { classes } = this.props;
         const { open, anchorEl } = this.state;
@@ -281,35 +267,35 @@ class PersistentDrawerLeft extends React.Component<Props> {
                     <Typography variant="h6" color="inherit" className={classes.grow}>
                         BEAM
                     </Typography>
-                        <div>
-                            <IconButton
-                                aria-owns={menuOpen ? 'menu-appbar' : undefined}
-                                aria-haspopup="true"
-                                onClick={this.handleMenu}
-                                color="inherit"
-                            >
-                                <AccountCircle />
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorEl}
-                                anchorOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                open={menuOpen}
-                                onClose={this.handleClose}
-                            >
-                                <MenuItem onClick={this.handleClose}>Profile</MenuItem>
-                                <MenuItem onClick={this.handleClose}>My account</MenuItem>
-                                <Divider/>
-                                <MenuItem onClick={this.handleClose}>Logout</MenuItem>
-                            </Menu>
-                        </div>
+                    <div hidden={Globals.LoginVars.USER_ID === ''}>
+                        <IconButton
+                            aria-owns={menuOpen ? 'menu-appbar' : undefined}
+                            aria-haspopup="true"
+                            onClick={this.handleMenu}
+                            color="inherit"
+                        >
+                            <AccountCircle />
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            open={menuOpen}
+                            onClose={this.handleClose}
+                        >
+                            <MenuItem onClick={this.handleClose}>Profile</MenuItem>
+                            <MenuItem onClick={this.handleClose}>My account</MenuItem>
+                            <Divider/>
+                            <MenuItem onClick={this.handleLogout} >Logout</MenuItem>
+                        </Menu>
+                    </div>
                 </Toolbar>
             </AppBar>
                 <Drawer
@@ -372,46 +358,25 @@ class PersistentDrawerLeft extends React.Component<Props> {
                     })}
                 >
                     <div className={classes.drawerHeader}/>
-
-                    <Query query={getSystemSetupQuery}>
-                        {({ loading, data, error }) => {
-                            if (loading) {
-                                return <div>Loading System Setup...</div>;
-                            }
-                            if (error) {
-                                return <div>ERROR: {error.message}</div>;
-                            }
-
-                            let systemSetups: SystemSetup[] = data.systemSetups;
-                            if (systemSetups.length) {
-                                Globals.SystemConfigVars.SYSTEM_SETUP_ID = systemSetups[0].id;
-                                Globals.SystemConfigVars.SYSTEMUSER_METAOBJECT_MAPPING = systemSetups[0].systemUserMOMapping.id;
-                                Globals.SystemConfigVars.SYSTEMUSER_USERID_MA_MAPPING = systemSetups[0].systemUseridMAMapping.id;
-                            }
-
-                            return (
-                                <div>
-                                    <Route exact={true} path="/login" component={LoginForm} />
-                                    <Route exact={true} path="/" component={Home} />
-                                    <Route exact={true} path="/Home" component={Home} />
-                                    <Route exact={true} path="/PlannerAdmin" component={PlannerAdmin} />
-                                    <Route exact={true} path="/Chart" component={Example} />
-                                    <Route exact={true} path="/Diagram" component={Diagram} />
-                                    <Route exact={true} path="/Admin" component={Admin} />
-                                    <Route path="/Composer" component={Composer} />
-                                    <Route path="/Navigation" component={Navigation} />
-                                    <Route path="/Planner" component={Planner} />
-                                </div>
-                            );
-                        }}
-                    </Query>
+                        <div>
+                            <Route exact={true} path="/login" component={LoginForm} />
+                            <Route exact={true} path="/" component={Home} />
+                            <Route exact={true} path="/Home" component={Home} />
+                            <Route exact={true} path="/PlannerAdmin" component={PlannerAdmin} />
+                            <Route exact={true} path="/Chart" component={Example} />
+                            <Route exact={true} path="/Diagram" component={Diagram} />
+                            <Route exact={true} path="/Admin" component={Admin} />
+                            <Route path="/Composer" component={Composer} />
+                            <Route path="/Navigation" component={Navigation} />
+                            <Route path="/Planner" component={Planner} />
+                        </div>
                 </main>
             </div>
         );
     }
 }
 
-const MainMenu = withStyles(styles)(PersistentDrawerLeft);
+const MainMenu = withRouter(withStyles(styles)(PersistentDrawerLeft));
 
 class App extends React.Component<{}> {
     

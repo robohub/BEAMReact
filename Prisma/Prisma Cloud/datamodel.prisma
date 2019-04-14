@@ -139,9 +139,10 @@ type Plan {
 
 type TemplateConfig {
   id: ID! @unique
-  moObject: MetaObject @relation(name: "TemplateConfigMetaObject", link: INLINE)
-  moRelation: MetaRelation @relation(name: "TemplateConfigMetaRelation", link: INLINE)
-  defaultTemplate: Template @relation(name: "TemplateConfigTemplate", link: INLINE)
+  moObject: MetaObject @relation(name: "TemplateConfigMetaObject", link: INLINE) @default(value: [])
+  moRelation: MetaRelation @relation(name: "TemplateConfigMetaRelation", link: INLINE) @default(value: [])
+  userRelatedMRId : String
+  defaultTemplate: Template @relation(name: "TemplateConfigTemplate", link: INLINE) @default(value: [])
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -156,8 +157,16 @@ type TemplateMapping {
 
 type Template {
   id: ID! @unique
-  name: String!
-  widgets: [Widget]
+  name: String! @default(value: "")
+  renderColumns: [RenderColumn] @relation(name: "TemplateRenderColumn", onDelete: CASCADE) @default(value: [])
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type RenderColumn {
+  id: ID! @unique
+  widgets: [Widget]  @relation(name: "RenderColumnWidget", onDelete: CASCADE)
+  width: Int
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -175,8 +184,9 @@ type Widget {
 
 type SystemSetup {
   id: ID! @unique
-  systemUserMOMapping: MetaObject
-  systemUseridMAMapping: MetaAttribute
+  systemUserMOMapping: MetaObject @default(value: [])
+  systemUseridMAMapping: MetaAttribute @default(value: [])
+  templateConfig: TemplateConfig @default(value: [])
   createdAt: DateTime!
   updatedAt: DateTime!
 }

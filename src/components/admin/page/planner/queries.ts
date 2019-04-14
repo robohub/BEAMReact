@@ -12,6 +12,7 @@ query allPlanConfigs {
             id
             oppositeName
             oppositeRelation {
+                id
                 incomingObject {
                     id
                     name

@@ -1,16 +1,44 @@
 import * as React from 'react';
+import { RouteComponentProps } from 'react-router-dom';
+
 import { Paper, withStyles, WithStyles, createStyles, Theme, Grid, TextField, Button, FormControlLabel, Checkbox } from '@material-ui/core';
 import { Face, Fingerprint } from '@material-ui/icons';
 
 import { Form, Field, withFormik, FormikProps } from 'formik';
 import MDInputField from '../shared/MDInputField';
 
-import { getTemplateMapping, MappingType, getUserRelations, UserRelationType } from '../home/homePage';
-import { SystemConfigVars } from '../shared/globals';
-import { LoginVars } from '../home/homePage';
+import { SystemConfigVars, LoginVars } from '../shared/globals';
 
 import { client } from '../../index';
-import { ApolloQueryResult } from 'apollo-client';
+import gql from 'graphql-tag';
+
+export const getUserRelations = gql`
+query getUserRelations($moId: ID, $userId: String, $mrId: ID) {
+    businessObjects(
+        where: {
+            AND: [{metaObject: {id: $moId}},
+                {name: $userId},{outgoingRelations_some: {metaRelation: {id:$mrId}}}]
+        }
+    )
+    {
+        id
+        outgoingRelations {
+            id
+            metaRelation { id }
+            oppositeObject { id  }
+        }
+    }
+}
+`;
+
+export type UserRelationType = {
+    outgoingRelations: {
+        metaRelation: {
+            id: string
+        }
+        oppositeObject: { id: string }
+    }[]
+};
 
 const styles = ({ spacing }: Theme) => createStyles({
     margin: {
@@ -31,7 +59,7 @@ interface FormValues {
     userid: string;
 }
 
-interface Props extends WithStyles<typeof styles> {
+interface Props extends RouteComponentProps<{}>, WithStyles<typeof styles> {
 }
 
 const formikEnhancer = withFormik<Props, FormValues>({
@@ -45,30 +73,28 @@ const formikEnhancer = withFormik<Props, FormValues>({
         }
         return errors;*/
     },
-    handleSubmit: async (values: FormValues, { setSubmitting }) => {
+    handleSubmit: async (values: FormValues, { props, setSubmitting }) => {
         setSubmitting(false);
         LoginVars.USER_ID = values.userid;
-
-        let mappings: ApolloQueryResult<{templateMappings: MappingType[]}> = await client.query({
-            query: getTemplateMapping
-        });
-        mappings.data.templateMappings.forEach(mapping => {
-            LoginVars.USER_TEMPLATE_MAP.set(mapping.businessObject.id, {id: mapping.template.id, name: mapping.template.name});
-        });
 
         let result = await client.query({
             query: getUserRelations,
             variables: {
                 moId: SystemConfigVars.SYSTEMUSER_METAOBJECT_MAPPING,
                 userId: LoginVars.USER_ID,
-                mrId: SystemConfigVars.TEMPLATE_CONFIG_MORELATION
+                mrId: SystemConfigVars.USER_RELATED_METARELATION
             }
         });
+
+        // Set default values, before searching for specific templates
+        LoginVars.USER_TEMPLATE_ID = SystemConfigVars.DEFAULT_USER_TEMPLATE;
+        LoginVars.USER_TEMPLATE_NAME = 'Default template - hard coded';
+
         let businessObjects = result.data.businessObjects as UserRelationType[];
-        if (businessObjects.length) {  // Check if userid is connected to BO via relation defined by TEMPLATE_CONFIG_MORELATION
+        if (businessObjects.length) {  // Check if userid is connected to BO via relation defined by USER_RELATED_METARELATION
             businessObjects[0].outgoingRelations.forEach(rel => {
-                if (rel.metaRelation.id === SystemConfigVars.TEMPLATE_CONFIG_MORELATION) {
-                    const template = LoginVars.USER_TEMPLATE_MAP.get(rel.oppositeObject.id);
+                if (rel.metaRelation.id === SystemConfigVars.USER_RELATED_METARELATION) {
+                    const template = SystemConfigVars.USER_TEMPLATE_MAP.get(rel.oppositeObject.id);
                     if (template !== undefined) {  // Check if the BO is mapped to template
                         LoginVars.USER_TEMPLATE_ID = template.id;
                         LoginVars.USER_TEMPLATE_NAME = template.name;
@@ -77,6 +103,9 @@ const formikEnhancer = withFormik<Props, FormValues>({
                 }
             });
         }
+
+        props.history.push(`/home`);
+
     },
     displayName: 'Login',
 });
