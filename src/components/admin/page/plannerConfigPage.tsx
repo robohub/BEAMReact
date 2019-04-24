@@ -30,7 +30,7 @@ class PlannerConfig extends React.Component<Props> {
                     <Tabs value={this.state.tabval} onChange={this.handleTabChange}>
                         <Tab label="User Mgmt" icon={<AccountCircle />}/>
                         <Tab label="Template definition" icon={<LibraryBooksOutlined />}/>
-                        <Tab label="BO <-> Template" icon={<SwapHoriz />}/>
+                        <Tab label="User templates" icon={<SwapHoriz />}/>
                         <Tab label="Planner setup" icon={<ClearAllOutlined />}/>
                     </Tabs>
                 </AppBar>

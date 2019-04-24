@@ -62,11 +62,11 @@ type TemplateType = {
     }[]
 };
 
-interface WidgetProps  {
+interface WidgetProps extends WithStyles<typeof styles> {
     render: WidgetType;
 }
 
-class Widget extends React.Component<WidgetProps> {
+class WidgetBase extends React.Component<WidgetProps> {
 
     updateSelectedBO = (boId: string) => {
         // This is just temporary - until TimeLine/Navigation is split to read-only component!
@@ -81,24 +81,29 @@ class Widget extends React.Component<WidgetProps> {
         // tslint:disable-next-line:no-console
         console.log('-- RENDER WIDGET ...');
 
+        const { classes } = this.props;
+
         const { render } = this.props;
         switch (render.type) {
             case 'Plan':
                 return (
-                    <TimeLine
-                        selectedBO={render.boid}
-                        updateSelectedBO={this.updateSelectedBO}
-                        selectedBoName={render.name}
-                    />
-                    // 'TIMELINE WIDGET'
+                    // TIMELINE WIDGET
+                    <div className={classes.root}>
+                        <TimeLine
+                            selectedBO={render.boid}
+                            updateSelectedBO={this.updateSelectedBO}
+                            selectedBoName={render.name}
+                            readonly={true}
+                        />
+                    </div>
                 );
             case 'Navigation':
                 return (
+                    // 'NAVIGATION WIDGET'
                     <BOGraphContainer
                         selectedBO={render.boid}
                         updateInfoView={this.updateSelectedBO}
                     />
-                    // 'NAVIGATION WIDGET'
                 );
             case 'Text':
                 return render.text;
@@ -107,7 +112,9 @@ class Widget extends React.Component<WidgetProps> {
                 return <span> -Widget Type not implemented-</span>;
             }       
     }
-}  
+}
+
+const Widget = withStyles(styles)(WidgetBase);
 
 interface UserProps {
     templateName: string;

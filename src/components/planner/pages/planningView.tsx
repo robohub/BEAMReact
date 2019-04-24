@@ -47,9 +47,21 @@ class PlanningView extends React.Component<Props, State> {
     }
 
     updateSelectedBO = (boId: string) => {
+    
+        function getCorrespondingMoAndBoName(boid: string, planConfigs: PlanConfig[]) {
+            for (var i = 0; i < planConfigs.length; i++ ) {
+                let pc = planConfigs[i];
+                for (var j = 0; j <  pc.uiMoPlan.businessObjects.length; j++) {
+                    if (pc.uiMoPlan.businessObjects[j].id === boid) {
+                        return { mo: pc.uiMoPlan.id, boName: pc.uiMoPlan.businessObjects[j].name };
+                    }
+                }
+            }
+            return null;  // If BO is not a Plan Object
+        }
 
         if (this.state.selectedBO !== boId) {
-            let boValues = this.getCorrespondingMoAndBoName(boId);
+            let boValues = getCorrespondingMoAndBoName(boId, this.planConfigs);
             if (boValues) {
                 this.setState({
                     selectedBO: boId,
@@ -58,18 +70,6 @@ class PlanningView extends React.Component<Props, State> {
                 });  // Update if boId is meant to be a planning object!
             }
         }
-    }
-
-    getCorrespondingMoAndBoName = (boId: string) => {
-        for (var i = 0; i < this.planConfigs.length; i++ ) {
-            let pc = this.planConfigs[i];
-            for (var j = 0; j <  pc.uiMoPlan.businessObjects.length; j++) {
-                if (pc.uiMoPlan.businessObjects[j].id === boId) {
-                    return { mo: pc.uiMoPlan.id, boName: pc.uiMoPlan.businessObjects[j].name };
-                }
-            }
-        }
-        return null;  // If BO is not a Plan Object
     }
 
     toggleDrawer = (open: boolean) => () => {
@@ -110,6 +110,7 @@ class PlanningView extends React.Component<Props, State> {
                                             selectedBO={this.state.selectedBO}
                                             updateSelectedBO={this.updateSelectedBO}
                                             selectedBoName={this.state.selectedBoName}
+                                            readonly={false}
                                         />
                                     </Paper>
                                 </Grid>

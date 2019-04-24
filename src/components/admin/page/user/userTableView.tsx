@@ -178,7 +178,7 @@ class UserTable extends React.Component<Props> {
                                                         <Button onClick={() => this.deleteUser(user.id)} color={'secondary'} ><Delete/></Button>
                                                         <Button onClick={() => this.editUser(user.id)} color={'primary'} ><Edit/></Button>
                                                     </TableCell>
-                                                    <TableCell>{user.name}</TableCell>
+                                                    <TableCell><Typography variant="subtitle2">{user.name}</Typography></TableCell>
                                                     <TableCell>{user.userid}</TableCell>
                                                 </TableRow>                            
                                             )

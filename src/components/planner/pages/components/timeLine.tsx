@@ -64,6 +64,7 @@ interface Props extends WithStyles<typeof styles> {
     selectedBO: string;
     selectedBoName: string;
     updateSelectedBO: (boId: string) => void;
+    readonly: boolean;
 }
 
 interface State {
@@ -122,15 +123,22 @@ class TimeLine extends React.Component<Props, State> {
                 this.props.updateSelectedBO(event.item);  // Will lead to change of plan...
             }            
         }));
+        if (this.props.selectedBO !== null) {
+            this.showTimeLine();
+        }
     }
 
     componentDidUpdate() {
         if (this.props.selectedBO !== null && this.props.selectedBO !== this.state.selectedBOId) {
-            this.setState({selectedBOId: this.props.selectedBO});
-            this.items.clear();
-            this.groups.clear();
-            this.drawTimeLine();
+            this.showTimeLine();
         }
+    }
+
+    showTimeLine() {
+        this.setState({selectedBOId: this.props.selectedBO});
+        this.items.clear();
+        this.groups.clear();
+        this.drawTimeLine();
     }
 
     generateId() {
@@ -311,9 +319,15 @@ class TimeLine extends React.Component<Props, State> {
                 <Divider/>
 
                 <div id="timeline" />
-                <Button variant="contained" color="primary" className={this.props.classes.button} onClick={this.saveClicked} disabled={this.props.selectedBO === null}>Save</Button>
-                <Button color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO === null}>Fit</Button>
-                <Button color="primary" className={this.props.classes.button} onClick={this.createGroup} disabled={this.props.selectedBO === null}>Create Group</Button>
+                {!this.props.readonly ?
+                    <div>
+                        <Button variant="contained" color="primary" className={this.props.classes.button} onClick={this.saveClicked} disabled={this.props.selectedBO === null}>Save</Button>
+                        <Button color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO === null}>Fit</Button>
+                        <Button color="primary" className={this.props.classes.button} onClick={this.createGroup} disabled={this.props.selectedBO === null}>Create Group</Button>
+                    </div>
+                    :
+                    null
+                }
             </div>
         );
     }

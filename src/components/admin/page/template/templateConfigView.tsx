@@ -160,48 +160,57 @@ class LayoutTable extends React.Component<Props> {
         const { classes, template, saveFunc } = this.props;
         return (
             <List>
-                {template.renderColumns.map((col, i) => (
-                    <span key={i}>
-                        <ListItem>
-                            <ListItemIcon>
-                                <ViewWeek />
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={'Column: ' + (i + 1) + ', width=' + col.width}
-                                secondary={
-                                    <span>
-                                        {col.widgets.map((widget, j) => 
-                                            <span key={j} >
-                                                {saveFunc ?
-                                                    <Chip component={'span'} label={'<' + widget.type + '> ' + widget.name} onDelete={e => this.deleteWidget(widget.id)} className={classes.button}/>
-                                                    :
-                                                    <Chip component={'span'} label={'<' + widget.type + '> ' + widget.name} className={classes.button}/>
-                                                }
-                                                {saveFunc ?
-                                                    <Fab size="small" color="primary" aria-label="Add" className={classes.button} onClick={e => this.addWidget(col.id)}>
-                                                        <Add />
-                                                    </Fab>
-                                                    :
-                                                    null
-                                                }
-                                            </span>
-                                            )}
-                                    </span>
+                {template.renderColumns.length ?
+                    template.renderColumns.map((col, i) => (
+                        <span key={i}>
+                            <ListItem>
+                                <ListItemIcon>
+                                    <ViewWeek />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={'Column: ' + (i + 1) + ', width=' + col.width}
+                                    secondary={
+                                        <span>
+                                            {col.widgets.map((widget, j) => 
+                                                <span key={j} >
+                                                    {saveFunc ?
+                                                        <Chip
+                                                            component={'span'}
+                                                            label={'<' + widget.type + '> ' + widget.name}
+                                                            onDelete={e => this.deleteWidget(widget.id)}
+                                                            className={classes.button}
+                                                        />
+                                                        :
+                                                        <Chip component={'span'} label={'<' + widget.type + '> ' + widget.name} className={classes.button}/>
+                                                    }
+                                                    {saveFunc ?
+                                                        <Fab size="small" color="primary" aria-label="Add" className={classes.button} onClick={e => this.addWidget(col.id)}>
+                                                            <Add />
+                                                        </Fab>
+                                                        :
+                                                        null
+                                                    }
+                                                </span>
+                                                )}
+                                        </span>
+                                    }
+                                />
+                                {saveFunc ?
+                                    <ListItemSecondaryAction>
+                                        <IconButton aria-label="Delete" onClick={e => this.deleteColumn(col.id)}>
+                                            <Delete />
+                                        </IconButton>
+                                    </ListItemSecondaryAction>
+                                    :
+                                    null
                                 }
-                            />
-                            {saveFunc ?
-                                <ListItemSecondaryAction>
-                                    <IconButton aria-label="Delete" onClick={e => this.deleteColumn(col.id)}>
-                                        <Delete />
-                                    </IconButton>
-                                </ListItemSecondaryAction>
-                                :
-                                null
-                            }
-                        </ListItem>
-                        <Divider style={{marginTop: '10px', marginBottom: '10px'}}/>
-                    </span>
-                ))}
+                            </ListItem>
+                            <Divider style={{marginTop: '10px', marginBottom: '10px'}}/>
+                        </span>
+                    ))
+                    :
+                    <Typography variant="body2">-No columns defined-</Typography>
+                }
                 {saveFunc ?    
                     <Fab size="small" color="primary" aria-label="Add" className={classes.button} onClick={this.addColumn}>
                         <Add />
@@ -317,7 +326,7 @@ export class TemplateConfig extends React.Component<TProps> {
                                                     <Button onClick={() => this.editTemplate(template.id)} color={'primary'}> <Edit/> </Button>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {template.name}
+                                                    <Typography variant="subtitle2">{template.name}</Typography>
                                                 </TableCell>
                                                 <TableCell>
                                                     <LayoutComp template={template} saveFunc={this.saved}/>
