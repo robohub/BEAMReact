@@ -40,7 +40,43 @@ export class StencilService {
             // Use default Grid Layout
             layout: true,
             // Remove tooltip definition from clone
-            dragStartClone: cell => cell.clone().removeAttr('root/dataTooltip')
+            dragStartClone: cell => cell.clone().removeAttr('root/dataTooltip'),
+            dragEndClone: cell => {
+                // tslint:disable-next-line:no-console
+                console.log('Dropped cell on paper...');
+/*
+                if (cell.get('type') === 'standard.EmbeddedImage') {
+                    var cell2 = new dia.Cell({
+                        type: 'standard.Image',
+                        size: { width: 53, height: 42 },
+                        attrs: {
+                            root: {
+                                dataTooltip: 'Image',
+                                dataTooltipPosition: 'left',
+                                dataTooltipPositionSelector: '.joint-stencil'
+                            },
+                            image: {
+                                xlinkHref: 'assets/image-icon3.svg'
+                            },
+                            body: {
+                                fill: 'transparent',
+                                stroke: '#31d0c6',
+                                strokeWidth: 2,
+                                strokeDasharray: '0'
+                            },
+                            label: {
+                                text: 'image',
+                                fontFamily: 'Roboto Condensed',
+                                fontWeight: 'Normal',
+                                fontSize: 11,
+                                fill: '#c6c7e2'
+                            }
+                        }
+                    });
+                    return cell2;
+                }*/
+                return cell.clone();
+            }
         });
     }
 
@@ -50,17 +86,48 @@ export class StencilService {
 
     getStencilGroups() {
         return <{ [key: string]: ui.Stencil.Group }> {
-            standard: { index: 1, label: 'Standard shapes' },
-            fsa: { index: 2, label: 'State machine' },
-            pn: { index: 3, label: 'Petri nets' },
-            erd: { index: 4, label: 'Entity-relationship' },
-            uml: { index: 5, label: 'UML' },
-            org: { index: 6, label: 'ORG' }
+            rob: { index: 1, label: 'Business Object' },
+            standard: { index: 2, label: 'Standard shapes' },
+            fsa: { index: 3, label: 'State machine' },
+            pn: { index: 4, label: 'Petri nets' },
+            erd: { index: 5, label: 'Entity-relationship' },
+            uml: { index: 6, label: 'UML' },
+            org: { index: 7, label: 'ORG' }
         };
     }
 
     getStencilShapes() {
         return {
+            rob: [
+                {
+                    type: 'standard.EmbeddedImage',
+                    size: { width: 5, height: 3 },
+                    attrs: {
+                        root: {
+                            dataTooltip: 'Card',
+                            dataTooltipPosition: 'left',
+                            dataTooltipPositionSelector: '.joint-stencil'
+                        },
+                        body: {
+                            fill: 'transparent',
+                            stroke: '#31d0c6',
+                            strokeWidth: 2,
+                            strokeDasharray: '0'
+                        },
+                        image: {
+                            xlinkHref: 'assets/image-icon1.svg'
+                        },
+                        label: {
+                            text: 'card',
+                            fill: '#c6c7e2',
+                            fontFamily: 'Roboto Condensed',
+                            fontWeight: 'Normal',
+                            fontSize: 11,
+                            strokeWidth: 0
+                        }
+                    }
+                },
+            ],
             standard: [
                 {
                     type: 'standard.Rectangle',
@@ -270,34 +337,7 @@ export class StencilService {
                         }
                     }
                 },
-                {
-                    type: 'standard.EmbeddedImage',
-                    size: { width: 5, height: 3 },
-                    attrs: {
-                        root: {
-                            dataTooltip: 'Card',
-                            dataTooltipPosition: 'left',
-                            dataTooltipPositionSelector: '.joint-stencil'
-                        },
-                        body: {
-                            fill: 'transparent',
-                            stroke: '#31d0c6',
-                            strokeWidth: 2,
-                            strokeDasharray: '0'
-                        },
-                        image: {
-                            xlinkHref: 'assets/image-icon1.svg'
-                        },
-                        label: {
-                            text: 'card',
-                            fill: '#c6c7e2',
-                            fontFamily: 'Roboto Condensed',
-                            fontWeight: 'Normal',
-                            fontSize: 11,
-                            strokeWidth: 0
-                        }
-                    }
-                },
+
                 {
                     type: 'standard.InscribedImage',
                     size: { width: 1, height: 1 },

@@ -5,7 +5,8 @@ import { Tabs, Tab, Button } from '@material-ui/core';
 import AttachementIcon from '@material-ui/icons/AttachFile';
 import LinkIcon from '@material-ui/icons/Link';
 
-import { BOEditType , MOResponse } from './Types';
+import { MetaObjectType } from './Types';
+import { BOEditType } from '../../../../domain/utils/boUtils';
 
 import { withFormik, Form, FieldArray, FormikProps, Field } from 'formik';
 import MDInputField from '../../../shared/MDInputField';
@@ -17,7 +18,7 @@ import { styles } from './../../../shared/style';
 
 interface Props extends WithStyles<typeof styles> {
     newObject: boolean;
-    metaObject: MOResponse;
+    metaObject: MetaObjectType;
     bizObject?: BOEditType;
     onSubmit: (values: FormValues) => void;
 }
@@ -31,7 +32,7 @@ const formikEnhancer = withFormik<Props, FormValues>({
         
         // Attributes
 
-        const { attributes: metaAttrs } = props.metaObject.metaObject;
+        const { attributes: metaAttrs } = props.metaObject;
         var formAttrs = new Array<FormAttribute>(0);
         
         if (props.newObject) {
@@ -58,7 +59,7 @@ const formikEnhancer = withFormik<Props, FormValues>({
 
         // Relations
 
-        const { outgoingRelations: metaRels } = props.metaObject.metaObject;
+        const { outgoingRelations: metaRels } = props.metaObject;
         var formRels = new Array<FormRelation>(0);
         
         if (props.newObject) {
@@ -159,7 +160,7 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
         // tslint:disable-next-line:no-console
         console.log(' ------ ------  ------ ----- BOEditForm renderar...');
 
-        this.props.metaObject.metaObject.outgoingRelations.map(mr => {
+        this.props.metaObject.outgoingRelations.map(mr => {
             if (this.options[mr.id] === undefined) {
                 this.options[mr.id] = { multiplicity: mr.multiplicity, bizobjects: mr.oppositeObject.businessObjects };
             }

@@ -12,3 +12,9 @@ export type BoType = {
     name: string
     plan: { id: string }
 };
+
+export type SelectedPlanBOType = {
+    id: string;
+    name: string;
+    metaObjectId: string;
+};

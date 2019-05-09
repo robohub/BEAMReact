@@ -4,7 +4,9 @@ import { UserMgmtView } from './user/userMgmtView';
 import { BoMappingTemplateView } from './template/boMappingTemplateView';
 import { TemplateConfigView } from './template/templateConfigView';
 import { Tabs, Tab, withStyles, WithStyles, createStyles, Theme, AppBar, Typography } from '@material-ui/core';
-import { AccountCircle, ClearAllOutlined, LibraryBooksOutlined, SwapHoriz } from '@material-ui/icons';
+import { AccountCircle, ClearAllOutlined, LibraryBooksOutlined, SwapHoriz, FeaturedPlayListOutlined } from '@material-ui/icons';
+
+import HTMLEditorView from './editor/editor';
 
 const styles = ({ palette }: Theme) => createStyles({
     root: {
@@ -32,6 +34,7 @@ class PlannerConfig extends React.Component<Props> {
                         <Tab label="Template definition" icon={<LibraryBooksOutlined />}/>
                         <Tab label="User templates" icon={<SwapHoriz />}/>
                         <Tab label="Planner setup" icon={<ClearAllOutlined />}/>
+                        <Tab label="HTML Editor" icon={<FeaturedPlayListOutlined />}/>
                     </Tabs>
                 </AppBar>
                 {this.state.tabval === 0 && 
@@ -54,7 +57,11 @@ class PlannerConfig extends React.Component<Props> {
                         <PlanConfigView/>
                     </Typography>
                 }
-
+                {this.state.tabval === 4 && 
+                    <Typography component="div" style={{ padding: 8 * 2 }}>
+                        <HTMLEditorView/>
+                    </Typography>
+                }
                 </div>
         );
     }

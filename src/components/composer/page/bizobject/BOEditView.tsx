@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { MOResponse, BOEditType, BizRelationsType, BizAttributeType, FormValues, FormRelation, FormAttribute, AllMRResponse } from './Types';
+import { MetaObjectType, FormValues } from './Types';
 import { updateSaveBO } from '../../../../domain/businessObject';
-import { BizRelPenta, UpdateBizAttrPair } from '../../../../domain/utils/boUtils';
+import { RelatedBOType, RelatedBAType, BOEditType } from '../../../../domain/utils/boUtils';
 
 import { BOEditForm } from './BOEditForm';
 import { Snackbar, IconButton } from '@material-ui/core';
@@ -10,77 +10,43 @@ import CloseIcon from '@material-ui/icons/Close';
 
 type MyProps = {
     newObject: boolean;
-    metaobject: MOResponse;
+    metaobject: MetaObjectType;
     bizObject?: BOEditType;
-    allMetaRels: AllMRResponse;
 };
 
 export default class EditBOView extends React.Component<MyProps> {
     state = { snackbarOpen: false };
 
     onSave = async (values: FormValues) => {
-
         const { newObject, bizObject } = this.props;
         const { bizAttributes, bizRelations } = values;
-
-        let createAttrs = new Array<{metaAttribute: {connect: {id: string}}, value: string}>();
-
-        let createRels = new Array<BizRelPenta>();
-        let deleteRels = new Array<BizRelPenta>();
-        var changedAttributeValues = new Array<UpdateBizAttrPair>();
-
         let objName = ''; // RH TODO temporary solution to the naming issue...
 
-        // Find the added and deleted relations
-        
-        if (newObject) {
-            // Fix attributes for save
+        let createBAs = new Array<RelatedBAType>();
+        if (this.props.newObject) {
             bizAttributes.map(attr => {
-                createAttrs.push({metaAttribute: {connect: {id: attr.maid}}, value: attr.bizattrval});
+                createBAs.push({maId: attr.maid, value: attr.bizattrval});
                 if (attr.name === 'Name') { objName = attr.bizattrval; }
             });
-
-            bizRelations.map(rel => {
-                if (typeof rel.bizrelbizobjs === 'string' && rel.bizrelbizobjs !== '') {
-                    createRels.push({mrid: rel.metarelid, oppositeObjectId: rel.bizrelbizobjs as string});
-                } else {
-                    for (let e = 0; e < rel.bizrelbizobjs.length; e++) {
-                        createRels.push({mrid: rel.metarelid, oppositeObjectId: rel.bizrelbizobjs[e]});
-                    }
-                }
-            });
-            changedAttributeValues = [];
-        } else {
-            changedAttributeValues = this.getUpdatedBizAttributes(values.bizAttributes, this.props.bizObject.bizAttributes);
-
-            const { added, toDelete } = this.getChangedRelations(bizObject.outgoingRelations, bizRelations);
-            createRels = added;
-            deleteRels  = toDelete;
         }
-
-        createRels.forEach(rel => {   // Find opposite meta relation id for when creating opposite relations later on...
-            this.props.allMetaRels.metaRelations.forEach(mr => {
-                if (rel.mrid === mr.id) {
-                    rel.oppMRid = mr.oppositeRelation.id;
-                    return;
+        
+        var relatedBOs = new Array<RelatedBOType>();
+        bizRelations.map(mo => {
+            if (typeof mo.bizrelbizobjs === 'string' && mo.bizrelbizobjs !== '') {
+                relatedBOs.push({mrId: mo.metarelid, boId: mo.bizrelbizobjs as string});
+            } else {
+                for (let e = 0; e < mo.bizrelbizobjs.length; e++) {
+                    relatedBOs.push({mrId: mo.metarelid, boId: mo.bizrelbizobjs[e]});
                 }
-            });            
+            }
         });
 
-        // tslint:disable-next-line:no-console
-        console.log('Added: ' + JSON.stringify(createRels, null, 2));
-        // tslint:disable-next-line:no-console
-        console.log('Deleted: ' + JSON.stringify(deleteRels, null, 2));
-    
-        await updateSaveBO(
-            newObject,
-            bizObject,
-            this.props.metaobject,
+        await updateSaveBO(     // RH TODO, check when this should be executed!!!
+            newObject ? '' : bizObject.id,
             objName,
-            createAttrs,
-            changedAttributeValues,
-            createRels,
-            deleteRels,
+            this.props.metaobject.id,
+            createBAs,
+            relatedBOs,
             this.saveFinished
         );
         
@@ -89,71 +55,7 @@ export default class EditBOView extends React.Component<MyProps> {
     }
 
     saveFinished = async () => {
-        this.setState({snackbarOpen: true});  // Will update UI with cach changes as well...
-    }
-
-    getChangedRelations = (oldrels: BizRelationsType[], newrels: FormRelation[]): {added: BizRelPenta[], toDelete: BizRelPenta[]} => {
-        var newrelPairs = new Array<BizRelPenta>(0);
-        var oldrelPairs = new Array<BizRelPenta>(0);
-
-        newrels.map(mo => {
-            if (typeof mo.bizrelbizobjs === 'string' && mo.bizrelbizobjs !== '') {
-                newrelPairs.push({mrid: mo.metarelid, oppositeObjectId: mo.bizrelbizobjs as string});
-            } else {
-                for (let e = 0; e < mo.bizrelbizobjs.length; e++) {
-                    newrelPairs.push({mrid: mo.metarelid, oppositeObjectId: mo.bizrelbizobjs[e]});
-                }
-            }
-        });
-
-        oldrels.map(br => {
-            oldrelPairs.push({mrid: br.metaRelation.id, oppositeObjectId: br.oppositeObject.id, bizrelId: br.id, oppBRid: br.oppositeRelation.id});
-        });
-
-        var deleted = this.diffDeletedRels(oldrelPairs, newrelPairs);
-        var added = this.diffDeletedRels(newrelPairs, oldrelPairs);
-
-        return {toDelete: deleted, added: added};
-    }
-
-    diffDeletedRels = (source: Array<BizRelPenta>, compare: Array<BizRelPenta>): BizRelPenta[] => {
-        var deleted = new Array<BizRelPenta>();
-        source.forEach(el => {
-            let sourceObj = { mrid: el.mrid, oppositeObjectId: el.oppositeObjectId }; // Remove field bizRelId from object to compare correctly
-            if (compare.findIndex(element => {
-                let compObj = { mrid: element.mrid, oppositeObjectId: element.oppositeObjectId }; // Remove field bizRelId from object to compare correctly
-                return JSON.stringify(sourceObj) === JSON.stringify(compObj); })
-            === -1) {
-                deleted.push(el);
-            }
-        });
-        return deleted;
-    }
-
-    getUpdatedBizAttributes = (newAttrs: FormAttribute[], oldAttrs: BizAttributeType[]): UpdateBizAttrPair[] => {
-        var updated = new Array<{metaId: string, value: string}>(0);
-        oldAttrs.forEach(oldBO => {
-            newAttrs.forEach(newBO => {
-                if (newBO.maid === oldBO.metaAttribute.id) {
-                    if (newBO.bizattrval !== oldBO.value) {
-                        updated.push({ metaId: newBO.maid , value: newBO.bizattrval});
-                    }
-                }
-            });
-        });
-        // tslint:disable-next-line:no-console
-        console.log(`UPDATED attributes :\n${JSON.stringify(updated, null, 0)}`);   
-        let objAttrs = this.props.bizObject.bizAttributes;
-        let changedBizAttrs = new Array<UpdateBizAttrPair>(0);
-        updated.forEach(metaRel => {
-            for (let i = 0; i < objAttrs.length; i++ ) {
-                if (metaRel.metaId === objAttrs[i].metaAttribute.id) {
-                    changedBizAttrs.push({ bizRelId: objAttrs[i].id, value: metaRel.value});
-                    break;
-                }
-            }
-        });
-        return changedBizAttrs;
+        this.setState({snackbarOpen: true});
     }
 
     showResults = (input: FormValues) => {

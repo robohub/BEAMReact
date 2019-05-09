@@ -15,3 +15,12 @@
     background-color: orange;
     border-color: orangered;
   }
+
+  .robclass1 {
+    background-color: #FFFF00
+  }
+
+  .robclass2 {
+    font-weight: 300;
+    font-size: 16px;
+  }

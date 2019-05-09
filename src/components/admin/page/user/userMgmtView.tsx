@@ -88,6 +88,7 @@ class UserMgmt extends React.PureComponent<Props> {
     }
 
     onSaveUserTemplate = (moId: string, mrId: string, oppMRId: string) => {
+        
         client.mutate({
             mutation: updateUserMOTemplateMutation,
             variables: {

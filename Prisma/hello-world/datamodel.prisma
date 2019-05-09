@@ -1,4 +1,4 @@
-﻿enum AttributeType {
+enum AttributeType {
   String
   Int
   Float
@@ -13,7 +13,6 @@ enum WidgetType {
   Diagram
   Navigation
   Tree
-  Video
 }
 
 type BizAttribute {
@@ -31,7 +30,7 @@ type BizRelation {
   incomingObject: BusinessObject @relation(name: "BOOutgoingBizRelation", link: INLINE)
   metaRelation: MetaRelation @relation(name: "BizRelationOnMetaRelation", link: INLINE)
   oppositeObject: BusinessObject @relation(name: "BOInComingBizRelation", link: INLINE)
-  oppositeRelation: BizRelation @relation(name: "BizRelationOnBizRelation", link: TABLE)
+  oppositeRelation: BizRelation @relation(name: "BizRelationOnBizRelation", link: INLINE)
   updatedAt: DateTime! @updatedAt
 }
 
@@ -83,7 +82,7 @@ type MetaRelation {
   multiplicity: MultiplicityType!
   oppositeName: String!
   oppositeObject: MetaObject @relation(name: "MetaRelationOnMetaObject", link: INLINE)
-  oppositeRelation: MetaRelation @relation(name: "MetaRelationOnMetaRelation", link: TABLE)
+  oppositeRelation: MetaRelation @relation(name: "MetaRelationOnMetaRelation", link: INLINE)
   updatedAt: DateTime! @updatedAt
 }
 
@@ -178,7 +177,7 @@ type SystemSetup {
   id: ID! @id
   systemUserMOMapping: MetaObject
   systemUseridMAMapping: MetaAttribute
-  templateConfig: TemplateConfig @relation(onDelete: CASCADE)
+  templateConfig: TemplateConfig
   createdAt: DateTime! @createdAt
   updatedAt: DateTime! @updatedAt
 }

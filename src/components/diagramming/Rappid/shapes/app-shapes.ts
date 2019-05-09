@@ -12,6 +12,54 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
 import * as joint from '../../../../vendor/rappid';
 import { memoize } from 'lodash';
 
+export namespace rob {
+    export var BO = joint.dia.Element.define('rob.BO',
+            { size: { width: 150, height: 100 },
+                attrs: { rect: { width: 170, height: 60 }, 
+                    '.card': { fill: '#FFFFFF', stroke: '#000000', 'stroke-width': 2, 'pointer-events': 'visiblePainted', rx: 10, ry: 10 },
+                    image: { width: 48, height: 48, ref: '.card', 'ref-x': 10, 'ref-y': 5 },
+                    '.rank': { 'text-decoration': 'underline', ref: '.card', 'ref-x': .9, 'ref-y': .2, 'font-family': 'Courier New', 'font-size': 14, 'text-anchor': 'end' },
+                    '.name': { 'font-weight': '800', ref: '.card', 'ref-x': .9, 'ref-y': .6, 'font-family': 'Courier New', 'font-size': 14, 'text-anchor': 'end' }
+                }
+            // tslint:disable-next-line:align
+            }, { 
+                markup: '<g class="rotatable"><g class="scalable"><rect class="card"/><image/></g><text class="rank"/><text class="name"/></g>' 
+            }
+        );
+
+    export class BizObject extends joint.shapes.standard.EmbeddedImage {
+        defaults() {
+            return joint.util.defaultsDeep({
+                type: 'rob.BizObject',
+                size: { width: 150, height: 60 },
+                attrs: {
+                    root: {
+                        dataTooltip: 'Image',
+                        dataTooltipPosition: 'left',
+                        dataTooltipPositionSelector: '.joint-stencil'
+                    },
+                    body: {
+                        fill: '#ffffff',
+                        stroke: '#31d0c6',
+                        strokeWidth: 2,
+                        strokeDasharray: '0'
+                    },
+                    label: {
+                        text: 'image',
+                        fontFamily: 'Roboto Condensed',
+                        fontWeight: 'Normal',
+                        fontSize: 14,
+                        fill: '#222138'
+                    }
+                },
+        
+                boId: -1  // RH default for custom attribute
+            },                             joint.shapes.standard.EmbeddedImage.prototype.defaults);
+        }
+    }
+
+}
+
 export namespace app {
 
     export class CircularModel extends joint.shapes.standard.Ellipse {

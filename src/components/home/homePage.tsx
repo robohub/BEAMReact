@@ -10,8 +10,14 @@ import { LoginVars } from '../shared/globals';
 import { styles } from '../shared/style';
 import { GridSize } from '@material-ui/core/Grid';
 
+import * as joint from '../../vendor/rappid';
+import * as appShapes from '../diagramming/Rappid/shapes/app-shapes';
+
 import TimeLine from '../planner/pages/components/timeLine';
 import BOGraphContainer from '../navigation/navComponents/boGraphContainer';
+import { client } from '../..';
+import { ApolloQueryResult } from 'apollo-client';
+import FroalaEditorView from 'react-froala-wysiwyg/FroalaEditorView';
 
 class DefaultTemplate extends React.Component {
     render() {  
@@ -46,6 +52,17 @@ query getTemplate($tid:ID){
 }
 `;
 
+const getDiagramQuery = gql`
+query getDiagram($id:ID) {
+    diagram(
+        where: {id: $id}
+    ) {
+        id
+        diagramData
+    }
+}
+`;
+
 type WidgetType = {
     id: string;
     name: string;
@@ -61,6 +78,62 @@ type TemplateType = {
         widgets: WidgetType[];
     }[]
 };
+
+interface DWProps extends WithStyles<typeof styles> {
+    selectedBO: string;
+}
+
+class DiagramWidgetClass extends React.Component<DWProps> {
+    state = { diagramData: JSON };
+
+    private graph: joint.dia.Graph;
+
+    componentDidMount() {
+        this.graph = new joint.dia.Graph({}, {
+            cellNamespace: appShapes
+        });
+
+        const paper = new joint.dia.Paper({
+            el: document.getElementById('dia'),
+            width: 800,
+            height: 800,
+            // gridSize: 10,
+            // drawGrid: false,
+            model: this.graph,
+
+            interactive: false
+        });
+
+        this.load();
+
+        // tslint:disable-next-line:no-console
+        console.log(paper);
+
+    }
+
+    async load() {
+        const result = await client.query({
+            query: getDiagramQuery,
+            variables: {
+                id: this.props.selectedBO
+            }
+        }) as ApolloQueryResult<{diagram: {diagramData: JSON}}>;
+        if (result.data.diagram) {
+            this.graph.fromJSON(result.data.diagram.diagramData);
+        }
+    }
+
+    render() {
+
+        return (
+
+            <div id="dia"   style={{overflowX: 'scroll'}}>-Hämtat diagram data-</div>
+
+        );
+    }
+}
+
+const DiagramWidget = withStyles(styles)(DiagramWidgetClass);
 
 interface WidgetProps extends WithStyles<typeof styles> {
     render: WidgetType;
@@ -90,10 +163,18 @@ class WidgetBase extends React.Component<WidgetProps> {
                     // TIMELINE WIDGET
                     <div className={classes.root}>
                         <TimeLine
-                            selectedBO={render.boid}
+                            selectedBO={{id: render.boid, name: render.name, metaObjectId: ''}}
                             updateSelectedBO={this.updateSelectedBO}
-                            selectedBoName={render.name}
                             readonly={true}
+                        />
+                    </div>
+                );
+            case 'Diagram':              
+                return (
+                    // DIAGRAM WIDGET
+                    <div className={classes.root} style={{overflow: 'scroll'}}>
+                        <DiagramWidget
+                            selectedBO={'cjuv91m7ckelh0b22d1tqb3i4'}
                         />
                     </div>
                 );
@@ -106,7 +187,29 @@ class WidgetBase extends React.Component<WidgetProps> {
                     />
                 );
             case 'Text':
-                return render.text;
+                return (
+                    <div className={classes.root}>
+                        {render.text}
+                    </div>
+                );
+            case 'Video':
+                return (
+                    <div className={classes.root} style={{overflow: 'scroll'}}>
+                        <iframe
+                            // width="640"
+                            // height="360"
+                            style={{display: 'block', width: '100%', height: 'auto', minHeight: '300px'}}
+                            src="https://www.youtube.com/embed/lt-I5zrRv4U"
+                            /* frameborder="0" */
+                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                            /* allowfullscreen={false} */
+                        />
+                    </div>
+                );            
+            case 'HTML':
+                return (
+                    <FroalaEditorView model={render.text}/>
+                );
 
             default:
                 return <span> -Widget Type not implemented-</span>;
@@ -170,16 +273,24 @@ class UserBasedTemplate extends React.PureComponent<UserProps> {
                                 return (
                                     template.renderColumns.length ?
                                         template.renderColumns.map((col, i) =>
-                                            <Grid item={true} xs={col.width} key={i} style={{backgroundColor: (i + 1) % 2 ? 'grey' : 'yellow'}}>
-                                                {col.widgets.length > 0 ? 
-                                                    col.widgets.map((widget, j) => 
-                                                        <Grid item={true} xs={widget.width} key={j}>
-                                                            <Paper style={{ marginBottom: '10px'}}>
-                                                                <Widget render={widget}/>
-                                                            </Paper>
-                                                        </Grid>
-                                                    
-                                                    )
+                                            <Grid item={true} xs={col.width} key={i} /* style={{backgroundColor: (i + 1) % 2 ? 'grey' : 'yellow'}} */>
+                                                {col.widgets.length > 0 ?
+                                                    <Grid
+                                                        container={true} 
+                                                        spacing={8}  
+
+                                                        // direction="column"
+                                                        // alignItems="center"
+                                                        // justify="center"
+                                                    >
+                                                        {col.widgets.map((widget, j) =>
+                                                            <Grid item={true} xs={widget.width} key={j}>
+                                                                <Paper elevation={0}>
+                                                                    <Widget render={widget}/>
+                                                                </Paper>
+                                                            </Grid>
+                                                        )}
+                                                    </Grid>
                                                     :
                                                     <div>-No widgets defined for this column-</div>
                                                 }

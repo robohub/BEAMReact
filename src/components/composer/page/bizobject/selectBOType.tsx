@@ -6,7 +6,7 @@ import { allMOQuery } from './queries';
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from './../../../shared/style';
 
-import { BOEditType } from './Types';
+import { BOEditType } from '../../../../domain/utils/boUtils';
 
 interface RObject {
     id: string; name: string;

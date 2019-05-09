@@ -9,7 +9,7 @@ import TimeLine from './components/timeLine';
 
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from '../../shared/style';
-import { PlanConfig } from './components/types';
+import { PlanConfig, SelectedPlanBOType } from './components/types';
 
 export const getPlanBOs = gql`
 query configuredPlanBos {
@@ -29,9 +29,7 @@ query configuredPlanBos {
 `;
 
 interface State {
-    selectedBO: string;
-    selectedBoName: string;
-    selectedMO: string;
+    selectedPlanBO: SelectedPlanBOType;
     drawerOpen: boolean;
 }
 
@@ -43,7 +41,7 @@ class PlanningView extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props);
-        this.state = ({selectedBO: null, selectedBoName: null, selectedMO: null, drawerOpen: false});
+        this.state = ({selectedPlanBO: {id: '', name: '', metaObjectId: ''}, drawerOpen: false});
     }
 
     updateSelectedBO = (boId: string) => {
@@ -60,13 +58,15 @@ class PlanningView extends React.Component<Props, State> {
             return null;  // If BO is not a Plan Object
         }
 
-        if (this.state.selectedBO !== boId) {
+        if (this.state.selectedPlanBO.id !== boId) {
             let boValues = getCorrespondingMoAndBoName(boId, this.planConfigs);
             if (boValues) {
                 this.setState({
-                    selectedBO: boId,
-                    selectedMO: boValues.mo,
-                    selectedBoName: boValues.boName
+                    selectedPlanBO: {
+                        id: boId,
+                        metaObjectId: boValues.mo,
+                        name: boValues.boName
+                    }
                 });  // Update if boId is meant to be a planning object!
             }
         }
@@ -107,16 +107,15 @@ class PlanningView extends React.Component<Props, State> {
                                 <Grid item={true} xs={9}>
                                     <Paper className={classes.root}>
                                         <TimeLine
-                                            selectedBO={this.state.selectedBO}
+                                            selectedBO={this.state.selectedPlanBO}
                                             updateSelectedBO={this.updateSelectedBO}
-                                            selectedBoName={this.state.selectedBoName}
                                             readonly={false}
                                         />
                                     </Paper>
                                 </Grid>
                                 <Grid item={true} xs={3}>
                                     <Paper className={classes.root}>
-                                        <ListItems selectedMO={this.state.selectedMO}/>
+                                        <ListItems selectedMO={this.state.selectedPlanBO.metaObjectId}/>
                                     </Paper>
                                 </Grid>                
 

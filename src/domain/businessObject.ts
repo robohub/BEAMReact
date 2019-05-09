@@ -1,12 +1,75 @@
 import gql from 'graphql-tag';
-import { ApolloQueryResult } from 'apollo-client';
-import { FetchResult } from 'react-apollo';
 
 import { client } from '../index';
 
-import { BizRelPenta, findIndirectDeletions, UpdateBizAttrPair, syncCreateAndConnectOppositeBizRels, deleteBizRelations } from './utils/boUtils';
-import { MOResponse, BOEditType, BizObjectsType } from './../components/composer/page/bizobject/Types';
-import { allBOQuery, upsertBO, allMOQuery, MOQuery, } from '../components/composer/page/bizobject/queries';
+import { ExtendedRelBOType, BizAttrValueType, RelatedBOType, RelatedBAType, BizObjectsType } from './utils/boUtils';
+import { findIndirectDeletions, syncCreateAndConnectOppositeBizRels, deleteBizRelations, getChangedRelations, getUpdatedBizAttributes } from './utils/boUtils';
+
+import { MetaRelType, MOResponse } from './../components/composer/page/bizobject/Types';
+import { allBOQuery, allMetaRelations, MOQuery, } from '../components/composer/page/bizobject/queries';
+import { getItemBOs } from '../components/planner/pages/components/queries';
+
+export const upsertBO = gql`
+mutation upsertBO(
+    $boid: ID,
+    $moid: ID,
+    $name: String,
+    $state: String,
+    $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
+    $rels: [BizRelationCreateWithoutIncomingObjectInput!],
+    $delRels: [BizRelationScalarWhereInput!],
+    $brValues: [BizAttributeUpdateManyWithWhereNestedInput!]
+  ) {
+    upsertBusinessObject(
+        where: {id: $boid}
+        create: {
+            metaObject: { connect: { id: $moid}},
+            name: $name,
+            state: $state,
+            bizAttributes: {create: $attrs},
+            outgoingRelations: { create: $rels}
+        }
+        update: {
+            state: $state,
+            outgoingRelations: { create: $rels, deleteMany: $delRels },
+            bizAttributes: {updateMany: $brValues}
+        }
+    ) {
+        id
+        name
+        state
+        metaObject {
+            id
+            name
+        }
+        bizAttributes {
+            id
+            metaAttribute
+            {
+                id
+                name
+            }
+            value
+        }
+        outgoingRelations {
+            id
+            oppositeObject {
+                id
+                name
+            }
+            metaRelation {
+                id
+                multiplicity
+                oppositeName
+
+            }
+            oppositeRelation {
+                id
+            }  
+        }
+    } 
+}
+`;
 
 const getBO = gql`
 query($id: ID) {
@@ -19,21 +82,21 @@ query($id: ID) {
             oppositeObject {
                 id
             }
+            oppositeRelation {
+                id
+            }
+            metaRelation {
+                id
+            }
         }
-    }
-}
-`;
-
-const updateBizRels = gql`
-mutation updateBoRels($boid: ID, $rels: [BizRelationCreateWithoutIncomingObjectInput!]) {
-    updateBusinessObject(
-        where: {id: $boid}
-        data: {
-            outgoingRelations: { create: $rels }
+        bizAttributes {
+            id
+            metaAttribute {
+                id 
+            }
+            value
         }
-    ) {
-        id
-        outgoingRelations {
+        metaObject {
             id
         }
     }
@@ -57,9 +120,11 @@ mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [Busines
     }
 }
 `;
-
+/*
 type getBOResponse = {
     id: string
+    name: string
+    
     outgoingRelations: {
         id: string
         oppositeObject: {
@@ -75,7 +140,7 @@ type updateBORelsResponse = {
         }[]
     }
 };
-
+*/
 /*
 type bizRel = {
     id: string
@@ -98,119 +163,113 @@ function findDeletedBos(source: bizRel[], compare: {id: string}[]): {id: string}
     return deleted;
 }
 */
-export function updateBORelations(
-    id: string,
-    relatedObjs: {id: string, mrid: string}[],
-    planId?: string,
-    planData?: { items: {}[], groups: {}[] }
-) {
-    client.query({
-        query: getBO,
-        variables: {id: id}
-    }).then(async (response: ApolloQueryResult<getBOResponse>) => {
-        
-        // 1. Create new relations
-        
-        var relations = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
-        relatedObjs.map((item: {id: string, mrid: string}) => {
-            relations.push({metaRelation: {connect: {id: item.mrid}}, oppositeObject: {connect: {id: item.id}}});
-        });
-
-        await client.mutate({
-            mutation: updateBizRels,
-            variables: { 
-                boid: id,
-                rels: relations
-            },
-        }).then(async (resp: FetchResult<updateBORelsResponse>) => {
-            // tslint:disable-next-line:no-console
-            console.log('Respons från update bizrels' + resp.data.updateBusinessObject.outgoingRelations);
-        }).catch(e => {
-            alert('Error when updating biz relations: ' + e);
-        });        
-
-        // 2. Check if planId != null, update plandata if so...
-        
-        if (planId !== undefined && planId !== null) {
-            var itemBOs = new Array<{id: string}>();  // Filter out Id
-            relatedObjs.map((item: {id: string}) => {
-                itemBOs.push({id: item.id});
-            });
-
-            client.mutate({
-                mutation: updatePlan,
-                // fetchPolicy: 'network-only',
-                variables: { 
-                    planId: planId,
-                    planData: planData,
-                    boId: id,
-                    itemBOs: itemBOs
-                }
-            }).catch(e => {
-                alert('Error when saving plan: ' + e);
-            });        
-        }
-    }).catch (e =>
-        alert('Error in function updateBORelations: ' + e)
-    );
-}
 
 export const updateSaveBO =  async (
-    newObject: boolean,
-    bizObject: BOEditType,
-    metaobject: MOResponse,
-    objName: string,
-    attrs: {metaAttribute: {connect: {id: string}}, value: string}[],
-    changedAttributeValues: UpdateBizAttrPair[],
-    createRels: BizRelPenta[],
-    deleteRels: BizRelPenta[],
-    saveFinished: () => void ) => {
+    bizObjectId: string,            // If === '' --> create, otherwise update
+    boName: string,                 // Create only for now RH TODO
+    metaObjectId: string,           // Create
+    newAttrs: RelatedBAType[],      // Create and update
+    newRels: RelatedBOType[],       // Create and update
+    saveFinished: () => void,
+    ) => {
         
     // tslint:disable-next-line:no-console
     console.log('1 Update BO........');
     try {
+        let moId = metaObjectId;
+
+        let createAttrs = new Array<{metaAttribute: {connect: {id: string}}, value: string}>();
+        let createRels = new Array<ExtendedRelBOType>();
+        let deleteRels = new Array<ExtendedRelBOType>();
+        var changedAttributeValues = new Array<BizAttrValueType>();
+
+        // Find the added and deleted relations
+        
+        if (bizObjectId === '') {
+            // Fix attributes for save
+            newAttrs.map(attr => {
+                createAttrs.push({metaAttribute: {connect: {id: attr.maId}}, value: attr.value});
+            });
+            createRels = newRels;
+            changedAttributeValues = [];
+        } else {
+
+            let boResult = await client.query({
+                query: getBO,
+                variables: {id: bizObjectId}
+            });
+            let bizObject = boResult.data.businessObject;   // To be able to compare find new/deleted relations and changed attribute values
+            moId = bizObject.metaObject.id;
+        
+            changedAttributeValues = getUpdatedBizAttributes(newAttrs, bizObject.bizAttributes);
+
+            const { added, toDelete } = getChangedRelations(bizObject.outgoingRelations, newRels);
+            createRels = added;
+            deleteRels  = toDelete;
+        }
+
+        let result = await client.query({
+            query: allMetaRelations,
+            variables: {id: moId}
+        });
+        let allMetaRels = result.data.metaRelations as MetaRelType[];  // To be able to find opposite relation ids
+
+        createRels.forEach(rel => {   // Find opposite meta relation id for when creating opposite relations later on...
+            allMetaRels.forEach(mr => {
+                if (rel.mrId === mr.id) {
+                    rel.oppMRid = mr.oppositeRelation.id;
+                    return;
+                }
+            });            
+        });
+
+        // tslint:disable-next-line:no-console
+        console.log('Added: ' + JSON.stringify(createRels, null, 2));
+        // tslint:disable-next-line:no-console
+        console.log('Deleted: ' + JSON.stringify(deleteRels, null, 2));
+
         // Prepare relations for upsert
         let addedRels = new Array<{metaRelation: {connect: {id: string}}, oppositeObject: {connect: {id: string}}}>();
         createRels.map(item => {
-            addedRels.push({metaRelation: {connect: {id: item.mrid}}, oppositeObject: {connect: {id: item.oppositeObjectId}}});
+            addedRels.push({metaRelation: {connect: {id: item.mrId}}, oppositeObject: {connect: {id: item.boId}}});
         });
 
         let delRels = new Array<{id: string}>();
         deleteRels.map(item => {
-            delRels.push({id: item.bizrelId});
+            delRels.push({id: item.brId});
         });
 
         // Prepare attributes for upsert
         let inputBrVals = new Array<{where: {id: string}, data: {value: string}}>(); 
         if (changedAttributeValues.length) {
             for (let i = 0; i < changedAttributeValues.length; i++) {
-                inputBrVals.push({where: {id: changedAttributeValues[i].bizRelId}, data: {value: changedAttributeValues[i].value}});
+                inputBrVals.push({where: {id: changedAttributeValues[i].brId}, data: {value: changedAttributeValues[i].value}});
             }
         }
 
         await client.mutate({     // RH TODO, check when this should be executed!!!
             mutation: upsertBO,
             variables: {
-                boid: newObject ? '' : bizObject.id,                          // MySQL, ...?
+                boid: bizObjectId,                          // MySQL, ...?
 //                    boid: newObject ? '53cb6b9b4f4ddef1ad47f943' : bizObject.id,    // MongoDB!!
-                moid: metaobject.metaObject.id,
-                name: objName, 
-                attrs: attrs,
-                state: 'Created',
+                moid: moId,
+                name: boName, 
+                state: bizObjectId === '' ? 'Created' : 'Updated',
+                attrs: createAttrs,
                 rels: addedRels,
                 delRels: delRels,
                 brValues: inputBrVals
             },
             update: async (cache, mutationResult ) => {
                 // tslint:disable-next-line:no-console
-                console.log('2 ...Updated BO........ = ', objName);
+                console.log('2 ...Updated BO........ = ', boName);
 
                 const resultBO = mutationResult.data.upsertBusinessObject;
 
-                if (newObject) {
-                    const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: metaobject.metaObject.id} });
+                if (bizObjectId === '') {  // Check if new BO
+                    const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: moId} });
                     data.metaObject.businessObjects.push(resultBO);  // Will push id
-                    cache.writeQuery({ query: MOQuery, variables: {id: metaobject.metaObject.id} , data});
+                    cache.writeQuery({ query: MOQuery, variables: {id: moId} , data});
                     
                     const data2: BizObjectsType = client.readQuery({query: allBOQuery });
                     data2.businessObjects.push(resultBO);
@@ -224,7 +283,7 @@ export const updateSaveBO =  async (
                     deleteRelIds.push(item.oppBRid);
                 });
                 //      3.2. Add, if any, INDIRECT relations to be deleted
-                const indirectRels = findIndirectDeletions(createRels, metaobject);
+                const indirectRels = await findIndirectDeletions(createRels, moId);
                 deleteRelIds = deleteRelIds.concat(indirectRels);
 
                 // 5. Create and connect opposite biz relations
@@ -234,33 +293,79 @@ export const updateSaveBO =  async (
                 console.log('Deleted BizRels: **** ', deleteRelIds);
 
                 // Remove deleted BRs from cache
-                const data3: BizObjectsType = client.readQuery({query: allBOQuery });
-                deleteRelIds.forEach(delBrId => {
-                    data3.businessObjects.forEach(bo => {
-                        var found = false;
-                        bo.outgoingRelations.forEach((br, index) => {
-                            if (br.id === delBrId) {
-                                bo.outgoingRelations.splice(index, 1);
-                                found = true;
-                                return;
-                            }                    
+                try {
+                    const data3: BizObjectsType = client.readQuery({query: allBOQuery });
+                    deleteRelIds.forEach(delBrId => {
+                        data3.businessObjects.forEach(bo => {
+                            var found = false;
+                            bo.outgoingRelations.forEach((br, index) => {
+                                if (br.id === delBrId) {
+                                    bo.outgoingRelations.splice(index, 1);
+                                    found = true;
+                                    return;
+                                }                    
+                            });
+                            if (found) { return; }
                         });
-                        if (found) { return; }
                     });
-                });
-                client.writeQuery({ query: allBOQuery, data: data3 });
+                    client.writeQuery({ query: allBOQuery, data: data3 });
+                } catch {
+                    // Do nothing - probably landing here when saving BO before query yet in store 'allBOQuery' called from e.g. Composer)
+                }
 
                 // tslint:disable-next-line:no-console
                 console.log('3 ...BO update klar!');
 
                 saveFinished();
-                
+
             },
-            refetchQueries: [{query: allMOQuery}]
+            // refetchQueries: [{ query: MOQuery, variables: {id: moId} }, { query: allBOQuery }] // 
+            // refetchQueries: [{ query: allMOQuery }, { query: MOQuery, variables: {id: moId} }, ]  // Alternative? Samma resultat som ovan, bara MOQuery funkar
+            // refetchQueries: [{query: allMOQuery}]  // Alternative?
+            // refetchQueries: () => (['allMOQuery'])  // If works --> we can send in string from controllers as to which queries to run! But not queries with variables?
         });
     } catch (e) {
         alert('Error when updating/creating BO:' + e);
     }
     // tslint:disable-next-line:no-console
     console.log('C. Exits updateSaveBO,.....');
+
 };
+
+export function updateBORelations(
+    boId: string,
+    boName: string,
+    moId: string,
+    relatedObjs: RelatedBOType[],
+    saveFinished: () => void,
+    planId?: string,
+    planData?: { items: {}[], groups: {}[] },
+) {
+    updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished);
+
+    // Check if planId != null, update plandata if so...
+  
+    if (planId !== undefined && planId !== null) {
+        var itemBOs = new Array<{id: string}>();  // Filter out Id
+        relatedObjs.map(item => {
+            itemBOs.push({id: item.boId});
+        });
+
+        client.mutate({
+            mutation: updatePlan,
+            variables: { 
+                planId: planId,
+                planData: planData,
+                boId: boId,
+                itemBOs: itemBOs
+            },
+            // update: // Update cache....
+            refetchQueries: [{
+                query: getItemBOs,
+                variables: {moid: moId}
+            }]
+        }).catch(e => {
+            alert('Error when saving plan: ' + e);
+        });        
+    }
+}

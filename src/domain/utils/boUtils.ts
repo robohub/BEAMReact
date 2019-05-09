@@ -1,12 +1,63 @@
 import { client } from '../../index';
 import { FetchResult } from 'react-apollo';
 
-import { MOResponse, BOEditType, BizObjectsType, BizRelationsType, } from './../../components/composer/page/bizobject/Types';
+import { MetaObjectType } from './../../components/composer/page/bizobject/Types';
 
-import { allBOQuery, /*upsertBO, allMOQuery, MOQuery,*/ updateBRWithOppRel, createBizRelation, deleteBRPairs, /*updateManyBRValues*/ } from '../../components/composer/page/bizobject/queries';
+import { allBOQuery, /*upsertBO, allMOQuery, MOQuery,*/ updateBRWithOppRel, createBizRelation, deleteBRPairs, MOQuery, /*updateManyBRValues*/ } from '../../components/composer/page/bizobject/queries';
 
-export type BizRelPenta = { mrid: string, oppositeObjectId: string, bizrelId?: string, oppBRid?: string, oppMRid?: string };
-export type UpdateBizAttrPair = { bizRelId: string, value: string };
+// export type BizRelPentax = { mrId: string, boId: string, brId?: string, oppBRid?: string, oppMRid?: string };
+
+export type BizAttrValueType = { brId: string, value: string };
+export type RelatedBOType = { mrId: string, boId: string};
+export type RelatedBAType = {maId: string, value: string};
+
+export interface ExtendedRelBOType extends RelatedBOType {
+    brId?: string;  // Used when deleting existing relations
+    oppMRid?: string;  // Used when adding existing relations and their opposite relations
+    oppBRid?: string;  // Used deleting opposite and indirect relations
+}
+
+export type BizAttributeType = {
+    id: string;
+    metaAttribute: { 
+        id: string;
+        name: string 
+    }
+    value: string;
+};
+
+export type BizRelationsType = {
+    id: string;
+
+    oppositeObject: {
+        id: string;
+        name: string;
+    }
+    oppositeRelation: {
+        id: string
+    }
+    metaRelation: {
+        id: string;
+        oppositeName: string;
+        multiplicity: string;
+    }
+};
+
+export type BOEditType = {
+    id: string;
+    name: string;
+    state: string;
+    metaObject: { 
+        id: string;
+        name: string  
+    };
+    bizAttributes: BizAttributeType[];
+    outgoingRelations: BizRelationsType[];
+};
+
+export type BizObjectsType = {
+    businessObjects: BOEditType[];
+};
 
 /*
 export const updateBizAttributes = async (boid: string, attrPairs: UpdateBizAttrPair[]) => {
@@ -50,14 +101,21 @@ export const updateBizAttributes = async (boid: string, attrPairs: UpdateBizAttr
 };
 */
 
-export const findIndirectDeletions = (createRels: BizRelPenta[], metaobject: MOResponse): string[] => {
+export const findIndirectDeletions = async (createRels: RelatedBOType[], moId: string) => {
     let indirectRels = new Array<string>();
+
+    let result = await client.query({
+        query: MOQuery,
+        variables: {id: moId}
+    });
+    let metaobject = result.data.metaObject as MetaObjectType;  // To be able to find opposite relation ids
+
     createRels.map(added => {
-        metaobject.metaObject.outgoingRelations.forEach(mRel => {
+        metaobject.outgoingRelations.forEach(mRel => {
             let found = false;
-            if (mRel.id === added.mrid) {
+            if (mRel.id === added.mrId) {
                 mRel.oppositeObject.businessObjects.forEach(oppBo => {
-                    if (oppBo.id === added.oppositeObjectId && oppBo.outgoingRelations.length && oppBo.outgoingRelations[0].metaRelation.multiplicity === 'One') {
+                    if (oppBo.id === added.boId && oppBo.outgoingRelations.length && oppBo.outgoingRelations[0].metaRelation.multiplicity === 'One') {
                         // These two BRs to be removed
                         indirectRels.push(oppBo.outgoingRelations[0].oppositeRelation.id);
                         indirectRels.push(oppBo.outgoingRelations[0].id);
@@ -91,21 +149,25 @@ const createAndConnectOppositeBizRels = async (incboid: string, oppboid: string,
         console.log('2... CREATED IN DB, BR: ' + response.data.createBizRelation.id);
 
         // Update cache - add new BR to BO
-        const data: BizObjectsType = client.readQuery({query: allBOQuery });
-        const newBR = response.data.createBizRelation;
-        data.businessObjects.forEach(bo => {
-            if (bo.id === incboid) {
-                if (newBR.metaRelation.multiplicity  === 'One') {
-                    bo.outgoingRelations = [newBR];
-                } else {
-                    // tslint:disable-next-line:no-console
-                    console.log('Updating cache: OPP BizRel ' + newBR);
-                    bo.outgoingRelations.push(newBR);
+        try {
+            const data: BizObjectsType = client.readQuery({query: allBOQuery });
+            const newBR = response.data.createBizRelation;
+            data.businessObjects.forEach(bo => {
+                if (bo.id === incboid) {
+                    if (newBR.metaRelation.multiplicity  === 'One') {
+                        bo.outgoingRelations = [newBR];
+                    } else {
+                        // tslint:disable-next-line:no-console
+                        console.log('Updating cache: OPP BizRel ' + newBR);
+                        bo.outgoingRelations.push(newBR);
+                    }
+                    return;
                 }
-                return;
-            }
-        });
-        client.writeQuery({ query: allBOQuery, data });
+            });
+            client.writeQuery({ query: allBOQuery, data });
+        } catch {
+            // Do nothing - probably landing here when saving BO before query yet in store 'allBOQuery' called from e.g. Composer)
+        }
 
         let promise = client.mutate({
             mutation: updateBRWithOppRel,
@@ -126,13 +188,13 @@ const createAndConnectOppositeBizRels = async (incboid: string, oppboid: string,
     console.log('B. Exits createAndConnectOppositeBizRels, all synced!!!.....');
 };
 
-export const syncCreateAndConnectOppositeBizRels = async (newBO: BOEditType, createRels: BizRelPenta[]) => {
+export const syncCreateAndConnectOppositeBizRels = async (newBO: BOEditType, createRels: ExtendedRelBOType[]) => {
     let singleCreateConnectPromises = new Array<Promise<void>>();
 
     createRels.map(newRel => {
         newBO.outgoingRelations.forEach(async dbRel => {
-            if (dbRel.metaRelation.id === newRel.mrid && dbRel.oppositeObject.id === newRel.oppositeObjectId) {
-                let promise = createAndConnectOppositeBizRels(newRel.oppositeObjectId, newBO.id, newRel.oppMRid, dbRel.id);
+            if (dbRel.metaRelation.id === newRel.mrId && dbRel.oppositeObject.id === newRel.boId) {
+                let promise = createAndConnectOppositeBizRels(newRel.boId, newBO.id, newRel.oppMRid, dbRel.id);
                 singleCreateConnectPromises.push(promise);
                 return;
             }
@@ -161,3 +223,58 @@ export const deleteBizRelations = async (deleteRelIds: string[]) => {
     console.log('D. Exits deleteBizRelations,.....');
     return deleteRelIds;
 };
+
+export function getUpdatedBizAttributes(newAttrs: RelatedBAType[], oldAttrs: BizAttributeType[]): BizAttrValueType[] {
+    
+    let changedBizAttrs = new Array<BizAttrValueType>();
+    // var updated = new Array<{metaId: string, value: string}>();
+    oldAttrs.forEach(oldBA => {
+        newAttrs.forEach(newBA => {
+            if (newBA.maId === oldBA.metaAttribute.id && newBA.value !== oldBA.value) {
+                changedBizAttrs.push({ brId: oldBA.id, value: newBA.value});
+            }
+        });
+    });
+    
+    // tslint:disable-next-line:no-console
+    console.log(`UPDATED attributes :\n${JSON.stringify(changedBizAttrs, null, 0)}`);
+/*
+    let changedBizAttrs = new Array<BizAttrValueType>(0);
+    updated.forEach(metaRel => {
+        for (let i = 0; i < oldAttrs.length; i++ ) {
+            if (metaRel.metaId === oldAttrs[i].metaAttribute.id) {
+                changedBizAttrs.push({ brId: oldAttrs[i].id, value: metaRel.value});
+                break;
+            }
+        }
+    });*/
+    return changedBizAttrs;
+}
+
+export function getChangedRelations(oldrels: BizRelationsType[], newrels: RelatedBOType[]): {added: ExtendedRelBOType[], toDelete: ExtendedRelBOType[]} {
+    var oldrelsConverted = new Array<ExtendedRelBOType>();
+
+    const getDeletedBOs = (initBOs: RelatedBOType[], compareBOs: RelatedBOType[]) => {
+        let deleted = new Array<RelatedBOType>();
+        initBOs.map(old => {
+            let found = false;
+            compareBOs.forEach(comp => {
+                if (old.boId === comp.boId && old.mrId === comp.mrId) {
+                    found = true;
+                    return;
+                }
+            });
+            if (!found) { deleted.push(old); }
+        });
+        return deleted;
+    };
+
+    oldrels.map(br => {
+        oldrelsConverted.push({mrId: br.metaRelation.id, boId: br.oppositeObject.id, brId: br.id, oppBRid: br.oppositeRelation.id});
+    });
+
+    var toDelete = getDeletedBOs(oldrelsConverted, newrels);
+    var added = getDeletedBOs(newrels, oldrelsConverted);
+
+    return {toDelete, added};
+}

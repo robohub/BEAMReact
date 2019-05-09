@@ -33,10 +33,9 @@ export default class NavigationView extends React.Component<Props, State> {
     render() {
         return (
             <Grid container={true} >
-                <Grid item={true} xs={2}>
+                <Grid item={true} xs={6} md={4} lg={3}>
                     <Paper>
                         <BOListContainer
-                            selectedListBO={this.state.selectedListBO}
                             selectedBOchange={this.updateListBO}
                             selectedInfoBOchange={this.updateInfoBO}
                         />
@@ -49,7 +48,7 @@ export default class NavigationView extends React.Component<Props, State> {
                     
                 </Grid>
 
-                <Grid item={true} xs={10} >
+                <Grid item={true} xs={6} md={8} lg={9}>
                     <Paper >
                         <BOGraphContainer
                             selectedBO={this.state.selectedListBO}

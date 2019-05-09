@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Query } from 'react-apollo';
-import gql from 'graphql-tag';
 
 import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core';
-
+import { getItemBOs } from './queries';
+/*
 export const getItemBOs = gql`
 query itemBOsFromPlanMO($moid: ID!) {
     planConfigs(
@@ -26,7 +26,9 @@ query itemBOsFromPlanMO($moid: ID!) {
     }
 }
 `;
+*/
 
+/*
 type MoRelType = {
     id: string;
     oppositeName: string
@@ -44,7 +46,22 @@ type MoRelType = {
         incomingObject: { name: string }
     }[]
 };
+*/
 
+type MoRelType = {
+    id: string
+    oppositeName: string
+
+    oppositeObject: {
+        // id: string
+        // name: string
+        businessObjects: {
+          id: string
+          name: string
+
+        }[]
+    }
+};
 interface Props {
     selectedMO: string;
 }
@@ -88,37 +105,37 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Name</TableCell>
-                                                    <TableCell>Item Type</TableCell>
-                                                    <TableCell>Planned</TableCell>
-                                                    <TableCell>Connected</TableCell>
+                                                    <TableCell>Relation</TableCell>
+                                                    <TableCell>Owner</TableCell>
+                                                    {/*<TableCell>Connected</TableCell>*/}
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
                                                 {data.planConfigs[0].uiMoRelations.map((rel: MoRelType ) =>
-                                                    rel.bizRelations.map(o => 
+                                                    rel.oppositeObject.businessObjects.map(o => 
                                                         <TableRow
-                                                            key={o.oppositeObject.id}
+                                                            key={o.id}
                                                             /* onClick={this.handleItemClick} */
-                                                            id={o.oppositeObject.id}
+                                                            // id={o.oppositeObject.id}
                                                             hover={true}
                                                             draggable={true}
                                                             onDragStart={
                                                                 (e) => this.handleDragStart(
                                                                     e,
                                                                     {
-                                                                        id: o.oppositeObject.id,
-                                                                        name: o.oppositeObject.name,
+                                                                        id: o.id,
+                                                                        name: o.name,
                                                                         mrid: rel.id
                                                                     }
                                                                 )
                                                             }
                                                         >
                                                             <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                                <Typography variant="body1">{o.oppositeObject.name}</Typography>
+                                                                <Typography variant="body1">{o.name}</Typography>
                                                             </TableCell>
                                                             <TableCell>{rel.oppositeName} </TableCell>
-                                                            <TableCell>{o.oppositeObject.plannedIn ? o.oppositeObject.plannedIn.planBO.name : '-Not planned-'}</TableCell>
-                                                            <TableCell>{o.incomingObject.name} </TableCell>
+                                                            <TableCell>Not implemented...</TableCell>
+                                                            {/*<TableCell>{o.incomingObject.name} </TableCell>*/}
                                                         </TableRow>
                                                     )
                                                 )}

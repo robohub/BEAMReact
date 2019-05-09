@@ -4,6 +4,7 @@ import { withStyles, WithStyles, Button, Paper, Typography, Divider, Select, For
 import { styles } from '../../../shared/style';
 import { Query } from 'react-apollo';
 import gql from 'graphql-tag';
+import { client } from '../../../..';
 
 const getMetaRelsQuery = gql`
 query getMetaRels($moId: ID) {
@@ -15,13 +16,19 @@ query getMetaRels($moId: ID) {
             id
             oppositeName
             multiplicity
-            oppositeRelation {
-                id
-            }
         }
     }
 }
-  `;
+`;
+
+const getOppRelQuery = gql`
+query getOppRel($id: ID) {
+    metaRelation(where: {id: $id}) {
+      id
+      oppositeRelation { id }
+    }
+}
+`;
 
 interface Props extends WithStyles<typeof styles> {
     selectedMO: string;
@@ -51,13 +58,15 @@ class MappingForm extends React.PureComponent<Props, State> {
     }
 
     save = () => {
-        if (this.state.mrId === '') {
-            alert('Not saved... Please finish selection of mappings!');
-        } else {
-            let oppMRId = 'cjtr0alq1fdkj0b24684h2cn0';
+        client.query({
+            query: getOppRelQuery,
+            variables: {id: this.state.mrId}
+        }).then(res => {
+            let oppMRId = res.data.metaRelation.oppositeRelation.id;
             this.props.onSubmit(this.state.moId, this.state.mrId, oppMRId);
-        }
+        });
     }
+
     render() {
         const { classes } = this.props;
 

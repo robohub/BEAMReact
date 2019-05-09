@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import * as vis from 'vis';
-import gql from 'graphql-tag';
 import { client } from '../../../../index';
 
 import { Button, Snackbar, Divider, Typography } from '@material-ui/core';
@@ -10,37 +9,29 @@ import { Button, Snackbar, Divider, Typography } from '@material-ui/core';
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from '../../../shared/style';
 
-import { ApolloQueryResult } from 'apollo-client';
-
 import { updateBORelations } from '../../../../domain/businessObject';
+import { RelatedBOType } from '../../../../domain/utils/boUtils';
+import { getPlan, getConnectedItems } from './queries';
+import { SelectedPlanBOType } from './types';
 
-const getPlan = gql`
-query getPlan($boid: ID!) {
-    plans (where: {planBO: {id: $boid}}) {
-        id
-        planBO {
-            id
-            name
-        }
-        planData
-        itemBOs {
-            id
-            name
-        }
-    }
-}
-`;
-
-type PlansType = {
-    plans: PlanType[]
-};
-
+/*
 type PlanType = {
     id: string;
     planBO: { id: string },
     planData: { items: {}[], groups: string}
     itemBOs: {id: string, name: string}[]
 };
+*/
+
+type ConnectedItemType = {
+    outgoingRelations: {
+        oppositeObject: {
+            id: string
+            name: string
+        }
+    }[]
+};
+
 /*
 const updatePlan = gql`
 mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [BusinessObjectWhereUniqueInput!]) {
@@ -61,20 +52,19 @@ mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [Busines
 `;
 */
 interface Props extends WithStyles<typeof styles> {
-    selectedBO: string;
-    selectedBoName: string;
+    selectedBO: SelectedPlanBOType;
     updateSelectedBO: (boId: string) => void;
     readonly: boolean;
 }
 
 interface State {
     snackbarOpen: boolean;
-    selectedBOId: string;
+    selectedBO: SelectedPlanBOType;
 }
 
 class TimeLine extends React.Component<Props, State> {
     state = {
-        snackbarOpen: false, selectedBOId: ''
+        snackbarOpen: false, selectedBO: {id: '', name: '', metaObjectId: ''}
     };
       
     private container: HTMLElement;
@@ -118,24 +108,27 @@ class TimeLine extends React.Component<Props, State> {
         this.timeline.on('doubleClick', (event => {
             // tslint:disable-next-line:no-console
             console.log(event);
-            if (event.item && this.state.selectedBOId !== event.item) {
+            if (event.item && this.state.selectedBO.id !== event.item) {
                 // this.selectedObjId = e.currentTarget.id;
                 this.props.updateSelectedBO(event.item);  // Will lead to change of plan...
             }            
         }));
-        if (this.props.selectedBO !== null) {
+        if (this.props.selectedBO.id !== '') {
             this.showTimeLine();
         }
     }
 
     componentDidUpdate() {
-        if (this.props.selectedBO !== null && this.props.selectedBO !== this.state.selectedBOId) {
+        if (this.props.selectedBO.id !== this.state.selectedBO.id) {
             this.showTimeLine();
         }
     }
 
     showTimeLine() {
-        this.setState({selectedBOId: this.props.selectedBO});
+        let bo = this.state.selectedBO;
+        bo.id = this.props.selectedBO.id;
+        this.setState({selectedBO: bo});
+
         this.items.clear();
         this.groups.clear();
         this.drawTimeLine();
@@ -146,17 +139,17 @@ class TimeLine extends React.Component<Props, State> {
         return timestamp + (Math.random() * 16).toString();
     }
 
-    validateItems(dataItems: {}[], plan: PlanType) {
+    validateItems(dataItems: {}[], connectedItems: ConnectedItemType) {
         var newDataItems = new Array<{}>();
 
         dataItems.map((item: {id: string, content: string, bizobject: boolean, className: string}) => {
             var found = false;
             var newItem = item;
             var newContent = item.content;
-            for (var i = 0; i < plan.itemBOs.length; i++) {  // As of now the ID of an object is 25-character string...
-                if (item.bizobject && item.id === plan.itemBOs[i].id ) {
+            for (var i = 0; i < connectedItems.outgoingRelations.length; i++) {  // As of now the ID of an object is 25-character string...
+                if (item.bizobject && item.id === connectedItems.outgoingRelations[i].oppositeObject.id ) {
                     found = true;
-                    newContent = plan.itemBOs[i].name;  // Update content, may have changed
+                    newContent = connectedItems.outgoingRelations[i].oppositeObject.name;  // Update content, may have changed
                     break;
                 }
             }
@@ -173,29 +166,36 @@ class TimeLine extends React.Component<Props, State> {
     }
 
     async drawTimeLine() {
-        if (this.props.selectedBO !== null) {
-             await client.query({
+        if (this.props.selectedBO.id !== '') {
+            let plansResult = await client.query({
                 query: getPlan,
-                fetchPolicy: 'network-only',    // TODO RH: fix cache strategy!!!
                 variables: { 
-                    boid: this.props.selectedBO
+                    boid: this.props.selectedBO.id
                 }
-            }).then((response: ApolloQueryResult<PlansType>) => {
-                if (response.data.plans.length === 0) {
-                    this.initTimeLineWithData();
-                    this.selectedPlanId = '';
-                } else {
-                    let data = response.data.plans[0].planData;
-                    let validatedItems = this.validateItems(data.items, response.data.plans[0]);  // Check for removed items...
-                    this.items.clear();
-                    this.items.add(validatedItems);
-                    this.groups.clear();
-                    this.groups.add(data.groups);
-                    this.selectedPlanId = response.data.plans[0].id;
-                }                
-            }).catch(e => {
-                alert('Error when loading plan: ' + e);
             });
+
+            if (plansResult.data.plans.length === 0) {
+                this.initTimeLineWithData();
+                this.selectedPlanId = '';
+            } else {
+                // Get items connected to selected BO
+                let result = await client.query({
+                    query: getConnectedItems,
+                    variables: { 
+                        boid: this.props.selectedBO.id
+                    }
+                });
+                let connectedItemsResult = result.data.businessObject as ConnectedItemType;
+
+                let data = plansResult.data.plans[0].planData;
+                let validatedItems = this.validateItems(data.items, connectedItemsResult);  // Check for removed items...
+                this.items.clear();
+                this.items.add(validatedItems);
+                this.groups.clear();
+                this.groups.add(data.groups);
+                this.selectedPlanId = plansResult.data.plans[0].id;
+            }                
+
         }
         this.timeline.setData({items: this.items, groups: this.groups}); 
         // this.timeline.redraw();
@@ -237,6 +237,36 @@ class TimeLine extends React.Component<Props, State> {
         );
     }
 
+    getBOsFromItems() {
+        var itemBOs = new Array<RelatedBOType>();  // Filter out BOs
+        this.items.map((item: {id: string, bizobject: boolean, mrid: string}) => {
+            if (item.bizobject) {
+                itemBOs.push({boId: item.id, mrId: item.mrid});
+            }
+        });
+        return itemBOs;
+    }
+
+    getDeletedBOs(initBOs: RelatedBOType[], compareBOs: RelatedBOType[]) {
+        let deleted = new Array<RelatedBOType>();
+        initBOs.map(old => {
+            let found = false;
+            compareBOs.forEach(comp => {
+                if (old.boId === comp.boId) {
+                    found = true;
+                    return;
+                }
+            });
+            if (!found) { deleted.push(old); }
+        });
+        return deleted;
+    }
+
+    saveFinished = async () => {
+        this.snackbarMessage = 'Timeplan saved';
+        this.setState({snackbarOpen: true});
+    }
+
     saveClicked = () => {
         let itemData = this.items.get({
             type: {
@@ -246,34 +276,17 @@ class TimeLine extends React.Component<Props, State> {
         });
         let groupData = this.groups.get();
 
-        var itemBOs = new Array<{id: string, mrid: string}>();  // Filter out BOs
-        this.items.map((item: {id: string, bizobject: boolean, mrid: string}) => {
-            if (item.bizobject) {
-                itemBOs.push({id: item.id, mrid: item.mrid});
-            }
-        });
-        
-        updateBORelations(this.props.selectedBO, itemBOs, this.selectedPlanId, {items: itemData, groups: groupData});        
-        this.snackbarMessage = 'Timeplan saved';
-        this.setState({snackbarOpen: true});
-
-/*
-        client.mutate({
-            mutation: updatePlan,
-            // fetchPolicy: 'network-only',
-            variables: { 
-                planId: this.selectedPlanId,
-                planData: { items: itemData, groups: groupData },
-                boId: this.props.selectedBO,
-                itemBOs: itemBOs
-            }
-        }).then(() => {
-            this.snackbarMessage = 'Timeplan saved';
-            this.setState({snackbarOpen: true});
-        }).catch(e => {
-            alert('Error when saving plan: ' + e);
-        });
-*/
+        var itemBOs = this.getBOsFromItems();
+     
+        updateBORelations(
+            this.state.selectedBO.id,
+            this.state.selectedBO.name,
+            this.state.selectedBO.metaObjectId,
+            itemBOs,
+            this.saveFinished,
+            this.selectedPlanId,
+            {items: itemData, groups: groupData},
+        );
     }
 
     fitClicked = () => {
@@ -314,7 +327,7 @@ class TimeLine extends React.Component<Props, State> {
                         </IconButton>,
                     ]}*/
                 />
-                <Typography variant="h6">{this.state.selectedBOId !== '' ? 'Selected Plan: ' + this.props.selectedBoName : 'No Plan selected...'}</Typography>
+                <Typography variant="h6">{this.state.selectedBO.id !== '' ? 'Selected Plan: ' + this.props.selectedBO.name : 'No Plan selected...'}</Typography>
                 
                 <Divider/>
 
@@ -322,8 +335,8 @@ class TimeLine extends React.Component<Props, State> {
                 {!this.props.readonly ?
                     <div>
                         <Button variant="contained" color="primary" className={this.props.classes.button} onClick={this.saveClicked} disabled={this.props.selectedBO === null}>Save</Button>
-                        <Button color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO === null}>Fit</Button>
-                        <Button color="primary" className={this.props.classes.button} onClick={this.createGroup} disabled={this.props.selectedBO === null}>Create Group</Button>
+                        <Button color="primary" className={this.props.classes.button} onClick={this.fitClicked} disabled={this.props.selectedBO.id === ''}>Fit</Button>
+                        <Button color="primary" className={this.props.classes.button} onClick={this.createGroup} disabled={this.props.selectedBO.id === ''}>Create Group</Button>
                     </div>
                     :
                     null

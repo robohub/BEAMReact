@@ -19,6 +19,33 @@ import { HaloService } from './halo-service';
 import { KeyboardService } from './keyboard-service';
 import * as appShapes from '../shapes/app-shapes';
 
+import gql from 'graphql-tag';
+import { client } from '../../../..';
+import { ApolloQueryResult } from 'apollo-client';
+
+const saveMutation = gql`
+mutation saveDiagram($id: ID, $dia: Json) {
+    upsertDiagram(
+        where: {id: $id}
+        create: {diagramData: $dia}
+        update: {diagramData: $dia}
+    ) {
+        id
+        diagramData
+}
+`;
+
+const getQuery = gql`
+query getDiagram($id:ID) {
+    diagram(
+        where: {id: $id}
+    ) {
+        id
+        diagramData
+    }
+}
+`;
+
 class KitchenSinkService {
 
     el: Element;
@@ -88,8 +115,8 @@ class KitchenSinkService {
         this.commandManager = new joint.dia.CommandManager({ graph: graph });
 
         const paper = this.paper = new joint.dia.Paper({
-            width: 1000,
-            height: 1000,
+            width: 800,
+            height: 800,
             gridSize: 10,
             drawGrid: true,
             model: graph,
@@ -99,6 +126,11 @@ class KitchenSinkService {
 
         paper.on('blank:mousewheel', _.partial(this.onMousewheel, null), this);
         paper.on('cell:mousewheel', this.onMousewheel.bind(this));
+
+        paper.on('element:pointerdblclick', function(elementView: { model: joint.dia.Element }) {        
+            var currentElement = elementView.model;
+            alert('Double click on ' + currentElement.attributes.id);
+        });
 
         this.snaplines = new joint.ui.Snaplines({ paper: paper });
 
@@ -110,6 +142,7 @@ class KitchenSinkService {
 
         this.renderPlugin('.paper-container', paperScroller);
         paperScroller.render().center();
+
     }
 
     initializeStencil() {
@@ -296,6 +329,59 @@ class KitchenSinkService {
         this.el.querySelector(selector).appendChild(plugin.el);
         plugin.render();
     }
+
+    async save() {
+        let json = this.graph.toJSON();
+
+        await client.mutate({
+            mutation: saveMutation,
+            variables: {
+                id: 'cjuv91m7ckelh0b22d1tqb3i4',
+                dia: json
+            }
+        });
+        // tslint:disable-next-line:no-console
+        console.log('Sparade diagram: ' + JSON.stringify(json));
+
+    }
+
+    async load() {
+        const result = await client.query({
+            query: getQuery,
+            variables: {
+                id: 'cjuv91m7ckelh0b22d1tqb3i4'
+            }
+        }) as ApolloQueryResult<{diagram: {diagramData: JSON}}>;
+        
+        let json = result.data.diagram.diagramData;
+        this.graph.fromJSON(json);
+
+        // tslint:disable-next-line:no-console
+        console.log('Hämtade diagram: ' + JSON.stringify(json), { space: 2});
+    }
+
+    addBusinessObject(x: number, y: number, name: string, id: string, imgSrc: string) {
+
+        var scrollerPos = this.paperScroller.getVisibleArea();
+
+        // tslint:disable-next-line:no-console
+        console.log('Paperscroller pos: ' + scrollerPos.x + ', ' + scrollerPos.y);
+
+        let el = new appShapes.rob.BizObject({
+            position: {x: x + scrollerPos.x, y: y + scrollerPos.y},
+            attrs: {
+                label: {
+                    text: name
+                },
+                image: {
+                    xlinkHref: imgSrc
+                }
+            },
+            boId: id
+        });
+        el.addTo(this.graph);
+    }
+
 }
 
 export default KitchenSinkService;

@@ -111,7 +111,9 @@ export default class BOGraphView extends React.Component<Props> {
     drawSubTree = (bo: BoItem) => {
         bo.outgoingRelations.map(rel => {
             try {
-                this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'dot'});
+                // this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'dot'});
+                // tslint:disable-next-line:max-line-length
+                this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'green', font: {color: 'black'}, shape: 'circularImage', image: 'assets/member-male.png'});
             } catch (e) {
                 // tslint:disable-next-line:no-console
                 console.log(`Node already in graph...`);
@@ -133,10 +135,13 @@ export default class BOGraphView extends React.Component<Props> {
         this.edges = new vis.DataSet();
 
         if (bo !== null) {
-            this.nodes.add({id: bo.id, label: bo.name, color: 'orange', font: {color: 'gray'}, shape: 'dot'});
+            // this.nodes.add({id: bo.id, label: bo.name, color: 'orange', font: {color: 'gray'}, shape: 'dot'});
+            this.nodes.add({id: bo.id, label: bo.name, font: {color: 'gray'}, shape: 'image', image: 'assets/icons/004-target.svg'});
             bo.outgoingRelations.map(rel => {
                 try {
-                    this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'blue', font: {color: 'black'}, shape: 'dot'});
+                    // this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, color: 'blue', font: {color: 'black'}, shape: 'dot'});
+                    // tslint:disable-next-line:max-line-length
+                    this.nodes.add({id: rel.oppositeObject.id, label: rel.oppositeObject.metaObject.name + ':\n' + rel.oppositeObject.name, font: {color: 'black'}, shape: 'image', image: 'assets/icons/diagram-1.svg'});
                 } catch (e) {
                     // tslint:disable-next-line:no-console
                     console.log(`Node already in graph...`);
@@ -154,7 +159,7 @@ export default class BOGraphView extends React.Component<Props> {
             nodes: this.nodes,
             edges: this.edges
         };
-        var options = { layout: { randomSeed: 8 }, width: '1000', height: '1000' };
+        var options = { layout: { randomSeed: 8 }};
 
         this.network = new vis.Network(this.myRef.current, data, options);
         this.network.on('oncontext', params => {
@@ -170,7 +175,7 @@ export default class BOGraphView extends React.Component<Props> {
             position: {x: 300, y: 300},
             scale: 1.0,
             // offset: {x: -500, y: -700}
-          });       
+          });
     }
 
     render() {  
@@ -181,7 +186,7 @@ export default class BOGraphView extends React.Component<Props> {
                 <div>
                     Selected BO = {name}
                 </div>
-                <div ref={this.myRef} style={{overflow: 'auto', height: '400'}}/>
+                <div ref={this.myRef} style={{overflow: 'auto', height: 800, width: 800, background: '#f2f2f2'}}/>
             </div>
         );
     }

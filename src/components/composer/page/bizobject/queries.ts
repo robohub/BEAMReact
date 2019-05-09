@@ -89,65 +89,6 @@ mutation CreateBO (
 `;
 */
 
-export const upsertBO = gql`
-mutation upsertBO(
-    $boid: ID,
-    $moid: ID,
-    $name: String,
-    $state: String,
-    $attrs: [BizAttributeCreateWithoutBusinessObjectInput!],
-    $rels: [BizRelationCreateWithoutIncomingObjectInput!],
-    $delRels: [BizRelationScalarWhereInput!],
-    $brValues: [BizAttributeUpdateManyWithWhereNestedInput!]
-  ) {
-    upsertBusinessObject(
-        where: {id: $boid}
-        create: {
-            metaObject: { connect: { id: $moid}},
-            name: $name,
-            state: $state,
-            bizAttributes: {create: $attrs},
-            outgoingRelations: { create: $rels}
-        }
-        update: {
-            outgoingRelations: { create: $rels, deleteMany: $delRels },
-            bizAttributes: {updateMany: $brValues}
-        }
-    ) {
-        id
-        name
-        state
-        metaObject {
-            id
-            name
-        }
-        bizAttributes {
-            id
-            metaAttribute
-            {
-                id
-                name
-            }
-            value
-        }
-        outgoingRelations {
-            id
-            oppositeObject {
-                id
-                name
-            }
-            metaRelation {
-                id
-                multiplicity
-                oppositeName
-
-            }
-            oppositeRelation { id }
-        }
-    } 
-}
-`;
-
 export const updateBizObject = gql`
 mutation updateBO($id: ID!, $name: String) {
     updateBusinessObject(data: {name: $name}, where: {id: $id})
@@ -291,6 +232,10 @@ query MOQuery($id: ID!) {
         }
 
     }
+}
+`;
+export const allMetaRelations = gql`
+query allMetaRelations {
     metaRelations {
         id
         oppositeName

@@ -10,7 +10,7 @@ file, You can obtain one at http://jointjs.com/license/rappid_v2.txt
  or from the Rappid archive as was distributed by client IO. See the LICENSE file.*/
 
 import * as joint from '../../../../vendor/rappid';
-import Position = joint.ui.Halo.HandlePosition;
+// import Position = joint.ui.Halo.HandlePosition;
 
 export class HaloService {
 
@@ -26,7 +26,7 @@ export class HaloService {
         return [
             {
                 name: 'remove',
-                position: Position.NW,
+                position: 'nw' as joint.ui.Halo.HandlePosition.NW,
                 events: { pointerdown: 'removeElement' },
                 attrs: {
                     '.handle': {
@@ -39,7 +39,7 @@ export class HaloService {
             },
             {
                 name: 'fork',
-                position: Position.NE,
+                position: 'ne' as joint.ui.Halo.HandlePosition.NE,
                 events: { pointerdown: 'startForking', pointermove: 'doFork', pointerup: 'stopForking' },
                 attrs: {
                     '.handle': {
@@ -52,7 +52,7 @@ export class HaloService {
             },
             {
                 name: 'clone',
-                position: Position.SE,
+                position: 'se' as joint.ui.Halo.HandlePosition.SE,
                 events: { pointerdown: 'startCloning', pointermove: 'doClone', pointerup: 'stopCloning' },
                 attrs: {
                     '.handle': {
@@ -65,7 +65,7 @@ export class HaloService {
             },
             {
                 name: 'unlink',
-                position: Position.W,
+                position: 'w' as joint.ui.Halo.HandlePosition.W,
                 events: { pointerdown: 'unlinkElement' },
                 attrs: {
                     '.handle': {
@@ -78,7 +78,7 @@ export class HaloService {
             },
             {
                 name: 'link',
-                position: Position.E,
+                position: 'e' as joint.ui.Halo.HandlePosition.E,
                 events: { pointerdown: 'startLinking', pointermove: 'doLink', pointerup: 'stopLinking' },
                 attrs: {
                     '.handle': {
@@ -91,7 +91,7 @@ export class HaloService {
             },
             {
                 name: 'rotate',
-                position: Position.SW,
+                position: 'sw' as joint.ui.Halo.HandlePosition.SW,
                 events: { pointerdown: 'startRotating', pointermove: 'doRotate', pointerup: 'stopBatch' },
                 attrs: {
                     '.handle': {

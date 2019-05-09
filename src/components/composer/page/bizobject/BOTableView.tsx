@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { Query, ChildProps } from 'react-apollo';
 import BOEditContainer from './BOEditContainer';
-import { BizObjectsType, BOEditType, MOResponse } from './Types';
+import { MOResponse } from './Types';
+import { BizObjectsType, BOEditType } from '../../../../domain/utils/boUtils';
+
 import SelectBOType from './selectBOType';
 import { allBOQuery, deleteBizObject, MOQuery } from './queries';
 import EditIcon from '@material-ui/icons/Edit';

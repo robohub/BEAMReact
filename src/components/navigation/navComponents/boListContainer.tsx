@@ -2,18 +2,29 @@ import * as React from 'react';
 import { ChildProps, Query } from 'react-apollo';
 import gql from 'graphql-tag';
 
-import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core';
+import { Typography, Table, TableHead, TableBody, TableRow, TableCell, TextField } from '@material-ui/core';
 
-const allBOQuery = gql`
-query allBusinessObjects {
-    businessObjects {
-        id
-        name
-        metaObject {
-            id
-            name
-        }
+import { Search } from '@material-ui/icons';
+
+const searchBOQuery = gql`
+query allBOs($moSearchStr: String, $boSearchStr: String){
+  businessObjects(
+    where: {
+      AND: [
+          {metaObject: {name_starts_with: $moSearchStr}},
+          {name_starts_with: $boSearchStr}
+      ]
     }
+    orderBy: name_ASC
+  ) {
+    id
+    name
+    createdAt
+    metaObject {
+      id
+      name
+    }
+  }
 }
 `;
 
@@ -30,54 +41,114 @@ interface Response {
 }
 
 interface Props {
-    selectedListBO: string;
-    selectedBOchange: (id: string) => void;
-    selectedInfoBOchange: (id: string) => void;
+    selectedBOchange?: (id: string) => void;
+    selectedInfoBOchange?: (id: string) => void;
 }
 
 export default class BOListContainer extends React.Component<ChildProps<Props, Response>> {
+    state = {
+        searchBOString: '',
+        searchMOString: ''
+    };
+
     private selectedBO = '';
 
-    handleItemClick = (e: React.MouseEvent) => {
-        if (this.selectedBO !== e.currentTarget.id) {
-            this.selectedBO = e.currentTarget.id;
-            this.props.selectedBOchange(e.currentTarget.id);
-            this.props.selectedInfoBOchange(e.currentTarget.id);
+    handleItemClick = (id: string) => {
+        if (this.selectedBO !== id) {
+            this.selectedBO = id;
+            if (this.props.selectedInfoBOchange) { this.props.selectedBOchange(id); }
+            if (this.props.selectedInfoBOchange) { this.props.selectedInfoBOchange(id); }
         }
+    }
+
+    handleMOInput = (val: string) => {
+        this.setState({searchMOString: val});
+    }
+
+    handleBOInput = (val: string) => {
+        this.setState({searchBOString: val});
+    }
+
+    onDragStart = (ev: React.DragEvent<HTMLElement>, id: string, name: string) => {
+        ev.dataTransfer.setData('id', id);
+        ev.dataTransfer.setData('name', name);
+        ev.dataTransfer.setData('svg', 'assets/icons/diagram-1.svg');
+        var img = new Image();
+        img.src = 'assets/icons/diagram-1.svg';
+        img.width = 30;
+        img.height = 30;
+
+        ev.dataTransfer.setDragImage(img, 15, 15);
     }
 
     render() {
         return (
-            <Query query={allBOQuery}>
-                {({ data, loading, error }) => {
-                    if (loading) { return <div>Loading</div>; }
-                    if (error) { return <h1>ERROR: {error}</h1>; }             
+            <div>
+                <Table padding="dense">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell><Typography variant="h6">Type</Typography></TableCell>
+                            <TableCell><Typography variant="h6">Object Name</Typography></TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>
+                                <Search/>
+                                <TextField
+                                    value={this.state.searchMOString}
+                                    // className={this.props.classes.textField}
+                                    id="search"
+                                    onChange={event => this.handleMOInput(event.target.value)}
+                                    placeholder={'Search...'}
+                                />
+                            </TableCell>
+                            <TableCell>
+                                <Search/>
+                                <TextField
+                                    value={this.state.searchBOString}
+                                    // className={this.props.classes.textField}
+                                    id="search"
+                                    onChange={event => this.handleBOInput(event.target.value)}
+                                    placeholder={'Search...'}
+                                />
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        <Query query={searchBOQuery} variables={{moSearchStr: this.state.searchMOString, boSearchStr: this.state.searchBOString}}>
+                        {({ data, loading, error }) => {
+                            if (loading) {
+                                return <TableRow><TableCell>Loading</TableCell></TableRow>;
+                            }
+                            if (error) {
+                                return <TableRow><TableCell>Error: {error.message}</TableCell></TableRow>;
+                            }
                     
-                    return (
-                        <div>
-                            <Divider/>
-                            <Table padding="dense">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell><Typography variant="h6">Type</Typography></TableCell>
-                                            <TableCell><Typography variant="h6">Object Name</Typography></TableCell>
+                            return (
+                                data.businessObjects.length ?
+                                    data.businessObjects.map((o: BoItem) => 
+                                        <TableRow key={o.id} onClick={e => this.handleItemClick(o.id)} hover={true} >
+                                            <TableCell>
+                                                <img src="assets/icons/diagram-1.svg" style={{ width: 30, height: 30}}/>
+                                                {o.metaObject.name}
+                                            </TableCell>
+                                            <TableCell
+                                                style={{whiteSpace: 'normal', wordWrap: 'break-word'}}
+                                                draggable={true}
+                                                onDragStart={(e: React.DragEvent<HTMLTableHeaderCellElement>) => this.onDragStart(e, o.id, o.name)}
+                                            >
+                                                <Typography variant="body1">{o.name}</Typography>
+                                            </TableCell>
                                         </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {data.businessObjects.map((o: BoItem) => 
-                                            <TableRow key={o.id} onClick={this.handleItemClick} id={o.id} hover={true} >
-                                                <TableCell>{o.metaObject.name} </TableCell>
-                                                <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                    <Typography variant="body1">{o.name}</Typography>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                            </Table>
-                        </div>
-                    );
-                }}
-            </Query>
+                                    )
+                                    :
+                                    <TableRow><TableCell>No Business Objects defined...</TableCell></TableRow>
+                            );
+                        }}
+                        </Query>
+                    </TableBody>
+                </Table>
+            </div>
+
         );
     }
 }

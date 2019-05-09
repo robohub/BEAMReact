@@ -2,7 +2,8 @@ import * as React from 'react';
 import { ChildProps, Query } from 'react-apollo';
 import EditBOView from './BOEditView';
 import { MOQuery } from './queries';
-import { MOResponse, BOEditType, AllMRResponse, } from './Types';
+import { MOResponse, MetaObjectType } from './Types';
+import { BOEditType } from '../../../../domain/utils/boUtils';
 
 import { client } from '../../../../index';
 
@@ -54,9 +55,8 @@ export default class BOEditContainer extends React.Component<ChildProps<InputPro
                             return (
                                 <EditBOView 
                                     newObject={this.props.newObject} 
-                                    metaobject={data as MOResponse} 
+                                    metaobject={data.metaObject as MetaObjectType} 
                                     bizObject={this.props.bizObject}
-                                    allMetaRels={data as AllMRResponse}
                                 />
                             );
                         }}

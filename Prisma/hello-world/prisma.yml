@@ -1,0 +1,2 @@
+endpoint: https://eu1.prisma.sh/robohub-c21015/hello-world/dev
+datamodel: datamodel.prisma

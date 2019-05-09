@@ -1,82 +1,40 @@
 
-export type BizAttributeType = {
-    id: string;
-    metaAttribute: { 
-        id: string;
-        name: string 
-    }
-    value: string;
-};
-
-export type BizRelationsType = {
-    id: string;
-
-    oppositeObject: {
-        id: string;
-        name: string;
-    }
-    oppositeRelation: {
+export type MetaObjectType = {
+    id: string
+    name: string
+    attributes: {
         id: string
-    }
-    metaRelation: {
-        id: string;
-        oppositeName: string;
-        multiplicity: string;
-    }
+        name: string
+    }[];
+    businessObjects: { id: string; }[]
+    outgoingRelations: MetaObjectOutRelsType[]
 };
 
-export type BOEditType = {
-    id: string;
-    name: string;
-    state: string;
-    metaObject: { 
-        id: string;
-        name: string  
-    };
-    bizAttributes: BizAttributeType[];
-    outgoingRelations: BizRelationsType[];
-};
-
-export type BizObjectsType = {
-    businessObjects: BOEditType[];
-};
-
-export interface MOResponse {
-    metaObject: { 
-        id: string,
-        name: string,
-        attributes: {
-            id: string;
-            name: string;
-        }[],
-        businessObjects: { id: string; }[]
-        outgoingRelations: {
+export type MetaObjectOutRelsType = {
+    id: string
+    oppositeName: string
+    oppositeObject: {
+        name: string
+        businessObjects: {
             id: string
-            oppositeName: string
-            oppositeObject: {
-                name: string
-                businessObjects: {
+            name: string
+            outgoingRelations: {
+                id: string
+                metaRelation: {
                     id: string
-                    name: string
-                    outgoingRelations: {
-                        id: string
-                        metaRelation: {
-                          id: string
-                          multiplicity: string
-                        }
-                        oppositeRelation: {
-                          id: string
+                    multiplicity: string
+                }
+                oppositeRelation: {
+                    id: string
 
-                        }
-                    }[]
-                }[]
-            }
-            multiplicity: string
-        }[];
-    };
-}
+                }
+            }[]
+        }[]
+    }
+    multiplicity: string
+};
 
-export type MetaRel = {
+export type MetaRelType = {
     id: string;
     oppositeName: string;
     oppositeRelation: {
@@ -87,8 +45,12 @@ export type MetaRel = {
 };
 
 export type AllMRResponse = {
-    metaRelations: MetaRel[];
+    metaRelations: MetaRelType[];
 };
+
+export interface MOResponse {
+    metaObject: MetaObjectType;
+}
 
 export type FormAttribute = {
     name: string;

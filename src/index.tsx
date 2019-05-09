@@ -39,9 +39,17 @@ query getUserMapping {
 
 const createSystemSetupMutation = gql`
 mutation createSystemSetup {
-    createSystemSetup (data: {templateConfig: {create: {defaultTemplate: null}}}) {
-        id
-    }
+  createSystemSetup (data: {templateConfig: {create: {defaultTemplate: null}}}) {
+    id
+    systemUserMOMapping { id }
+    systemUseridMAMapping { id }
+    templateConfig {
+      id
+      moObject { id }
+      moRelation { id }
+      defaultTemplate { id }
+      userRelatedMRId
+    }  }
 }
 `;
 
@@ -138,7 +146,14 @@ ReactDOM.render(
               } else {
                 // RH TODO: skapa ny tom SystemSetup!
                 client.mutate({
-                  mutation: createSystemSetupMutation
+                    mutation: createSystemSetupMutation
+                }).then(res => {
+                    let newSetup: SystemSetup = res.data.createSystemSetup;
+                    Globals.SystemConfigVars.SYSTEM_SETUP_ID = newSetup.id;
+                    // Update cache
+                    const setups: {systemSetups: SystemSetup[]} = client.readQuery({query: getSystemSetupQuery});
+                    setups.systemSetups.push(newSetup);
+                    client.writeQuery({ query: getSystemSetupQuery, data: setups});
                 });
               }
 
