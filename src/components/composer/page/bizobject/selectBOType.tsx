@@ -57,8 +57,8 @@ class SelectBOType extends React.PureComponent<ChildProps<{}, Response> & Props>
                         objs.push({label: o.name, value: o.id});
                     });
 
-                    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>, child: React.ReactNode) => {
-                        this.setState({selected: true, selectedId: event.target.value, boType: child.valueOf.toString});
+                    const handleChange = (event: React.ChangeEvent<HTMLSelectElement>, child: React.ReactElement) => {
+                        this.setState({selected: true, selectedId: event.target.value, boType: child.props.children});
                     };
     
                     return (

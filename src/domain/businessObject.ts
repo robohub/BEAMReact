@@ -5,9 +5,11 @@ import { client } from '../index';
 import { ExtendedRelBOType, BizAttrValueType, RelatedBOType, RelatedBAType, BizObjectsType } from './utils/boUtils';
 import { findIndirectDeletions, syncCreateAndConnectOppositeBizRels, deleteBizRelations, getChangedRelations, getUpdatedBizAttributes } from './utils/boUtils';
 
-import { MetaRelType, MOResponse } from './../components/composer/page/bizobject/Types';
-import { allBOQuery, allMetaRelations, MOQuery, } from '../components/composer/page/bizobject/queries';
-import { getItemBOs } from '../components/planner/pages/components/queries';
+import { MetaRelType } from './../components/composer/page/bizobject/Types';
+import { allBOQuery, allMetaRelations, } from '../components/composer/page/bizobject/queries';
+import { removeBusinessObjectsFromCache } from '../utils/apolloExtensions';
+import { ExecutionResult } from 'react-apollo';
+import { RefetchQueryDescription } from 'apollo-client/core/watchQueryOptions';
 
 export const upsertBO = gql`
 mutation upsertBO(
@@ -171,6 +173,7 @@ export const updateSaveBO =  async (
     newAttrs: RelatedBAType[],      // Create and update
     newRels: RelatedBOType[],       // Create and update
     saveFinished: () => void,
+    refetchQueries: ((result: ExecutionResult) => RefetchQueryDescription) | RefetchQueryDescription
     ) => {
         
     // tslint:disable-next-line:no-console
@@ -263,18 +266,23 @@ export const updateSaveBO =  async (
             update: async (cache, mutationResult ) => {
                 // tslint:disable-next-line:no-console
                 console.log('2 ...Updated BO........ = ', boName);
+                // tslint:disable-next-line:no-console
+                console.log('Cache: ', cache);
 
                 const resultBO = mutationResult.data.upsertBusinessObject;
 
                 if (bizObjectId === '') {  // Check if new BO
-                    const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: moId} });
+/*                    const data: MOResponse = cache.readQuery({query: MOQuery, variables: {id: moId} });
                     data.metaObject.businessObjects.push(resultBO);  // Will push id
                     cache.writeQuery({ query: MOQuery, variables: {id: moId} , data});
                     
-                    const data2: BizObjectsType = client.readQuery({query: allBOQuery });
+                    const data2: BizObjectsType = cache.readQuery({query: allBOQuery });
                     data2.businessObjects.push(resultBO);
-                    client.writeQuery({ query: allBOQuery, data: data2 });
-                }
+                    cache.writeQuery({ query: allBOQuery, data: data2 });
+*/                    
+                    removeBusinessObjectsFromCache(cache);
+    
+                    }
                 
                 // Prepare for deletion of opposite and indirect relations...
                 //      3.1 Prepare ids[] with oppositebrid pairs
@@ -319,10 +327,7 @@ export const updateSaveBO =  async (
                 saveFinished();
 
             },
-            // refetchQueries: [{ query: MOQuery, variables: {id: moId} }, { query: allBOQuery }] // 
-            // refetchQueries: [{ query: allMOQuery }, { query: MOQuery, variables: {id: moId} }, ]  // Alternative? Samma resultat som ovan, bara MOQuery funkar
-            // refetchQueries: [{query: allMOQuery}]  // Alternative?
-            // refetchQueries: () => (['allMOQuery'])  // If works --> we can send in string from controllers as to which queries to run! But not queries with variables?
+            refetchQueries: refetchQueries
         });
     } catch (e) {
         alert('Error when updating/creating BO:' + e);
@@ -335,13 +340,13 @@ export const updateSaveBO =  async (
 export function updateBORelations(
     boId: string,
     boName: string,
-    moId: string,
     relatedObjs: RelatedBOType[],
     saveFinished: () => void,
+    refetchQueries: ((result: ExecutionResult) => RefetchQueryDescription) | RefetchQueryDescription,
     planId?: string,
     planData?: { items: {}[], groups: {}[] },
 ) {
-    updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished);
+    updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, refetchQueries);
 
     // Check if planId != null, update plandata if so...
   
@@ -360,10 +365,7 @@ export function updateBORelations(
                 itemBOs: itemBOs
             },
             // update: // Update cache....
-            refetchQueries: [{
-                query: getItemBOs,
-                variables: {moid: moId}
-            }]
+            refetchQueries: refetchQueries
         }).catch(e => {
             alert('Error when saving plan: ' + e);
         });        

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Query, ChildProps } from 'react-apollo';
 import BOEditContainer from './BOEditContainer';
-import { MOResponse } from './Types';
+// import { MOResponse } from './Types';
 import { BizObjectsType, BOEditType } from '../../../../domain/utils/boUtils';
 
 import SelectBOType from './selectBOType';
@@ -13,7 +13,6 @@ import DeleteIcon from '@material-ui/icons/DeleteForeverOutlined';
 import CloseIcon from '@material-ui/icons/Close';
 
 import { client } from '../../../../index';
-// import gql from 'graphql-tag';
 
 import {
     Table,
@@ -36,6 +35,8 @@ import {
     Snackbar,
     IconButton,
 } from '@material-ui/core';
+
+import { BODeleteFromCache } from '../../../../utils/apolloExtensions';
 
 /* Redundant? See deleteBO function
 export const allBizRels = gql`
@@ -76,7 +77,10 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         id: bo.id
                     },
                     update: cache => {
-                        // Remove BO from cache
+
+                        BODeleteFromCache(cache, { __typename: 'BusinessObject', id: bo.id});
+                      
+/*                        // Remove BO from cache
                         const data: BizObjectsType = cache.readQuery({query: allBOQuery});
                         data.businessObjects.forEach((el, index) => {
                             if (el.id === bo.id) {
@@ -97,20 +101,6 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         });
                         cache.writeQuery({query: allBOQuery, data});
 
-/*                        // Remove BizRelation that connects other BOs to deleted BO from cache
-                        const cacheRels: {bizRelations: {id: string}[]} = cache.readQuery({query: allBizRels});
-                        deletedBRs.forEach(deletedBRid => {
-                            for (var i = cacheRels.bizRelations.length - 1; i >= 0; i--) {
-                                if (deletedBRid === cacheRels.bizRelations[i].id) {
-                                    cacheRels.bizRelations.splice(i, 1);
-                                }
-                            }
-                        });
-                        // TODO RH: BizRelations försvinner från ROOT_QUERY men ligger kvara i Apollo Inspector, gäller även borttagen BO!!!!???
-                        // I cache.data.data (i debugger) verkar det dock stämma?
-                        // Ovanstående BizRelation-removal kan var onödig i dagsläget...
-                        cache.writeQuery({query: allBizRels, data: cacheRels});
-*/
                         // Remove BO from MO businessobjects (so related BOs won't see removed BO as selectable)
                         let found = false;
                         try {
@@ -130,7 +120,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         } catch {
                             alert('Error when trying to update cache for deleted object!');
                         }
-                        
+*/                        
                         // tslint:disable-next-line:no-console
                         console.log('Deleted BO finished.....');
 
@@ -164,24 +154,23 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
 
     componentDidMount() {
         // tslint:disable-next-line:no-console
-        console.log('---> BOEditView skapades');
+        console.log('---> BOTableView skapades');
     }
 
     componentWillUpdate() {
         // tslint:disable-next-line:no-console
-        console.log('---> BOEditView kommer uppdateras');
+        console.log('---> BOTableView kommer uppdateras');
     }
 
     componentDidUpdate() {
         // tslint:disable-next-line:no-console
-        console.log('---> BOEditView UPPDATERADES <-----');
+        console.log('---> BOTableView UPPDATERADES <-----');
     }
 
     render() {
         return (
             <Query
                 query={allBOQuery}
-                fetchPolicy={'cache-and-network'}
             >
                 {({ loading, data: { businessObjects }, error }) => {
                     if (loading) {
@@ -192,12 +181,12 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                     }
 
                     // tslint:disable-next-line:no-console
-                    console.log('--- BOTableView renderar --- Selected BO:' + (this.state.selectedBO ? this.state.selectedBO.id : null) );
-
+                    console.log('--- BOTableView renderar --- Selected BO:' );
+/*
                     const data: BizObjectsType = client.readQuery({query: allBOQuery });
                     // tslint:disable-next-line:no-console
                     console.log(data);
-/*
+
                     // tslint:disable-next-line:no-console
                     console.log('From allBOQuery:' + JSON.stringify(businessObjects, null, 2));
 */

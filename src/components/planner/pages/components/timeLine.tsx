@@ -11,7 +11,7 @@ import { styles } from '../../../shared/style';
 
 import { updateBORelations } from '../../../../domain/businessObject';
 import { RelatedBOType } from '../../../../domain/utils/boUtils';
-import { getPlan, getConnectedItems } from './queries';
+import { getPlan, getConnectedItems, getItemBOs, getPlanBOs } from './queries';
 import { SelectedPlanBOType } from './types';
 
 /*
@@ -281,9 +281,21 @@ class TimeLine extends React.Component<Props, State> {
         updateBORelations(
             this.state.selectedBO.id,
             this.state.selectedBO.name,
-            this.state.selectedBO.metaObjectId,
             itemBOs,
             this.saveFinished,
+            [
+                {
+                    query: getPlanBOs,
+                },
+                {
+                    query: getPlan,
+                    variables: {boid: this.props.selectedBO.id}                
+                },
+                {
+                    query: getItemBOs,
+                    variables: {moid: this.props.selectedBO.metaObjectId}
+                }
+            ],
             this.selectedPlanId,
             {items: itemData, groups: groupData},
         );

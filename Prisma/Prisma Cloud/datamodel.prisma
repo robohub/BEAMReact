@@ -46,10 +46,10 @@ type BusinessObject {
   state: String
   tags: [String!] @scalarList(strategy: RELATION)
   updatedAt: DateTime! @updatedAt
-  plan: Plan @relation(name: "PlanBizObject", link: INLINE)
-  plannedIn: Plan @relation(name: "ItemBOsBizObject")
-  ownsDiagrams: [Diagram] @relation(name: "BODiagram")
-  participatesInDiagrams: [Diagram] @relation(name: "DiagramBizObject")
+  plan: Plan @relation(name: "PlanBizObject", link: INLINE, , onDelete: CASCADE))
+  plannedIn: Plan @relation(name: "ItemBOsBizObject",, onDelete: CASCADE))
+  ownsDiagrams: [Diagram] @relation(name: "BODiagram", onDelete: CASCADE))
+  participatesInDiagrams: [Diagram] @relation(name: "DiagramBizObject", onDelete: CASCADE))
 }
 
 type MetaAttribute {

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { /*ChildProps, */ Query } from 'react-apollo';
-import gql from 'graphql-tag';
 
 import { Grid, Paper, Button, Drawer } from '@material-ui/core';
 import ListPlans from './components/listPlans';
@@ -10,23 +9,7 @@ import TimeLine from './components/timeLine';
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from '../../shared/style';
 import { PlanConfig, SelectedPlanBOType } from './components/types';
-
-export const getPlanBOs = gql`
-query configuredPlanBos {
-    planConfigs {
-      id
-      uiMoPlan {
-        id
-        name
-        businessObjects {
-          id
-          name
-          plan { id }
-        }  
-      }
-    }
-}
-`;
+import { getPlanBOs } from './components/queries';
 
 interface State {
     selectedPlanBO: SelectedPlanBOType;
@@ -104,7 +87,7 @@ class PlanningView extends React.Component<Props, State> {
                                 <ListPlans planConfigs={data.planConfigs} updateSelectedBO={this.updateSelectedBO}/>
                             </Drawer>
                             <Grid container={true} spacing={8}>
-                                <Grid item={true} xs={9}>
+                                <Grid item={true} xs={7}>
                                     <Paper className={classes.root}>
                                         <TimeLine
                                             selectedBO={this.state.selectedPlanBO}
@@ -113,7 +96,7 @@ class PlanningView extends React.Component<Props, State> {
                                         />
                                     </Paper>
                                 </Grid>
-                                <Grid item={true} xs={3}>
+                                <Grid item={true} xs={5}>
                                     <Paper className={classes.root}>
                                         <ListItems selectedMO={this.state.selectedPlanBO.metaObjectId}/>
                                     </Paper>

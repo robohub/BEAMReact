@@ -5,8 +5,6 @@ import { MOQuery } from './queries';
 import { MOResponse, MetaObjectType } from './Types';
 import { BOEditType } from '../../../../domain/utils/boUtils';
 
-import { client } from '../../../../index';
-
 type InputProps = {
     newObject: boolean;
     metaID: string;
@@ -37,7 +35,7 @@ export default class BOEditContainer extends React.Component<ChildProps<InputPro
                             if (loading) { return <div>Loading</div>; }
                             
                             if (error) { return <div>ERROR: {error.message}</div>; }             
-                            
+/*                            
                             if (this.props.newObject) {
                                 // tslint:disable-next-line:no-console
                                 console.log(' ------ ----- BOEditContainer renderar NEW BO !!!');
@@ -51,7 +49,7 @@ export default class BOEditContainer extends React.Component<ChildProps<InputPro
                             const data2: MOResponse = client.readQuery({query: MOQuery, variables: {id: id} });
                             // tslint:disable-next-line:no-console
                             console.log(data2);
-        
+*/       
                             return (
                                 <EditBOView 
                                     newObject={this.props.newObject} 

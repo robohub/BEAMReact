@@ -255,10 +255,10 @@ export class TemplateConfig extends React.Component<TProps> {
             mutation: createTemplateMutation,
             variables: {name: this.state.templateName},
             update: (cache, result) => {
-                const data: {templates: TemplateType[]} = cache.readQuery({query: getTemplatesQuery});
+/*                const data: {templates: TemplateType[]} = cache.readQuery({query: getTemplatesQuery});
                 data.templates.push(result.data.createTemplate);
                 cache.writeQuery({query: getTemplatesQuery, data});
-
+*/
                 this.dbMessage = 'Created new Template';
                 this.setState({snackbarOpen: true});
             }

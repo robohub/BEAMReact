@@ -7,6 +7,7 @@ import { RelatedBOType, RelatedBAType, BOEditType } from '../../../../domain/uti
 import { BOEditForm } from './BOEditForm';
 import { Snackbar, IconButton } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
+import { allBOQuery, MOQuery } from './queries';
 
 type MyProps = {
     newObject: boolean;
@@ -47,7 +48,8 @@ export default class EditBOView extends React.Component<MyProps> {
             this.props.metaobject.id,
             createBAs,
             relatedBOs,
-            this.saveFinished
+            this.saveFinished,
+            [{query: allBOQuery}, { query: MOQuery, variables: {id: this.props.metaobject.id} } ]
         );
         
         // tslint:disable-next-line:no-console

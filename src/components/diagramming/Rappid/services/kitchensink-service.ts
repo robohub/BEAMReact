@@ -32,6 +32,7 @@ mutation saveDiagram($id: ID, $dia: Json) {
     ) {
         id
         diagramData
+    }
 }
 `;
 

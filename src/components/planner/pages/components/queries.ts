@@ -1,5 +1,22 @@
 import gql from 'graphql-tag';
 
+export const getPlanBOs = gql`
+query configuredPlanBos {
+    planConfigs {
+      id
+      uiMoPlan {
+        id
+        name
+        businessObjects {
+          id
+          name
+          plan { id }
+        }  
+      }
+    }
+}
+`;
+
 export const getPlan = gql`
 query getPlan($boid: ID!) {
     plans (where: {planBO: {id: $boid}}) {
@@ -16,6 +33,30 @@ query getPlan($boid: ID!) {
     }
 }
 `;
+/*
+export const getItemBOs = gql`
+query itemBOsFromPlanMO($moid: ID!) {
+    planConfigs(
+      where: {uiMoPlan: {id: $moid}}
+    ) {
+        id
+        uiMoRelations {
+            id
+            oppositeName
+          	bizRelations {
+                id
+                oppositeObject {
+                    id name plannedIn { planBO { id name }}
+                }
+                incomingObject {
+                  id name 
+              }  
+            }
+        }
+    }
+}
+`;
+*/
 
 export const getItemBOs = gql`
 query itemBOsFromPlanMO($moid: ID!) {
@@ -32,7 +73,13 @@ query itemBOsFromPlanMO($moid: ID!) {
               businessObjects {
                 id
                 name
-
+                plannedIn {
+                  id
+                  planBO {
+                    id
+                    name
+                  }
+                }
               }     
             }
 
