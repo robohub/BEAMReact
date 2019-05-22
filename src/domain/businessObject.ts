@@ -8,7 +8,7 @@ import { findIndirectDeletions, syncCreateAndConnectOppositeBizRels, deleteBizRe
 import { MetaRelType } from './../components/composer/page/bizobject/Types';
 import { allBOQuery, allMetaRelations, } from '../components/composer/page/bizobject/queries';
 import { removeBusinessObjectsFromCache } from '../utils/apolloExtensions';
-import { ExecutionResult } from 'react-apollo';
+import { ExecutionResult, FetchResult } from 'react-apollo';
 import { RefetchQueryDescription } from 'apollo-client/core/watchQueryOptions';
 
 export const upsertBO = gql`
@@ -176,9 +176,9 @@ export const updateSaveBO =  async (
     refetchQueries: ((result: ExecutionResult) => RefetchQueryDescription) | RefetchQueryDescription
     ) => {
         
-    // tslint:disable-next-line:no-console
-    console.log('1 Update BO........');
-    try {
+        // tslint:disable-next-line:no-console
+        console.log('1 Update BO........');
+//    try {
         let moId = metaObjectId;
 
         let createAttrs = new Array<{metaAttribute: {connect: {id: string}}, value: string}>();
@@ -329,15 +329,15 @@ export const updateSaveBO =  async (
             },
             refetchQueries: refetchQueries
         });
-    } catch (e) {
-        alert('Error when updating/creating BO:' + e);
-    }
-    // tslint:disable-next-line:no-console
-    console.log('C. Exits updateSaveBO,.....');
+//    } catch (e) {
+//        alert('Error when updating/creating BO:' + e);
+//    }
+        // tslint:disable-next-line:no-console
+        console.log('C. Exits updateSaveBO,.....');
 
 };
 
-export function updateBORelations(
+export async function updateBORelations(
     boId: string,
     boName: string,
     relatedObjs: RelatedBOType[],
@@ -346,7 +346,8 @@ export function updateBORelations(
     planId?: string,
     planData?: { items: {}[], groups: {}[] },
 ) {
-    updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, refetchQueries);
+    // updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, refetchQueries);
+    await updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, []);
 
     // Check if planId != null, update plandata if so...
   
@@ -356,7 +357,7 @@ export function updateBORelations(
             itemBOs.push({id: item.boId});
         });
 
-        client.mutate({
+        let result = await client.mutate({
             mutation: updatePlan,
             variables: { 
                 planId: planId,
@@ -367,7 +368,20 @@ export function updateBORelations(
             // update: // Update cache....
             refetchQueries: refetchQueries
         }).catch(e => {
-            alert('Error when saving plan: ' + e);
-        });        
+            alert('Error when saving plan: ' + e + '\nWill try again!!!');
+            client.mutate({
+                mutation: updatePlan,
+                variables: { 
+                    planId: planId,
+                    planData: planData,
+                    boId: boId,
+                    itemBOs: itemBOs
+                },
+                // update: // Update cache....
+                refetchQueries: refetchQueries
+            });
+        }) as FetchResult<{upsertPlan: { id: string}}>;
+        return result.data.upsertPlan.id;
     }
+    return '';
 }

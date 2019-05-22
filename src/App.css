@@ -16,6 +16,16 @@
     border-color: orangered;
   }
 
+  .vis-item.red {
+    background-color: red;
+    border-color: red;
+  }
+  .vis-item.vis-selected.red {
+    /* custom colors for selected orange items */
+    background-color: orange;
+    border-color: orangered;
+  }
+
   .robclass1 {
     background-color: #FFFF00
   }

@@ -1,0 +1,202 @@
+﻿enum AttributeType {
+  String
+  Int
+  Float
+  DateTime
+  Boolean
+}
+
+enum WidgetType {
+  Text
+  Plan
+  HTML
+  Diagram
+  Navigation
+  Tree
+  Video
+}
+
+type BizAttribute {
+  businessObject: BusinessObject @relation(name: "BOBizAttribute", link: INLINE)
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  metaAttribute: MetaAttribute @relation(name: "BizAttributeOnMetaAttribute", link: INLINE)
+  updatedAt: DateTime! @updatedAt
+  value: String!
+}
+
+type BizRelation {
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  incomingObject: BusinessObject @relation(name: "BOOutgoingBizRelation", link: INLINE)
+  metaRelation: MetaRelation @relation(name: "BizRelationOnMetaRelation", link: INLINE)
+  oppositeObject: BusinessObject @relation(name: "BOInComingBizRelation", link: INLINE)
+  oppositeRelation: BizRelation @relation(name: "BizRelationOnBizRelation", link: TABLE)
+  updatedAt: DateTime! @updatedAt
+}
+
+type BusinessObject {
+  bizAttributes: [BizAttribute!]! @relation(name: "BOBizAttribute" onDelete: CASCADE)
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  incomingRelations: [BizRelation!]! @relation(name: "BOInComingBizRelation", onDelete: CASCADE)
+  metaObject: MetaObject @relation(name: "BusinessObjectOnMetaObject", link: INLINE )
+  name: String
+  outgoingRelations: [BizRelation!]! @relation(name: "BOOutgoingBizRelation", onDelete: CASCADE)
+  state: String
+  tags: [String!] @scalarList(strategy: RELATION)
+  updatedAt: DateTime! @updatedAt
+  plan: Plan @relation(name: "PlanBizObject", link: INLINE, onDelete: CASCADE)
+  plannedIn: Plan @relation(name: "ItemBOsBizObject", onDelete: CASCADE)
+  ownsDiagrams: [Diagram] @relation(name: "BODiagram", onDelete: CASCADE)
+  participatesInDiagrams: [Diagram] @relation(name: "DiagramBizObject", onDelete: CASCADE)
+}
+
+type MetaAttribute {
+  bizAttributes: [BizAttribute!]! @relation(name: "BizAttributeOnMetaAttribute")
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  name: String @unique
+  objects: [MetaObject!]! @relation(name: "AttributeOnObject")
+  type: AttributeType
+  updatedAt: DateTime! @updatedAt
+}
+
+type MetaObject {
+  attributes: [MetaAttribute!]! @relation(name: "AttributeOnObject", link: TABLE)
+  businessObjects: [BusinessObject!]! @relation(name: "BusinessObjectOnMetaObject", onDelete: CASCADE)
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  incomingRelations: [MetaRelation!]! @relation(name: "MetaRelationOnMetaObject", onDelete: CASCADE)
+  name: String!
+  outgoingRelations: [MetaRelation!]! @relation(name: "MetaObjectOnMetaRelation", onDelete: CASCADE)
+  updatedAt: DateTime! @updatedAt
+  planConfig: PlanConfig @relation(name: "UIMOPlanMetaObject")
+  templateConfig: TemplateConfig @relation(name: "TemplateConfigMetaObject")
+}
+
+type MetaRelation {
+  bizRelations: [BizRelation!]! @relation(name: "BizRelationOnMetaRelation")
+  createdAt: DateTime! @createdAt
+  id: ID! @id
+  incomingObject: MetaObject @relation(name: "MetaObjectOnMetaRelation", link: INLINE)
+  multiplicity: MultiplicityType!
+  oppositeName: String!
+  oppositeObject: MetaObject @relation(name: "MetaRelationOnMetaObject", link: INLINE)
+  oppositeRelation: MetaRelation @relation(name: "MetaRelationOnMetaRelation", link: TABLE)
+  updatedAt: DateTime! @updatedAt
+}
+
+enum MultiplicityType {
+  One
+  Many
+}
+
+type SMTransition {
+  createdAt: DateTime! @createdAt
+  event: String!
+  from: String!
+  id: ID! @id
+  stateMachineSchema: StateMachineSchema @relation(name: "StateMachineSchemaOnSMTransition", link: INLINE)
+  to: String!
+  updatedAt: DateTime! @updatedAt
+}
+
+type StateMachineSchema {
+  createdAt: DateTime! @createdAt
+  finalState: String!
+  id: ID! @id
+  initialState: String!
+  name: String! @unique
+  sMTransitions: [SMTransition!]! @relation(name: "StateMachineSchemaOnSMTransition")
+  updatedAt: DateTime! @updatedAt
+}
+
+type PlanConfig {
+  id: ID! @id
+  uiMoPlan: MetaObject @relation(name: "UIMOPlanMetaObject", link: INLINE)
+  uiMoRelations: [MetaRelation] @relation(name: "UIMORelationMetaRelations", link: TABLE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type Plan {
+  id: ID! @id
+  planData: Json
+  planBO: BusinessObject @relation(name: "PlanBizObject")
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+  itemBOs: [BusinessObject] @relation(name: "ItemBOsBizObject")
+}
+
+type TemplateConfig {
+  id: ID! @id
+  moObject: MetaObject @relation(name: "TemplateConfigMetaObject", link: INLINE)
+  moRelation: MetaRelation @relation(name: "TemplateConfigMetaRelation", link: INLINE)
+  userRelatedMRId : String
+  defaultTemplate: Template @relation(name: "TemplateConfigTemplate", link: INLINE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type TemplateMapping {
+  id: ID! @id
+  template: Template @relation(name: "TemplateMappingTemplate", link: INLINE)
+  businessObject: BusinessObject @relation(name: "TemplateMappingBO", link: INLINE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type Template {
+  id: ID! @id
+  name: String! @default(value: "")
+  renderColumns: [RenderColumn] @relation(name: "TemplateRenderColumn", onDelete: CASCADE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type RenderColumn {
+  id: ID! @id
+  widgets: [Widget]  @relation(name: "RenderColumnWidget", onDelete: CASCADE)
+  width: Int
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type Widget {
+  id: ID! @id
+  name: String
+  type: WidgetType!
+  width: Int
+  boid: String
+  text: String
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type SystemSetup {
+  id: ID! @id
+  systemUserMOMapping: MetaObject
+  systemUseridMAMapping: MetaAttribute
+  templateConfig: TemplateConfig @relation(onDelete: CASCADE)
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type User {
+  id: ID! @id
+  userid: String @unique @default(value: "")
+  password: String @default(value: "")
+  name: String @unique @default(value: "")
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+}
+
+type Diagram {
+  id: ID! @id
+  diagramData: Json
+  ownerBO: BusinessObject @relation(name: "BODiagram")
+  createdAt: DateTime! @createdAt
+  updatedAt: DateTime! @updatedAt
+  participatingBOs: [BusinessObject] @relation(name: "DiagramBizObject")
+}

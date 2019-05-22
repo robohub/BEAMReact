@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Query } from 'react-apollo';
 
-import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell, IconButton } from '@material-ui/core';
+import { Typography, Divider, Table, TableHead, TableBody, TableRow, TableCell } from '@material-ui/core';
 import { getItemBOs } from './queries';
-import { ChevronLeft, ChevronRight } from '@material-ui/icons';
 /*
 type MoRelType = {
     id: string;
@@ -50,7 +49,6 @@ interface Props {
 }
 
 export default class ItemListContainer extends React.PureComponent<Props> {  // PureComponent implements shouldComponentUpdate: if props same => no update
-    state = {minimized: false};
 /*    handleItemClick = (e: React.MouseEvent) => {
         this.props.selectedBOchange(e.currentTarget.id);
         this.props.selectedInfoBOchange(e.currentTarget.id);
@@ -71,11 +69,10 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
         event.dataTransfer.setData('text', JSON.stringify(item));
     }
 
-    chevronClick = () => {
-        this.setState({minimized: !this.state.minimized});
-    }
-
     render() {
+        // tslint:disable-next-line:no-console
+        console.log('LISTITEMS rendererar...');
+
         return (
             this.props.selectedMO  ? (
                 <Query query={getItemBOs} variables={{moid: this.props.selectedMO}}>
@@ -87,16 +84,13 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                             return (
                                 <div>
                                     <Typography variant="h6">Items</Typography>
-                                    <IconButton color="primary" onClick={e => this.chevronClick()}>
-                                        {this.state.minimized ? <ChevronRight/> : <ChevronLeft/>}
-                                    </IconButton>
                                     <Divider/>
                                     <Table padding="dense">
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Name</TableCell>
-                                                    {!this.state.minimized ? <TableCell>Relation</TableCell> : null}
-                                                    {!this.state.minimized ? <TableCell>Connected</TableCell> : null}
+                                                    <TableCell>Relation</TableCell>
+                                                    <TableCell>Connected</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -122,8 +116,8 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                                                             <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
                                                                 <Typography variant="body1">{o.name}</Typography>
                                                             </TableCell>
-                                                            {!this.state.minimized ? <TableCell>{rel.oppositeName} </TableCell> : null}
-                                                            {!this.state.minimized ? <TableCell>{o.plannedIn ? o.plannedIn.planBO.name : '-Not planned-'}</TableCell> : null}
+                                                            <TableCell>{rel.oppositeName} </TableCell>
+                                                            <TableCell>{o.plannedIn ? o.plannedIn.planBO.name : '-Not planned-'}</TableCell>
                                                         </TableRow>
                                                     )
                                                 )}

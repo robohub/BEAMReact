@@ -24,3 +24,11 @@ där finns även Prisma Cloud definition under "/Prisma/Prisma Cloud"
 
 Konsol på Prisma Cloud:      https://app.prisma.io/robohub-c21015/services
 
+# Prisma lokalt med MySQL
+--> Prisma/mysql
+
+För att se loggar (internal server error):
+docker ps
+docker logs -f <prisma container id>
+
+Körs sedan löpande ut fel osv...

@@ -18,3 +18,19 @@ export type SelectedPlanBOType = {
     name: string;
     metaObjectId: string;
 };
+
+export type PlanDataType = {
+    id: string;
+    planBO: {
+        id: string;
+        name: string;
+    }
+    planData: {
+        items: {}[]
+        groups: {}[]
+    };
+    itemBOs: {
+        id: string;
+        name: string;
+    }[]
+};

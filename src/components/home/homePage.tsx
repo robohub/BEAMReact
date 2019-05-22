@@ -13,7 +13,7 @@ import { GridSize } from '@material-ui/core/Grid';
 import * as joint from '../../vendor/rappid';
 import * as appShapes from '../diagramming/Rappid/shapes/app-shapes';
 
-import TimeLine from '../planner/pages/components/timeLine';
+import PlanView from '../planner/pages/components/planView';
 import BOGraphContainer from '../navigation/navComponents/boGraphContainer';
 import { client } from '../..';
 import { ApolloQueryResult } from 'apollo-client';
@@ -162,7 +162,8 @@ class WidgetBase extends React.Component<WidgetProps> {
                 return (
                     // TIMELINE WIDGET
                     <div className={classes.root}>
-                        <TimeLine
+                        <PlanView
+                            tlContainerId="timeline"
                             selectedBO={{id: render.boid, name: render.name, metaObjectId: ''}}
                             updateSelectedBO={this.updateSelectedBO}
                             readonly={true}

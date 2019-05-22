@@ -87,7 +87,7 @@ query itemBOsFromPlanMO($moid: ID!) {
     }
 }
 `;
-
+/*
 export const getConnectedItems = gql`
 query connectedItems($boid: ID!) {
     businessObject (where: {id: $boid} ){
@@ -102,3 +102,4 @@ query connectedItems($boid: ID!) {
     }
   }
   `;
+  */

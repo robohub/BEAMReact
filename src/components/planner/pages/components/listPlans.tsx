@@ -29,6 +29,9 @@ class PlanListContainer extends React.PureComponent<Props> {
     render() {
         const { planConfigs } = this.props;
 
+        // tslint:disable-next-line:no-console
+        console.log('LISTPLANS rendererar...');
+
         if (planConfigs.length > 0) {
             return (
                 <div className={this.props.classes.root}>
