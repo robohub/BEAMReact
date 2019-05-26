@@ -16,9 +16,12 @@ type MyProps = {
 };
 
 export default class EditBOView extends React.Component<MyProps> {
-    state = { snackbarOpen: false };
+    state = { snackbarOpen: false, saving: false };
 
     onSave = async (values: FormValues) => {
+
+        this.setState({saving: true});
+
         const { newObject, bizObject } = this.props;
         const { bizAttributes, bizRelations } = values;
         let objName = ''; // RH TODO temporary solution to the naming issue...
@@ -49,15 +52,18 @@ export default class EditBOView extends React.Component<MyProps> {
             createBAs,
             relatedBOs,
             this.saveFinished,
-            [{query: allBOQuery}, { query: MOQuery, variables: {id: this.props.metaobject.id} } ]
+            [ {query: allBOQuery}, { query: MOQuery, variables: {id: this.props.metaobject.id}} ]
         );
         
         // tslint:disable-next-line:no-console
-        console.log('E. Exits onSAVE,.....');
+        console.log('E. Exits onSAVE.....');
     }
 
     saveFinished = async () => {
-        this.setState({snackbarOpen: true});
+        // tslint:disable-next-line:no-console
+        console.log('D. SAVE finished, show message.....');
+
+        this.setState({snackbarOpen: true, saving: false});
     }
 
     showResults = (input: FormValues) => {
@@ -86,11 +92,12 @@ export default class EditBOView extends React.Component<MyProps> {
                     // onSubmit={this.showResults}
                     metaObject={this.props.metaobject}
                     bizObject={this.props.newObject ? null : this.props.bizObject}
+                    inhibitSave={this.state.saving}
                 />
                 <Snackbar
                     anchorOrigin={{vertical: 'top', horizontal: 'right'}}
                     open={this.state.snackbarOpen}
-                    autoHideDuration={6000}
+                    autoHideDuration={3000}
                     onClose={this.snackbarClose}
                     ContentProps={{'aria-describedby': 'message-id'}}
                     message={<span id="message-id">Saved Business Object</span>}

@@ -14,7 +14,7 @@ export default class ManageMOView extends React.Component {
                         return <div>Loading</div>;
                     }
                     if (error) {
-                        return <h1>ERROR</h1>;
+                        return <div>ERROR: {error.message}</div>;
                     } 
                     
                     return (

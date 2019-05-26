@@ -15,6 +15,7 @@ import { MuiThemeProvider, createMuiTheme } from '@material-ui/core';
 import { blue } from '@material-ui/core/colors';
 
 import App from './App';
+
 import * as Globals from './components/shared/globals';
 
 import gql from 'graphql-tag';
@@ -160,9 +161,8 @@ ReactDOM.render(
               return (
                 <App />
               );
-
         }}
-        </Query>
+      </Query>
       </MuiThemeProvider>
     </BrowserRouter>
   </ApolloProvider>,

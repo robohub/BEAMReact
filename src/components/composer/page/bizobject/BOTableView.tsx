@@ -128,7 +128,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         // Is it due to cache update is in same component?
                         // Does cache changes in BOEditView update components because of showing the Snackbar!? IMPLEMENTED Snackbar -> updates...
                         // RH TODO
-                        this.setState({snackbarOpen: true});
+//                        this.setState({snackbarOpen: true});
                     },
                     // refetchQueries: [ { query: allBOQuery } ]
                 });
@@ -182,6 +182,10 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
 
                     // tslint:disable-next-line:no-console
                     console.log('--- BOTableView renderar --- Selected BO:' );
+                    if (!businessObjects) {
+                    // tslint:disable-next-line:no-console
+                    console.log('Business Objects list är TOM   <------------------------------------- OBS! OBS' );
+                    }
 /*
                     const data: BizObjectsType = client.readQuery({query: allBOQuery });
                     // tslint:disable-next-line:no-console
@@ -205,7 +209,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {businessObjects.map((o: BOEditType, index: number) =>
+                                        {businessObjects ? businessObjects.map((o: BOEditType, index: number) =>
                                             <TableRow key={o.id}>
                                                 <TableCell>
                                                     <Button
@@ -284,7 +288,12 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                                                         </List>
                                                     </TableCell>
                                             </TableRow>
-                                        )}
+                                        )
+                                            :
+                                            <TableRow>
+                                                {' '}
+                                            </TableRow>
+                                        }
                                     </TableBody>
                                 </Table>
                             </Paper>

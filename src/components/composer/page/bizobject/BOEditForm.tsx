@@ -20,6 +20,7 @@ interface Props extends WithStyles<typeof styles> {
     newObject: boolean;
     metaObject: MetaObjectType;
     bizObject?: BOEditType;
+    inhibitSave: boolean;
     onSubmit: (values: FormValues) => void;
 }
 
@@ -233,7 +234,9 @@ class InnerForm extends React.Component<Props & FormikProps<FormValues>, CompSta
                             />
                     }
                 </div>
-                <Button variant="contained" color="primary" type="submit" className={this.props.classes.button}>Save</Button>
+                <Button disabled={this.props.inhibitSave} variant="contained" color="primary" type="submit" className={this.props.classes.button}>
+                    {this.props.inhibitSave ? 'Saving...' : 'Save'}
+                </Button>
             </Form>
         );
     }

@@ -89,8 +89,8 @@ class SelectBOType extends React.PureComponent<ChildProps<{}, Response> & Props>
                                     {'Add Business Object: ' + this.state.boType}
                                 </DialogTitle>
                                 <div className={this.props.classes.root}>
-                                    {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : '...'}
-                                    </div>
+                                    {this.state.selected ? <BOEditContainer newObject={true} metaID={this.state.selectedId}/> : null}
+                                </div>
                             </Dialog >
                         </div>
                     );
