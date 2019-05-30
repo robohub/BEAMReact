@@ -80,54 +80,62 @@ export default class ItemListContainer extends React.PureComponent<Props> {  // 
                         if (loading) { return <div>Loading</div>; }
                         if (error) { return <h1>ERROR</h1>; }
                         
-                        if (data.planConfigs.length > 0) {
-                            return (
-                                <div>
-                                    <Typography variant="h6">Items</Typography>
-                                    <Divider/>
-                                    <Table padding="dense">
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell>Name</TableCell>
-                                                    <TableCell>Relation</TableCell>
-                                                    <TableCell>Connected</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {data.planConfigs[0].uiMoRelations.map((rel: MoRelType ) =>
-                                                    rel.oppositeObject.businessObjects.map(o =>
-                                                        <TableRow
-                                                            key={o.id}
-                                                            /* onClick={this.handleItemClick} */
-                                                            // id={o.oppositeObject.id}
-                                                            hover={true}
-                                                            draggable={true}
-                                                            onDragStart={
-                                                                (e) => this.handleDragStart(
-                                                                    e,
-                                                                    {
-                                                                        id: o.id,
-                                                                        name: o.name,
-                                                                        mrid: rel.id
-                                                                    }
-                                                                )
-                                                            }
-                                                        >
-                                                            <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
-                                                                <Typography variant="body1">{o.name}</Typography>
-                                                            </TableCell>
-                                                            <TableCell>{rel.oppositeName} </TableCell>
-                                                            <TableCell>{o.plannedIn ? o.plannedIn.planBO.name : '-Not planned-'}</TableCell>
-                                                        </TableRow>
-                                                    )
-                                                )}
-                                            </TableBody>
-                                    </Table>
-                                </div>
-                            );
-                        } else {
-                            return <h1>No items connected to meta object...</h1>;   // TODO RH Correct message?
+                        // tslint:disable-next-line:no-console
+                        console.log('--- QUERY ---- LISTITEM: getItemBOs execute...');
+
+                        if (data.planConfigs) {
+                            if (data.planConfigs.length > 0) {
+                                return (
+                                    <div>
+                                        <Typography variant="h6">Items</Typography>
+                                        <Divider/>
+                                        <Table size="small">
+                                                <TableHead>
+                                                    <TableRow>
+                                                        <TableCell>Name</TableCell>
+                                                        <TableCell>Relation</TableCell>
+                                                        <TableCell>Connected</TableCell>
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {data.planConfigs[0].uiMoRelations.map((rel: MoRelType ) =>
+                                                        rel.oppositeObject.businessObjects.map(o =>
+                                                            <TableRow
+                                                                key={o.id}
+                                                                /* onClick={this.handleItemClick} */
+                                                                // id={o.oppositeObject.id}
+                                                                hover={true}
+                                                                draggable={true}
+                                                                onDragStart={
+                                                                    (e) => this.handleDragStart(
+                                                                        e,
+                                                                        {
+                                                                            id: o.id,
+                                                                            name: o.name,
+                                                                            mrid: rel.id
+                                                                        }
+                                                                    )
+                                                                }
+                                                            >
+                                                                <TableCell style={{whiteSpace: 'normal', wordWrap: 'break-word'}}>
+                                                                    <Typography variant="body1">{o.name}</Typography>
+                                                                </TableCell>
+                                                                <TableCell>{rel.oppositeName} </TableCell>
+                                                                <TableCell>{o.plannedIn ? o.plannedIn.planBO.name : '-Not planned-'}</TableCell>
+                                                            </TableRow>
+                                                        )
+                                                    )}
+                                                </TableBody>
+                                        </Table>
+                                    </div>
+                                );
+                            } else {
+                                return <h1>No items connected to meta object...</h1>;   // TODO RH Correct message?
+                            }
                         }
+                        // tslint:disable-next-line:no-console
+                        console.log('--- ERROR? : ListItems Query: No items connected to meta object..');
+                        return null;
                     }}
                 </Query>)
                 :

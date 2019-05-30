@@ -24,11 +24,11 @@ import FroalaEditorView from 'react-froala-wysiwyg/FroalaEditorView';
 
 // ReactDOM.render(<FroalaEditor tag="textarea"/>, document.getElementById('editor'));
 
-import * as React from 'react';
-
 import { client } from '../../../../index';
 import gql from 'graphql-tag';
 import { Button } from '@material-ui/core';
+
+import * as React from 'react';
 
 export const getHTMLWidgets = gql`
 query getWidgets {
@@ -53,7 +53,6 @@ mutation saveHMTLWidget($id: ID, $html: String, $width: Int) {
 }
 `;
 
-
 export default class EditorComponent extends React.Component {
     state = {
         model: 'Example text',
@@ -70,6 +69,7 @@ export default class EditorComponent extends React.Component {
         client.query({
             query: getHTMLWidgets
         }).then(result => {
+            // tslint:disable-next-line:no-console
             console.log('Result:' + result.data.widgets);
             if (result.data.widgets) {
                 this.setState({
@@ -89,7 +89,7 @@ export default class EditorComponent extends React.Component {
                 width: 12
             }
         }).then(result => {
-            alert('Saved widget ID: ' + result.data.upsertWidget.id)
+            alert('Saved widget ID: ' + result.data.upsertWidget.id);
         });
     }
 
@@ -111,4 +111,3 @@ export default class EditorComponent extends React.Component {
         );
     }
 }
-

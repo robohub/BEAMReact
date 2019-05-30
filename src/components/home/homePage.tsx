@@ -243,7 +243,7 @@ class UserBasedTemplate extends React.PureComponent<UserProps> {
         console.log('-- RENDER UserBasedTemplate ...');
 
         return (
-            <Grid container={true} spacing={16}>
+            <Grid container={true} spacing={2}>
 
                 <Grid item={true} xs={12}>
                     <div>
@@ -278,7 +278,7 @@ class UserBasedTemplate extends React.PureComponent<UserProps> {
                                                 {col.widgets.length > 0 ?
                                                     <Grid
                                                         container={true} 
-                                                        spacing={8}  
+                                                        spacing={1}  
 
                                                         // direction="column"
                                                         // alignItems="center"

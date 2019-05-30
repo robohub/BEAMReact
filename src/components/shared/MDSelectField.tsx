@@ -29,8 +29,8 @@ class MDSelectField extends React.Component<FieldProps & SelectFieldProps> {
         });
     }
 
-    changeVal(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.props.form.setFieldValue(this.props.field.name, event.target.value);
+    changeVal(value: string) {
+        this.props.form.setFieldValue(this.props.field.name, value);
     }
     
     render() {
@@ -42,7 +42,7 @@ class MDSelectField extends React.Component<FieldProps & SelectFieldProps> {
                 <Select 
                     className={this.props.classes.select}
                     value={this.props.field.value}
-                    onChange={newValue => this.changeVal(newValue)}
+                    onChange={ev => this.changeVal(ev.target.value as string)}
                     input={<Input name="moSelect" id="input"/>}
                 >
                     {this.props.options.map(opt => (

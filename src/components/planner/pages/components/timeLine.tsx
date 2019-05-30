@@ -10,12 +10,11 @@ import { styles } from '../../../shared/style';
 
 import { updateBORelations } from '../../../../domain/businessObject';
 import { RelatedBOType } from '../../../../domain/utils/boUtils';
-import { getPlan, getPlanBOs, getItemBOs, } from './queries';
 import { SelectedPlanBOType, PlanDataType } from './types';
-import { KeyboardArrowUp, KeyboardArrowDown, Menu, ToggleOffOutlined, SubdirectoryArrowRight, DeleteForeverOutlined } from '@material-ui/icons';
-import { ExecutionResult } from 'graphql';
+import { KeyboardArrowUp, KeyboardArrowDown, ToggleOffOutlined, SubdirectoryArrowRight, DeleteForeverOutlined, Menu } from '@material-ui/icons';
 import { PureQueryOptions } from 'apollo-client';
 import * as ReactDOM from 'react-dom';
+// import * as ReactDOMServer from 'react-dom/server';
 
 interface Props extends WithStyles<typeof styles> {
     tlContainerId: string;  // id for timeline - where rendered timeline will attach itself, used when using several timelines in same component
@@ -24,7 +23,7 @@ interface Props extends WithStyles<typeof styles> {
     updateSelectedBO: (boId: string) => void;
     readonly: boolean;
     // tslint:disable-next-line:no-any
-    getRefetchQueries?: () => ((result: ExecutionResult<Record<string, any>>) => (string | PureQueryOptions)[]) | (string | PureQueryOptions)[];
+    getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 
 interface State {
@@ -49,6 +48,7 @@ class TimeLine extends React.Component<Props, State> {
     private options = {};
     private snackbarMessage = '';
     private nestedIndex = 1;
+    // private initItems = new vis.DataSet();
 
     componentDidMount() {
 
@@ -105,12 +105,14 @@ class TimeLine extends React.Component<Props, State> {
             },
             zoomKey: 'ctrlKey',
             stack: true,
-/*            groupTemplate: (group: any, element: HTMLElement) => {
+/*            // tslint:disable-next-line:no-any
+            groupTemplate: (group: any, element: HTMLElement) => {
                 return '<h6>' + group.content + '</h6>';
             },*/
             // tslint:disable-next-line:no-any
             groupTemplate: (group: any, element: HTMLElement) => {
                 return ReactDOM.render(
+//                return ReactDOMServer.renderToStaticMarkup(   // This render ok, but buttons don't work
                     <div style={{width: 200}}>
                         <Typography variant="subtitle2">{group.content}</Typography>
                         
@@ -145,16 +147,19 @@ class TimeLine extends React.Component<Props, State> {
                     </div>,
                     element);
             },
-            /*template: (item: vis.DataItem, element: HTMLElement) => {       // RH TODO This doesn't work any longer!!??? ---> Error saying 'conten' property not present...
-                return ReactDOM.render(
-                    item ? <Typography variant="caption">{item.content}</Typography> : <div>{''}</div>,
-                    element);
-            }*/
-            template: (item: vis.DataItem, element: HTMLElement) => {
-                if (item) {
-                    return '<caption>' + item.content + '</caption>';
+            // tslint:disable-next-line:no-any
+            template: (item: any, element: HTMLElement) => {
+/*                if (item && item.content) {  // This works but is static --> no events sent like e.g. double-click!!!!
+                    return ReactDOMServer.renderToStaticMarkup(<Typography variant="caption">{item.content}</Typography>);
                 }
-                return '';
+                return '';*/
+/*                if (item && item.content) {
+                    return ReactDOM.render(       // RH TODO This doesn't work any longer!!??? ---> Error saying 'content' property not present...
+                        <Typography variant="caption">{item.content}</Typography>,
+                        element);
+                }
+                return '';*/
+                return '<caption>' + item.content + '</caption>';
             }
         };
 
@@ -165,14 +170,14 @@ class TimeLine extends React.Component<Props, State> {
         
         this.setupHackOverridingNestedButton(this.timeline);  // Otherwise my buttons (del, hide, etc...) in the group can't be reached...
 
-/*        this.timeline.on('doubleClick', (event => {
+        this.timeline.on('doubleClick', (event => {
             // tslint:disable-next-line:no-console
             console.log(event);
             if (event.item && this.selectedBO.id !== event.item) {
                 // this.selectedObjId = e.currentTarget.id;
                 this.props.updateSelectedBO(event.item);  // Will lead to change of plan...
             }            
-        }));*/
+        }));
         if (this.props.selectedBO.id !== '') {
             this.drawPlan();
         }
@@ -277,8 +282,8 @@ class TimeLine extends React.Component<Props, State> {
     }
 
     itemBOsHasChanged(newBOs: RelatedBOType[]) { // Checks if RefetchQuery (propbably) has changed planned item BOs
-        var deleted = this.getDeletedBOs(this.itemBOsInPlan, newBOs);
-        return deleted.length;
+        var changed = this.getDeletedBOs(this.itemBOsInPlan, newBOs).length + this.getDeletedBOs(newBOs, this.itemBOsInPlan).length; // Deleted + added
+        return changed;
     }
 
     initTimeLineWithData() {
@@ -458,45 +463,31 @@ class TimeLine extends React.Component<Props, State> {
         });
         let groupData = this.groups.get();
 
-        var itemBOs = this.getBOsFromItems();
-        var refetchQueries = this.props.getRefetchQueries();
+        const itemBOs = this.getBOsFromItems();
 
-        refetchQueries = [
-            {
-                query: getPlanBOs,
-            },
-            {
-                query: getPlan,
-                variables: {boid: 'cjuv63l5gjjhk0b22aype9q0i'}   // Hard coded =  Epic 1
-            },
-            {
-                query: getPlan,
-                variables: {boid: 'cjuv6s6w6v2d30b9507wod1un'}   // Hard coded =  Epic 2
-            },
-/*            {
-                query: getConnectedItems,
-                variables: {boid: 'cjuv6s6w6v2d30b9507wod1un'}
-            },
-            {
-                query: getConnectedItems,
-                variables: {boid: 'cjuv63l5gjjhk0b22aype9q0i'}
-            },*/
-            {
-                query: getItemBOs,
-                variables: {moid: this.props.selectedBO.metaObjectId}
-            },
+        let delBOs = this.getDeletedBOs(this.itemBOsInPlan, itemBOs);
+        let addedBOs = this.getDeletedBOs(itemBOs, this.itemBOsInPlan);
 
-        ];
-     
+        var refetchQueries = this.props.getRefetchQueries(this.selectedBO);
+   
+//        if (addedBOs.length || delBOs.length) {  // Too simple, not taking planData changes in account!!!
         this.selectedPlanId = await updateBORelations(
+            // For BO
             this.selectedBO.id,
             this.selectedBO.name,
-            itemBOs,
+            this.selectedBO.metaObjectId,
+            addedBOs,
+            delBOs,
             this.saveFinished,
             refetchQueries,
+            // For Plan related update
             this.selectedPlanId,
             {items: itemData, groups: groupData},
+            itemBOs
         );
+//        }
+
+        // this.itemBOsInPlan = itemBOs;   // Reflect new state...
     }
 
     fitClicked = () => {
@@ -584,6 +575,9 @@ class TimeLine extends React.Component<Props, State> {
                             </Button>
                             <Button color="primary" className={this.props.classes.button} onClick={this.unhideGroups} disabled={!this.state.hiddenGroup}>
                                 Unhide
+                            </Button>
+                            <Button color="primary" className={this.props.classes.button} /*onClick={this.unhideGroups}*/ disabled={true/*this.props.selectedBO.id === ''*/}>
+                                Unplanned
                             </Button>
                         </div>
                         :

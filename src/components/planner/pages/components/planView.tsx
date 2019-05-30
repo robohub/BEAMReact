@@ -5,7 +5,7 @@ import { styles } from '../../../shared/style';
 
 import { getPlan, } from './queries';
 import { SelectedPlanBOType } from './types';
-import { Query, ExecutionResult } from 'react-apollo';
+import { Query } from 'react-apollo';
 import { PureQueryOptions } from 'apollo-client';
 
 import Timeline from './timeline';
@@ -16,24 +16,25 @@ interface Props extends WithStyles<typeof styles> {
     updateSelectedBO: (boId: string) => void;
     readonly: boolean;
     // tslint:disable-next-line:no-any
-    getRefetchQueries?: () => ((result: ExecutionResult<Record<string, any>>) => (string | PureQueryOptions)[]) | (string | PureQueryOptions)[];
+    getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 
 class PlanView extends React.Component<Props> {
 
     render() {
-        
+
+        // tslint:disable-next-line:no-console
+        console.log('aaaaaaaaaaaaaaaaaa ---- PLANVIEW rendererar...' + this.props.selectedBO.id);
+
         if (this.props.selectedBO.id !== '' ) {
             return (
                 <Query query={getPlan} variables={{boid: this.props.selectedBO.id}}>
                 {({ data, loading, error }) => {
-                    if (loading) {
-                            return <div>Loading</div>;
-                    }
+                    if (loading) { return <div>Loading</div>; }
                     if (error) { return <h1>{error.message}</h1>; }
                     
                     // tslint:disable-next-line:no-console
-                    console.log('aaaaaaaaaaaaaaaaaa ---- PLANVIEW rendererar...' + this.props.selectedBO.id);
+                    console.log('--QUERY ---- PLANVIEW: getPlan execute...' + this.props.selectedBO.id);
                     
                     return (
                         <Timeline

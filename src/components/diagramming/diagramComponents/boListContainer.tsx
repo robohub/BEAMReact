@@ -58,7 +58,7 @@ export default class BOListContainer extends React.Component<ChildProps<{}, Resp
                     
                     return (
                         <div>
-                            <Typography variant="title">Business Objects</Typography>
+                            <Typography variant="h6">Business Objects</Typography>
                             <Divider/>
                             <List component="nav">
                                 {data.allBusinessObjects.map((o: BoItem) => 

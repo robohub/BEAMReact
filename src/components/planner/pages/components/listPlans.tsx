@@ -37,7 +37,7 @@ class PlanListContainer extends React.PureComponent<Props> {
                 <div className={this.props.classes.root}>
                     <Typography variant="h6">Plans</Typography>
                     <Divider/>
-                    <Table padding="dense">
+                    <Table size="small">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Name</TableCell>

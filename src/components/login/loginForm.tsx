@@ -42,10 +42,10 @@ export type UserRelationType = {
 
 const styles = ({ spacing }: Theme) => createStyles({
     margin: {
-        margin: spacing.unit * 2,
+        margin: spacing(2),
     },
     padding: {
-        padding: spacing.unit
+        padding: spacing(1)
     },
     center: {
         display: 'flex',
@@ -118,7 +118,7 @@ class LoginTab extends React.Component<Props & FormikProps<FormValues>> {
             <Form className={classes.center}>
             <Paper className={classes.padding}>
                 <div className={classes.margin}>
-                    <Grid container={true} spacing={8} alignItems="flex-end">
+                    <Grid container={true} spacing={1} alignItems="flex-end">
                         <Grid item={true}>
                             <Face />
                         </Grid>
@@ -134,7 +134,7 @@ class LoginTab extends React.Component<Props & FormikProps<FormValues>> {
                             />                        
                         </Grid>
                     </Grid>
-                    <Grid container={true} spacing={8} alignItems="flex-end">
+                    <Grid container={true} spacing={1} alignItems="flex-end">
                         <Grid item={true}>
                             <Fingerprint />
                         </Grid>

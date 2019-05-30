@@ -12,8 +12,8 @@ export const expStyles = ({ mixins, spacing, typography }: Theme) => createStyle
         width: '100%',
         ...mixins.gutters(),
         ...typography.body1,
-        paddingTop: spacing.unit,
-        paddingBottom: spacing.unit,
+        paddingTop: spacing(1),
+        paddingBottom: spacing(1),
     },
 });
 

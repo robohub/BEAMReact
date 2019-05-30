@@ -72,7 +72,8 @@ class RenderRelations extends React.Component<RelProps> {
                             value={this.state.selectedBOId}
                             // placeholder="<Select an object type>"
                             onChange={event => {
-                                this.setState( {selectedBOId: event.target.value, selectedBOName: this.props.metaObjects[event.currentTarget.id].name});
+                                // this.setState( {selectedBOId: event.target.value, selectedBOName: this.props.metaObjects[event.target.id].name});
+                                this.setState( {selectedBOId: event.target.value as string, selectedBOName: event.target.name});
                             }}
                             input={<Input name="MetaObject" id="relobjinput"/>}
                         >

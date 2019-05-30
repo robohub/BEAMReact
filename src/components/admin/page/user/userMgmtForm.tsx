@@ -39,12 +39,12 @@ class UserMgmt extends React.PureComponent<Props, State> {
         this.state = {moId: props.selectedMO, maId: props.selectedMA};
     }
 
-    changeMoId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({moId: event.target.value, maId: ''});
+    changeMoId(value: string) {
+        this.setState({moId: value, maId: ''});
     }
 
-    changeMaId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({maId: event.target.value});
+    changeMaId(value: string) {
+        this.setState({maId: value});
     }
 
     save = () => {
@@ -72,7 +72,7 @@ class UserMgmt extends React.PureComponent<Props, State> {
                                 <Select 
                                     className={this.props.classes.select}
                                     value={this.state.moId}
-                                    onChange={newValue => this.changeMoId(newValue)}
+                                    onChange={ev => this.changeMoId(ev.target.value as string)}
                                     input={<Input name="moSelect" id="moinput"/>}
                                 >
                                     {this.props.metaObjects.map(opt => (
@@ -103,7 +103,7 @@ class UserMgmt extends React.PureComponent<Props, State> {
                                                 <Select 
                                                     className={this.props.classes.select}
                                                     value={this.state.maId}
-                                                    onChange={newValue => this.changeMaId(newValue)}
+                                                    onChange={ev => this.changeMaId(ev.target.value as string)}
                                                     input={<Input name="maSelect" id="mainput"/>}
                                                 >
                                                     {data.metaObject.attributes.map((ma: {id: string, name: string, type: string}) => (

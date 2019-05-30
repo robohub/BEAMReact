@@ -135,7 +135,7 @@ class BoMappingTemplate extends React.Component<Props> {
                         );
 
                         return (
-                            <Grid container={true} spacing={16}>
+                            <Grid container={true} spacing={2}>
                                 <Grid item={true} xs={12} md={5} xl={4}>
                                     <Paper>
                                         <div className={classes.root}>

@@ -98,14 +98,14 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
 
         return (
             <form className={classes.root} onSubmit={handleSubmit}>
-                <Grid container={true} spacing={16}>
+                <Grid container={true} spacing={2}>
                     <Grid item={true} xs={6}>
                         Available Items
                         <FieldArray
                             name="available"
                             render={arrayHelpers => {
                                 return (
-                                    <Table padding="dense">
+                                    <Table size="small">
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Item</TableCell>
@@ -154,7 +154,7 @@ class ConnectForm extends React.Component<Props & FormikProps<FormValues>> {
                             name="selected"
                             render={arrayHelpers => {
                                 return (
-                                    <Table padding="dense">
+                                    <Table size="small">
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Item</TableCell>

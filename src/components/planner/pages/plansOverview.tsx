@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { /*ChildProps, */ Query, ExecutionResult } from 'react-apollo';
+import { /*ChildProps, */ Query } from 'react-apollo';
 
 import { Paper, Drawer, Grid, IconButton } from '@material-ui/core';
 import ListPlans from './components/listPlans';
@@ -22,10 +22,10 @@ interface State {
 interface Props extends WithStyles<typeof styles> {
     tlContainerId: number;  // id for timeline - propagated to TimeLine component
     closeDiagram: (id: number) => void;
-    connectPlanId: (containerId: number, planId: string) => void;  // Call this to associate opened PlanId with container Id in parent component
+    connectPlanId: (containerId: number, planId: string, planMOId: String) => void;  // Call this to associate opened PlanId with container Id in parent component
 
     // tslint:disable-next-line:no-any
-    getRefetchQueries?: () => ((result: ExecutionResult<Record<string, any>>) => (string | PureQueryOptions)[]) | (string | PureQueryOptions)[];
+    getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 
 class PlanningView extends React.Component<Props, State> {
@@ -60,7 +60,7 @@ class PlanningView extends React.Component<Props, State> {
                         name: boValues.boName
                     }
                 });  // Update if boId is meant to be a planning object!
-                this.props.connectPlanId(this.props.tlContainerId, boId);
+                this.props.connectPlanId(this.props.tlContainerId, boId, boValues.mo);
             }
         }
     }
@@ -77,6 +77,9 @@ class PlanningView extends React.Component<Props, State> {
 
     render() {
         const { classes } = this.props;
+        
+        // tslint:disable-next-line:no-console
+        console.log('PLANSOVERVIEW rendererar...');
 
         return (
             <Query query={getPlanBOs}>
@@ -85,6 +88,9 @@ class PlanningView extends React.Component<Props, State> {
                     if (error) { return <h1>{error.message}</h1>; }
 
                     this.planConfigs = data.planConfigs;
+
+                    // tslint:disable-next-line:no-console
+                    console.log('--- QUERY ---- PLANSOVERVIEV: execute...');
 
                     return (
                         <div className={classes.root} style={{backgroundColor: 'rgba(240, 240, 240, 1.0)'}}>
@@ -102,7 +108,7 @@ class PlanningView extends React.Component<Props, State> {
                                 <ListPlans planConfigs={data.planConfigs} updateSelectedBO={this.updateSelectedBO}/>
                             </Drawer>
 
-                            <Grid container={true} spacing={8}>
+                            <Grid container={true} spacing={1}>
                                 {this.state.itemsListOpen ?
                                     <Grid item={true} xs={12} md={5} lg={3}>
                                         <Paper className={classes.root}>

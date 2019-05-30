@@ -84,7 +84,7 @@ export default class BOListContainer extends React.Component<ChildProps<Props, R
     render() {
         return (
             <div>
-                <Table padding="dense">
+                <Table size="small">
                     <TableHead>
                         <TableRow>
                             <TableCell><Typography variant="h6">Type</Typography></TableCell>

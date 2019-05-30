@@ -3,10 +3,12 @@ import './App.css';
 import '../node_modules/vis/dist/vis.css';
 
 import * as React from 'react';
-import { Link, Route, LinkProps, RouteComponentProps, withRouter } from 'react-router-dom';
+import { Route, RouteComponentProps, withRouter } from 'react-router-dom';
 
 import { client } from './index';
 import * as Globals from './components/shared/globals';
+
+import { ListItemLink } from './utils/muiLinkHelper';
 
 import PlannerAdmin from './components/admin/page/plannerConfigPage';
 import Example from './components/charting/chartsample';
@@ -125,10 +127,6 @@ import List from '@material-ui/core/List';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-// import ChevronRightIcon from '@material-ui/icons/ChevronRight';
-import ListItem, { ListItemProps } from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import HomeIcon from '@material-ui/icons/Home';
 import { AccountCircle, LinearScale } from '@material-ui/icons';
 
@@ -178,7 +176,7 @@ export const styles = (theme: Theme) => createStyles({
     },
     content: {
         flexGrow: 1,
-        padding: theme.spacing.unit * 3,
+        padding: theme.spacing(3),
         transition: theme.transitions.create('margin', {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
@@ -196,7 +194,7 @@ export const styles = (theme: Theme) => createStyles({
 
 interface Props extends RouteComponentProps<{}>, WithStyles<typeof styles> {
 }
-
+/*
 const LoginLink: React.SFC<ListItemProps> = (props) => { return <Link to="/login" {...props as LinkProps} />; };
 const HomeLink: React.SFC<ListItemProps> = (props) => { return <Link to="/home" {...props as LinkProps} />; };
 const PlannerAdminLink: React.SFC<ListItemProps> = (props) => { return <Link to="/PlannerAdmin" {...props as LinkProps} />; };
@@ -206,6 +204,7 @@ const AdminLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Admin
 const ComposerLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Composer" {...props as LinkProps} />; };
 const NavigationLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Navigation" {...props as LinkProps} />; };
 const PlannerLink: React.SFC<ListItemProps> = (props) => { return <Link to="/Planner" {...props as LinkProps} />; };
+*/
 
 class PersistentDrawerLeft extends React.Component<Props> {
   state = {
@@ -314,10 +313,17 @@ class PersistentDrawerLeft extends React.Component<Props> {
                     </div>
                     <Divider />
                         <List>
-                        <ListItem button={true} key={5} component={LoginLink}>
-                                <ListItemIcon>{<LoginIcon/>}</ListItemIcon>
-                                <ListItemText primary={'Login'} />
-                            </ListItem>
+                        
+                        <ListItemLink to="/login" icon={<LoginIcon/>} primary="Login"/>
+                        <ListItemLink to="/home" icon={<HomeIcon/>} primary="Home"/>
+                        <ListItemLink to="/PlannerAdmin" icon={<SettingsIcon/>} primary="Planner Admin"/>
+                        <ListItemLink to="/Chart" icon={<ChartIcon/>} primary="Chart"/>
+                        <ListItemLink to="/Diagram" icon={<DiagramIcon/>} primary="Diagram"/>
+                        <ListItemLink to="/Admin" icon={<MapIcon/>} primary="Meta Objects"/>
+                        <ListItemLink to="/Composer" icon={<BubblesIcon/>} primary="Business Objects"/>
+                        <ListItemLink to="/Navigation" icon={<LinearScale/>} primary="Navigation"/>
+                        <ListItemLink to="/Planner" icon={<PlannerIcon/>} primary="Planner"/>
+{/*
                             <ListItem button={true} key={10} component={HomeLink}>
                                 <ListItemIcon>{<HomeIcon/>}</ListItemIcon>
                                 <ListItemText primary={'Home'} />
@@ -349,7 +355,8 @@ class PersistentDrawerLeft extends React.Component<Props> {
                             <ListItem button={true} key={80} component={PlannerLink}>
                                 <ListItemIcon>{<PlannerIcon/>}</ListItemIcon>
                                 <ListItemText primary={'Planner'} />
-                            </ListItem>                    
+                            </ListItem>
+*/}
                         </List>
                 </Drawer>
                 <main

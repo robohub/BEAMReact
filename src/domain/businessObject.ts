@@ -3,9 +3,8 @@ import gql from 'graphql-tag';
 import { client } from '../index';
 
 import { RelatedBOType, RelatedBAType } from './utils/boUtils';
-import { removeBusinessObjectsFromCache } from '../utils/apolloExtensions';
-import { ExecutionResult, FetchResult } from 'react-apollo';
-import { RefetchQueryDescription } from 'apollo-client/core/watchQueryOptions';
+import { removePlansFromCache, removeBusinessObjectsFromCache, removePlanConfigsFromCache } from '../utils/apolloExtensions';
+import {  FetchResult } from 'react-apollo';
 import { PureQueryOptions } from 'apollo-client';
 
 export const upsertBO = gql`
@@ -30,35 +29,6 @@ mutation upsertBO(
         id
         name
         state
-        metaObject {
-            id
-            name
-        }
-        bizAttributes {
-            id
-            metaAttribute
-            {
-                id
-                name
-            }
-            value
-        }
-        outgoingRelations {
-            id
-            oppositeObject {
-                id
-                name
-            }
-            metaRelation {
-                id
-                multiplicity
-                oppositeName
-
-            }
-            oppositeRelation {
-                id
-            }  
-        }
     } 
 }
 `;
@@ -73,56 +43,13 @@ mutation updatePlan($planId: ID!, $planData: Json, $boId: ID, $itemBOs: [Busines
 		planData: $planData, planBO: {connect: {id: $boId}}, itemBOs: {connect: $itemBOs}
     }
     update: {
-		planData: $planData, planBO: {connect: {id: $boId}}, itemBOs: {set: $itemBOs}
+		planData: $planData, planBO: {connect: {id: $boId}}
     }
     ) {
         id
     }
 }
 `;
-/*
-type getBOResponse = {
-    id: string
-    name: string
-    
-    outgoingRelations: {
-        id: string
-        oppositeObject: {
-            id: string
-        }
-    }[]
-};
-
-type updateBORelsResponse = {
-    updateBusinessObject: {
-        outgoingRelations: {
-            id: string
-        }[]
-    }
-};
-*/
-/*
-type bizRel = {
-    id: string
-    oppositeObject: {
-        id: string
-    }
-};
-
-function findDeletedBos(source: bizRel[], compare: {id: string}[]): {id: string}[] {
-    var deleted = new Array<{id: string}>(0);
-    source.forEach(el => {
-        let sourceObj = { id: el.oppositeObject.id }; // Remove field bizRelId from object to compare correctly
-        if (compare.findIndex(element => {
-            let compObj = { metaRelationId: element.metaRelationId, oppositeObjectId: element.oppositeObjectId }; // Remove field bizRelId from object to compare correctly
-            return JSON.stringify(sourceObj) === JSON.stringify(compObj); })
-        === -1) {
-            deleted.push(el);
-        }
-    });
-    return deleted;
-}
-*/
 
 export const updateSaveBO =  async (
     bizObjectId: string,            // If === '' --> create, otherwise update
@@ -130,8 +57,8 @@ export const updateSaveBO =  async (
     metaObjectId: string,           // Create
     newAttrs: RelatedBAType[],      // Create and update
     newRels: RelatedBOType[],       // Create and update
+    delRels: RelatedBOType[],       // Update
     saveFinished: () => void,
-    // refetchQueries: ((result: ExecutionResult) => RefetchQueryDescription) | RefetchQueryDescription
     refetchQueries: PureQueryOptions[]
     ) => {
        
@@ -147,22 +74,21 @@ export const updateSaveBO =  async (
             metaObjectId: metaObjectId,
             metaAttributes: newAttrs,
             newRels: newRels,
-            deleteRels: [],               // RH TODO
+            deleteRels: delRels,
         },
         update: async (cache, mutationResult ) => {
-            if (bizObjectId === '') {
-                removeBusinessObjectsFromCache(cache);   // RH TODO Behövs detta om jag gör client.query med 'network-only' på refetch-frågorna?
-
-                // tslint:disable-next-line:no-console
-                console.log('BA. Saved BO, clearing cache.....');
+            removeBusinessObjectsFromCache(cache);
+            removePlansFromCache(cache);   // Will initiate that queries starting with "plan" will be reading from db, see Planner
+            if (refetchQueries.length) {   // RH TODO Just a test!!! Don't invalidate when coming from updateBORelations() --> planConfig query = {}
+                removePlanConfigsFromCache(cache);
             }
 
             // tslint:disable-next-line:no-console
-            console.log('BB. BO sparad och cache fixad.....');
+            console.log('BA. Saved BO, clearing cache.....');
         },
-        refetchQueries: refetchQueries,   // --> synkproblem i GUI, null-pointers...?
+        refetchQueries: refetchQueries,   // --> synkproblem i GUI, null-pointers...? Uppdaterad apollo + react-apollo -> verkar fixat...
     });
-/*    
+/*
     if (refetchQueries) {
         // tslint:disable-next-line:no-any
         let refetchPromises = new Array<Promise<any>>();
@@ -189,9 +115,10 @@ export const updateSaveBO =  async (
         });
         await Promise.all(refetchPromises);
     }
+*/
     // tslint:disable-next-line:no-console
     console.log('C. Exits updateSaveBO,.....');
-*/
+
     saveFinished();
 
 };
@@ -199,21 +126,25 @@ export const updateSaveBO =  async (
 export async function updateBORelations(
     boId: string,
     boName: string,
-    relatedObjs: RelatedBOType[],
+    moId: string,
+    addedObjs: RelatedBOType[],
+    deletedObjs: RelatedBOType[],
     saveFinished: () => void,
-    refetchQueries: ((result: ExecutionResult) => RefetchQueryDescription) | RefetchQueryDescription,
+    refetchQueries: PureQueryOptions[],
     planId?: string,
     planData?: { items: {}[], groups: {}[] },
+    planObjs?: RelatedBOType[]
 ) {
-    // updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, refetchQueries);
-    await updateSaveBO(boId, boName, '', [], relatedObjs, saveFinished, []);
 
-    // Check if planId != null, update plandata if so...
-  
+    // Check if planId != null, update plandata if so... 
     if (planId !== undefined && planId !== null) {
-        var itemBOs = new Array<{id: string}>();  // Filter out Id
-        relatedObjs.map(item => {
-            itemBOs.push({id: item.boId});
+
+        await updateSaveBO(boId, boName, moId, [], addedObjs, deletedObjs, saveFinished, []);
+
+        var planBOs = new Array<{id: string}>();  // Filter out Id
+        
+        planObjs.map(item => {
+            planBOs.push({id: item.boId});
         });
 
         let result = await client.mutate({
@@ -222,25 +153,16 @@ export async function updateBORelations(
                 planId: planId,
                 planData: planData,
                 boId: boId,
-                itemBOs: itemBOs
+                itemBOs: planBOs   // Only used when creating a plan in upsert...updateSaveBO takes of updates
             },
             // update: // Update cache....
             refetchQueries: refetchQueries
-        }).catch(e => {
-            alert('Error when saving plan: ' + e + '\nWill try again!!!');
-            client.mutate({
-                mutation: updatePlan,
-                variables: { 
-                    planId: planId,
-                    planData: planData,
-                    boId: boId,
-                    itemBOs: itemBOs
-                },
-                // update: // Update cache....
-                refetchQueries: refetchQueries
-            });
         }) as FetchResult<{upsertPlan: { id: string}}>;
+
         return result.data.upsertPlan.id;
+
+    } else {
+        await updateSaveBO(boId, boName, moId, [], addedObjs, deletedObjs, saveFinished, refetchQueries);
+        return '';
     }
-    return '';
 }

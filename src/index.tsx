@@ -11,7 +11,8 @@ import { ApolloProvider, Query } from 'react-apollo';
 import { createClient } from './utils/apollo';
 import * as WebFontLoader from 'webfontloader'; 
 
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core';
+import { ThemeProvider } from '@material-ui/styles';
+import { createMuiTheme  } from '@material-ui/core/styles';
 import { blue } from '@material-ui/core/colors';
 
 import App from './App';
@@ -97,13 +98,13 @@ const theme = createMuiTheme({
     palette: {
         primary: { main: blue[500] },
     },
-    typography: { useNextVariants: true },  // RH TODO: ?
+    // typography: { useNextVariants: true },  // Not needed in MUI v4
 });
 
 ReactDOM.render(
   <ApolloProvider client={client}>
     <BrowserRouter>
-      <MuiThemeProvider theme={theme}>
+      <ThemeProvider theme={theme}>
         <Query query={getSystemSetupQuery}>
           {({ loading, data, error }) => {
               if (loading) {
@@ -163,7 +164,7 @@ ReactDOM.render(
               );
         }}
       </Query>
-      </MuiThemeProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </ApolloProvider>,
   document.getElementById('root') as HTMLElement

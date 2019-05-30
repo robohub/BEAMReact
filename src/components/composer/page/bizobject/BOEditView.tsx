@@ -51,6 +51,7 @@ export default class EditBOView extends React.Component<MyProps> {
             this.props.metaobject.id,
             createBAs,
             relatedBOs,
+            [],
             this.saveFinished,
             [ {query: allBOQuery}, { query: MOQuery, variables: {id: this.props.metaobject.id}} ]
         );

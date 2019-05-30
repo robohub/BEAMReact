@@ -34,8 +34,8 @@ class MDMultiSelectField extends React.Component<FieldProps & SelectFieldProps> 
         return name;
     });
 
-    changeVal(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.props.form.setFieldValue(this.props.field.name, event.target.value);
+    changeVal(value: string) {
+        this.props.form.setFieldValue(this.props.field.name, value);
     }
 
     render() {
@@ -46,7 +46,7 @@ class MDMultiSelectField extends React.Component<FieldProps & SelectFieldProps> 
                     className={this.props.classes.select}
                     multiple={true}
                     value={this.props.field.value}
-                    onChange={newValue => this.changeVal(newValue)}
+                    onChange={ev => this.changeVal(ev.target.value as string)}
                     input={<Input id="select-multiple-chip" />}
                     renderValue={(selected: []) => (
                         // <div className={classes.chips}>

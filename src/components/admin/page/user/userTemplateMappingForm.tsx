@@ -49,12 +49,12 @@ class MappingForm extends React.PureComponent<Props, State> {
         this.state = {moId: props.selectedMO, mrId: props.selectedMR};
     }
 
-    changeMoId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({moId: event.target.value, mrId: ''});
+    changeMoId(value: string) {
+        this.setState({moId: value, mrId: ''});
     }
 
-    changeMrId(event: React.ChangeEvent<HTMLSelectElement>) {
-        this.setState({mrId: event.target.value});
+    changeMrId(value: string) {
+        this.setState({mrId: value});
     }
 
     save = () => {
@@ -85,7 +85,7 @@ class MappingForm extends React.PureComponent<Props, State> {
                                 <Select 
                                     className={this.props.classes.select}
                                     value={this.state.moId}
-                                    onChange={newValue => this.changeMoId(newValue)}
+                                    onChange={ev => this.changeMoId(ev.target.value as string)}
                                     input={<Input name="moSelect" id="moinput"/>}
                                 >
                                     {this.props.metaObjects.map(opt => (
@@ -116,7 +116,7 @@ class MappingForm extends React.PureComponent<Props, State> {
                                                 <Select 
                                                     className={this.props.classes.select}
                                                     value={this.state.mrId}
-                                                    onChange={newValue => this.changeMrId(newValue)}
+                                                    onChange={ev => this.changeMrId(ev.target.value as string)}
                                                     input={<Input name="mrSelect" id="mrinput"/>}
                                                 >
                                                     {data.metaObject.outgoingRelations.map((mr: {id: string, oppositeName: string, multiplicity: string}) => (

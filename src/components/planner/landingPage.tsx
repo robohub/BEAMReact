@@ -1,11 +1,12 @@
 import * as React from 'react';
-import PlanningView from './pages/plansOverview';
+import PlansOverview from './pages/plansOverview';
 import { Typography, Paper, Fab,  } from '@material-ui/core';
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from '../shared/style';
 import { Add } from '@material-ui/icons';
-import { getPlanBOs, getPlan, } from './pages/components/queries';
+import { getPlanBOs, getPlan, getItemBOs,  } from './pages/components/queries';
 import { PureQueryOptions } from 'apollo-client';
+import { SelectedPlanBOType } from './pages/components/types';
 
 // import SplitterLayout from 'react-splitter-layout';
 // import 'react-splitter-layout/lib/index.css';
@@ -14,63 +15,68 @@ interface Props extends WithStyles<typeof styles> {
 }
 
 type State = {
-    diagrams: {id: string, containerId: number}[];  // Array of open diagram ids and container id for Timeline
+    plans: {id: string, containerId: number, moId: string}[];  // Array of meta data per opened plan
 };
 
 class LandingPageComp extends React.Component<Props, State> {
     state = {
-        diagrams: new Array<{id: string, containerId: number}>()
+        plans: new Array<{id: string, containerId: number, moId: string}>()
     };
 
     private containerIdIndex = 0;  // Incremented when new diagram opens, used for container id
 
-    addDiagram = () => {
-        let newDiagrams = this.state.diagrams;
-        newDiagrams.push({id: '', containerId: this.containerIdIndex++});
-        this.setState({diagrams: newDiagrams});
+    addPlan = () => {
+        let newPlan = this.state.plans;
+        newPlan.push({id: '', containerId: this.containerIdIndex++, moId: ''});
+        this.setState({plans: newPlan});
     }
 
-    closeDiagram = (containerId: number) => {
-        let newDiagrams = this.state.diagrams;
-        newDiagrams.forEach((diag, index) => {
+    closePlan = (containerId: number) => {
+        let newPlans = this.state.plans;
+        newPlans.forEach((diag, index) => {
             if (containerId === diag.containerId) {
-                newDiagrams.splice(index, 1); // Remove reference from nestedGroups
-                this.setState({diagrams: newDiagrams});
+                newPlans.splice(index, 1); // Remove reference from nestedGroups
+                this.setState({plans: newPlans});
                 return;
             }
         });
     }
 
-    // Used by PlanningView to associate containerId with PlanId
-    setPlanIdForDiagram = (containerId: number, planId: string) => {
-        let newDiagrams = this.state.diagrams;
-        newDiagrams.forEach((diag, index) => {
+    // Used by PlansOverview to associate containerId with PlanId and PlanMO (to get ItemBOs)
+    setPlanIdForPlan = (containerId: number, planId: string, planMOid: string) => {
+        let newPlans = this.state.plans;
+
+        newPlans.forEach((diag, index) => {
             if (containerId === diag.containerId) {
-                newDiagrams[index].id = planId;
-                this.setState({diagrams: newDiagrams});
+                newPlans[index].id = planId;
+                newPlans[index].moId = planMOid;
+                this.setState({plans: newPlans});
                 return;
             }
         });
     }
 
-    getRefetchQueries = () => {
+    // Called when saving a plan
+    getRefetchQueries = (planInfo: SelectedPlanBOType) => {
         let refetchQueries = [
             {
                 query: getPlanBOs,
             },
-/*
-            {
-                query: getItemBOs,
-                variables: {moid: this.props.selectedBO.metaObjectId}
-            }
-        ];
-*/
-
-        // tslint:disable-next-line:no-any
         ] as PureQueryOptions[];
-        this.state.diagrams.map(diag => {
-            refetchQueries.push({query: getPlan, variables: {boid: diag.id}});
-            /* refetchQueries.push({query: getConnectedItems, variables: {boid: diag.id}}); */
+
+        let addedGetItemBOs = new Array<string>();
+        let addedGetPlans = new Array<string>();
+        this.state.plans.map(plan => {
+            if (plan.moId === planInfo.metaObjectId) {  // Only refetch plans of same meta object type
+                if (!addedGetPlans.find(item => item === plan.id)) {   // Only refetch ONE getPlan for each id
+                    refetchQueries.push({query: getPlan, variables: {boid: plan.id}});
+                    addedGetPlans.push(plan.id);
+                }
+                if (!addedGetItemBOs.find(item => item === plan.moId)) {  // Only refetch ONE getIemBOs for meta object type
+                    refetchQueries.push({query: getItemBOs, variables: {moid: plan.moId}});
+                    addedGetItemBOs.push(plan.moId);
+                }
+            }
         });
         return refetchQueries;
     }
@@ -82,13 +88,13 @@ class LandingPageComp extends React.Component<Props, State> {
             <div>
                 <Typography variant="h6">Welcome to the Planner landing page!</Typography>
 {/*                <SplitterLayout vertical={true}> */}
-                    {this.state.diagrams.map(diag => 
-                        <Paper key={diag.containerId}>
-                            <PlanningView tlContainerId={diag.containerId} closeDiagram={this.closeDiagram} getRefetchQueries={this.getRefetchQueries} connectPlanId={this.setPlanIdForDiagram}/>
+                    {this.state.plans.map(plan => 
+                        <Paper key={plan.containerId}>
+                            <PlansOverview tlContainerId={plan.containerId} closeDiagram={this.closePlan} getRefetchQueries={this.getRefetchQueries} connectPlanId={this.setPlanIdForPlan}/>
                         </Paper>
                     )}
 {/*               </SplitterLayout> */}
-                    <Fab size="small" color="primary" aria-label="Add" className={classes.button} onClick={this.addDiagram}>
+                    <Fab size="small" color="primary" aria-label="Add" className={classes.button} onClick={this.addPlan}>
                         <Add />
                     </Fab>
             </div>

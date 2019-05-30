@@ -129,7 +129,7 @@ class UserMgmt extends React.PureComponent<Props> {
 
                         return (
                             <div>
-                                <Grid container={true} spacing={16}>
+                                <Grid container={true} spacing={2}>
                                     <Grid item={true} xs={4}>
                                         <UserMgmtForm
                                             selectedMO={Globals.SystemConfigVars.SYSTEMUSER_METAOBJECT_MAPPING}

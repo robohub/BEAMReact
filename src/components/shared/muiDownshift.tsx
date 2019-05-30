@@ -10,7 +10,7 @@ import { ExpandLess, ExpandMore, Clear } from '@material-ui/icons';
 const styles = ({ spacing, palette }: Theme) => createStyles({
     frame: {
         flexGrow: 1,
-        minHeight: spacing.unit * 8,
+        minHeight: spacing(8),
         margin: 0,
         height: '100%'
     },
@@ -18,7 +18,7 @@ const styles = ({ spacing, palette }: Theme) => createStyles({
         maxHeight: 300,
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         width: 'auto',
-        marginRight: spacing.unit,
+        marginRight: spacing(1),
         overflow: 'scroll'
     },
     active: {

@@ -14,25 +14,25 @@ import { createStyles, Theme } from '@material-ui/core/styles';
 const styles = ({ mixins, spacing }: Theme) => createStyles({    // TODO RH: coordinate styles!!!
     root: {
         ...mixins.gutters(),
-        paddingTop: spacing.unit,
-        paddingBottom: spacing.unit,
+        paddingTop: spacing(1),
+        paddingBottom: spacing(1),
     },
     stepper: {
             width: '90%',
         },
     button: {
-        marginRight: spacing.unit,
-        marginTop: spacing.unit * 2,
-        marginBottom: spacing.unit * 2,
+        marginRight: spacing(1),
+        marginTop: spacing(2),
+        marginBottom: spacing(2),
     },
     instructions: {
-        marginLeft: spacing.unit * 4,
-        marginTop: spacing.unit,
-        marginBottom: spacing.unit * 4,
+        marginLeft: spacing(4),
+        marginTop: spacing(1),
+        marginBottom: spacing(4),
     },
     paper: {
-        paddingTop: spacing.unit,
-        paddingBottom: spacing.unit,
+        paddingTop: spacing(1),
+        paddingBottom: spacing(1),
     },
     select: {
         minWidth: 300

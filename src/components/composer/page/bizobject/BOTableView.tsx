@@ -198,7 +198,7 @@ export default class BOTableView extends React.Component<ChildProps<InputProps, 
                         <div>
                             <SelectBOType setSelectedBO={this.setSelectedBO}/>
                             <Paper>
-                                <Table padding="dense">
+                                <Table size="small">
                                     <TableHead>
                                         <TableRow>
                                             <TableCell><Typography variant="h6">{' '}</Typography></TableCell>

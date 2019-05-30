@@ -152,7 +152,7 @@ class Diagram extends React.Component {
                     direction="row"
                     justify="flex-start"
                     alignItems="stretch"
-                    spacing={8}
+                    spacing={1}
                 >
                     <Grid item={true} xs={4}>
                         <Paper square={true}>

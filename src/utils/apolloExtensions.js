@@ -9,39 +9,39 @@ import { InMemoryCache } from 'apollo-cache-inmemory'
  * @return the number of deleted properties or indexes
  */
 function deepDeleteAll(value, removeType, predicate) {
-  let rels = []
-  if (isArray(value)) {
-    value.forEach((item, index) => {
-    
-      if (predicate(item)) {
-        value.splice(index, 1)
-      } else {
-        rels = rels.concat(deepDeleteAll(item, removeType, predicate))
-      }
-    })
-  } else if (isPlainObject(value)) {
-    // console.log("-- PLAIN OBJECT --\n" + JSON.stringify(value, null, 2) + "\n")
-    Object.keys(value).forEach(key => {
-      if (predicate(value[key])) {
-        if (removeType !== "BizRelation" && value.id && value.__typename === 'BizRelation') {
-//            console.log("HITTADE en BIZRELATION" + JSON.stringify(value, null, 2))
-            // Save for deletion later
-            rels.push("BizRelation:" + value.id)
-            rels.push(value.oppositeRelation.id)
-        } else if (value.id && value.__typename === 'BizAttribute') {
-            // BizAttribute should be added for delete as well, doesn't affect anything yet!
-            // Anything else? Check data model...
-        } else {
-            console.log("VALUE2: " + JSON.stringify(value, null, 2))
-            console.log("Deleting: " + JSON.stringify(value[key], null, 2))   // {"type":"id","generated":false,"id":"BusinessObject:cjvggpg65rx490b22044zd74m","typename":"BusinessObject"}
-            delete value[key]
-        }
-      } else {
-        rels= rels.concat(deepDeleteAll(value[key], removeType, predicate))
-      }
-    })
-  }
-  return rels
+    let rels = []
+    if (isArray(value)) {
+        value.forEach((item, index) => {
+
+            if (predicate(item)) {
+                value.splice(index, 1)
+            } else {
+                rels = rels.concat(deepDeleteAll(item, removeType, predicate))
+            }
+        })
+    } else if (isPlainObject(value)) {
+        // console.log("-- PLAIN OBJECT --\n" + JSON.stringify(value, null, 2) + "\n")
+        Object.keys(value).forEach(key => {
+            if (predicate(value[key])) {
+                if (removeType !== "BizRelation" && value.id && value.__typename === 'BizRelation') {
+                    //            console.log("HITTADE en BIZRELATION" + JSON.stringify(value, null, 2))
+                    // Save for deletion later
+                    rels.push("BizRelation:" + value.id)
+                    rels.push(value.oppositeRelation.id)
+                } else if (value.id && value.__typename === 'BizAttribute') {
+                    // BizAttribute should be added for delete as well, doesn't affect anything yet!
+                    // Anything else? Check data model...
+                } else {
+                    console.log("VALUE2: " + JSON.stringify(value, null, 2))
+                    console.log("Deleting: " + JSON.stringify(value[key], null, 2))   // {"type":"id","generated":false,"id":"BusinessObject:cjvggpg65rx490b22044zd74m","typename":"BusinessObject"}
+                    delete value[key]
+                }
+            } else {
+                rels = rels.concat(deepDeleteAll(value[key], removeType, predicate))
+            }
+        })
+    }
+    return rels
 }
 
 export function BODeleteFromCache(cache, entry) {
@@ -57,21 +57,46 @@ export function BODeleteFromCache(cache, entry) {
         deepDeleteAll(cache.data.data, "BizRelation", ref => ref && (ref.type === 'id' && ref.id === brId))
         cache.data.delete(brId)
     })
-  
+
     // delete entry from cache (and trigger UI refresh)
     cache.data.delete(id)
-}    
+}
 
-export const removeBusinessObjectsFromCache = (cache) => {
+export const removeBusinessObjectsFromCache = (cache) => {   // RH TODO --> gör om removeXXX med regex!
     const { ROOT_QUERY } = cache.data.data
     const newROOT = Object.keys(ROOT_QUERY).reduce((acc, d) => {
         if (d.match(/businessObjects*/)) {
             return acc
-      }
-      return { ...acc, [d]: ROOT_QUERY[d]}
+        }
+        return { ...acc, [d]: ROOT_QUERY[d] }
     }, {})
     cache.data.data.ROOT_QUERY = newROOT
     // return newROOT
-    console.log("New ROOT_QUERY: " + JSON.stringify(newROOT, null, 2))                
+    console.log("New ROOT_QUERY: " + JSON.stringify(newROOT, null, 2))
+}
 
-  }
+export const removePlansFromCache = (cache) => {   // RH TODO --> gör om removeXXX med regex!
+    const { ROOT_QUERY } = cache.data.data
+    const newROOT = Object.keys(ROOT_QUERY).reduce((acc, d) => {
+        if (d.match(/plans\(*/)) {
+        //if (d.match(/plan*/)) {
+            return acc
+        }
+        return { ...acc, [d]: ROOT_QUERY[d] }
+    }, {})
+    cache.data.data.ROOT_QUERY = newROOT
+    console.log("New ROOT_QUERY: " + JSON.stringify(newROOT, null, 2))
+}
+
+export const removePlanConfigsFromCache = (cache) => {   // RH TODO --> gör om removeXXX med regex!
+    const { ROOT_QUERY } = cache.data.data
+    const newROOT = Object.keys(ROOT_QUERY).reduce((acc, d) => {
+        // if (d.match(/plans\(*/)) {
+        if (d.match(/planConfigs\(*/)) {
+            return acc
+        }
+        return { ...acc, [d]: ROOT_QUERY[d] }
+    }, {})
+    cache.data.data.ROOT_QUERY = newROOT
+    console.log("New ROOT_QUERY: " + JSON.stringify(newROOT, null, 2))
+}
