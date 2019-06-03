@@ -22,7 +22,6 @@ interface Props extends WithStyles<typeof styles> {
     selectedBO: SelectedPlanBOType;
     updateSelectedBO: (boId: string) => void;
     readonly: boolean;
-    // tslint:disable-next-line:no-any
     getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 
@@ -33,7 +32,7 @@ interface State {
     hiddenGroup: boolean;
 }
 
-class TimeLine extends React.Component<Props, State> {
+class TimeLineComp extends React.Component<Props, State> {
     state = {
         snackbarOpen: false, /*selectedBO: {id: '', name: '', metaObjectId: '', },*/ itemStacking: true, minimized: false, hiddenGroup: false, hideTools: true
     };
@@ -590,4 +589,4 @@ class TimeLine extends React.Component<Props, State> {
     }
 }
 
-export default withStyles(styles)(TimeLine);
+export const TimeLine = withStyles(styles)(TimeLineComp);

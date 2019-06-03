@@ -7,11 +7,12 @@ import MappingForm from './mapUIBOForm';
 import { getConfigQuery, getItemRelations } from './queries';
 import { PlanConfig } from './types';
 
-import {  Button, Paper, IconButton, Snackbar, Grid, Divider, Chip, Typography, Dialog, DialogTitle } from '@material-ui/core';
+import {  Button, Paper, IconButton, Snackbar, Grid, Divider, Chip, Typography, Dialog, DialogTitle, Fab } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import EditIcon from '@material-ui/icons/Edit';
 import { WithStyles, withStyles } from '@material-ui/core/styles';
 import { styles } from '../../../shared/style';
+import { Add } from '@material-ui/icons';
 
 type State = {
     selectedPc: PlanConfig;
@@ -75,17 +76,19 @@ class PlannerView extends React.Component<Props, State> {
                         return <div>Loading</div>;
                     }
                     if (error) {
-                        return <h1>ERROR: {error}</h1>;
+                        return <div>ERROR: {error}</div>;
                     }
                     const { classes } = this.props;
                     this.planConfigs = data.planConfigs;
 
                     return (
                         <div className={classes.root}>
-                            <Button onClick={this.openStepper} variant={'contained'} color={'primary'} className={classes.button} disabled={this.state.dialogOpen}>Add mapping</Button>
+                            <Fab size="small" color="primary" className={classes.button} disabled={this.state.dialogOpen} onClick={this.openStepper}>
+                                <Add />
+                            </Fab>
                             {this.state.stepperOpen ?
-                                <Grid container={true} className={classes.root}>
-                                    <Grid item={true} xs={6}>
+                                <Grid container={true}>
+                                    <Grid item={true} xs={12} lg={9}>
                                         <MappingStepper
                                             onClose={this.connectionsDialogClose}
                                             planConfig={this.state.selectedPc}
@@ -93,15 +96,18 @@ class PlannerView extends React.Component<Props, State> {
                                     </Grid>
                                 </Grid>
                                 :
-                                ''
+                                null
                             }
-                            <Typography variant="h5" className={classes.root}>Mapped Meta Objects</Typography>
-                            <Paper className={classes.root}>
+                            <Paper style={{marginTop: 10}}>
+                                <div className={classes.root}>
+                                    <Typography variant="h6">Mapped Meta Objects</Typography>
+                                </div>
+                                <Divider style={{marginTop: 10, marginBottom: 10}}/>
                                 {data.planConfigs.length === 0 ?
                                     <Typography variant="body1">No mappings done yet...</Typography>
                                     :
                                     data.planConfigs.map((pc: PlanConfig, index: string) =>
-                                        <div key={pc.id}>
+                                        <div key={pc.id} className={classes.root}>
                                             <Grid container={true}>
                                                 <Grid item={true} xs={2}>
                                                     <Typography variant="h6">{pc.uiMoPlan.name}</Typography>
@@ -159,14 +165,14 @@ class PlannerView extends React.Component<Props, State> {
                                                                 availableMetaRelations={props.data.metaRelations}
                                                             />
                                                             :
-                                                            ''
+                                                            null
                                                         }
                                                     </div>
                                                 );
                                             }}
                                         </Query>
                                         :
-                                        ''
+                                        null
                                     }
                                 </Dialog>
                             <Snackbar

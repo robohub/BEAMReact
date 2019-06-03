@@ -9,37 +9,9 @@ import RightArrowIcon from '@material-ui/icons/KeyboardArrowRight';
 import LeftArrowIcon from '@material-ui/icons/KeyboardArrowLeft';
 
 import { WithStyles, withStyles } from '@material-ui/core/styles';
-import { createStyles, Theme } from '@material-ui/core/styles';
+import { stepperStyles } from '../../../shared/style';
 
-const styles = ({ mixins, spacing }: Theme) => createStyles({    // TODO RH: coordinate styles!!!
-    root: {
-        ...mixins.gutters(),
-        paddingTop: spacing(1),
-        paddingBottom: spacing(1),
-    },
-    stepper: {
-            width: '90%',
-        },
-    button: {
-        marginRight: spacing(1),
-        marginTop: spacing(2),
-        marginBottom: spacing(2),
-    },
-    instructions: {
-        marginLeft: spacing(4),
-        marginTop: spacing(1),
-        marginBottom: spacing(4),
-    },
-    paper: {
-        paddingTop: spacing(1),
-        paddingBottom: spacing(1),
-    },
-    select: {
-        minWidth: 300
-    }
-});
-
-interface SProps extends WithStyles<typeof styles> {
+interface SProps extends WithStyles<typeof stepperStyles> {
     planObjects: {id: string, name: string}[];
     onClose: (saved: boolean, message: string) => void;
 }
@@ -195,9 +167,7 @@ class MyStepper extends React.Component<SProps, SState> {
                         {activeStep === steps.length - 1 ?
                             <Button
                                 disabled={this.state.selectedPlanMO === ''}
-                                // variant="contained"
                                 color="primary"
-                                // onClick={this.handleNext}
                                 onClick={this.handleSubmitMyForm}
                                 className={classes.button}
                             >
@@ -206,7 +176,6 @@ class MyStepper extends React.Component<SProps, SState> {
                             :
                             <Button
                                 disabled={this.state.selectedPlanMO === ''}
-                                // variant="contained"
                                 color="primary"
                                 onClick={this.handleNext}
                                 className={classes.button}
@@ -220,9 +189,9 @@ class MyStepper extends React.Component<SProps, SState> {
         );
     }
 }
-const AStepper = withStyles(styles)(MyStepper);
+const AStepper = withStyles(stepperStyles)(MyStepper);
 
-interface Props extends WithStyles<typeof styles> {    onClose: (saved: boolean, message: string) => void;
+interface Props extends WithStyles<typeof stepperStyles> {    onClose: (saved: boolean, message: string) => void;
     planConfig: PlanConfig;
 }
 
@@ -268,4 +237,4 @@ class PlanMapperStepper extends React.Component<Props, State> {
     }
 }
 
-export default withStyles(styles)(PlanMapperStepper);
+export default withStyles(stepperStyles)(PlanMapperStepper);

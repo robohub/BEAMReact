@@ -22,7 +22,6 @@
     "noUnusedLocals": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "incremental": true
   },
   "exclude": [
     "node_modules",

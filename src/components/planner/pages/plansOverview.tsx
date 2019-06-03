@@ -23,8 +23,6 @@ interface Props extends WithStyles<typeof styles> {
     tlContainerId: number;  // id for timeline - propagated to TimeLine component
     closeDiagram: (id: number) => void;
     connectPlanId: (containerId: number, planId: string, planMOId: String) => void;  // Call this to associate opened PlanId with container Id in parent component
-
-    // tslint:disable-next-line:no-any
     getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 

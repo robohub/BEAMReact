@@ -7,15 +7,13 @@ import { getPlan, } from './queries';
 import { SelectedPlanBOType } from './types';
 import { Query } from 'react-apollo';
 import { PureQueryOptions } from 'apollo-client';
-
-import Timeline from './timeline';
+import { TimeLine } from './timeLine';
 
 interface Props extends WithStyles<typeof styles> {
     tlContainerId: string;  // id for timeline - where rendered timeline will attach itself, used when using several timelines in same component
     selectedBO: SelectedPlanBOType;
     updateSelectedBO: (boId: string) => void;
     readonly: boolean;
-    // tslint:disable-next-line:no-any
     getRefetchQueries?: (bo: SelectedPlanBOType) => PureQueryOptions[];
 }
 
@@ -37,7 +35,7 @@ class PlanView extends React.Component<Props> {
                     console.log('--QUERY ---- PLANVIEW: getPlan execute...' + this.props.selectedBO.id);
                     
                     return (
-                        <Timeline
+                        <TimeLine
                             plans={data.plans}
                             tlContainerId={this.props.tlContainerId}
                             readonly={this.props.readonly}

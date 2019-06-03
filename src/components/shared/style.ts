@@ -37,3 +37,38 @@ export const styles = ({ mixins, spacing, typography }: Theme) => createStyles({
           color: 'red'
       }
 });
+
+export const stepperStyles = ({ mixins, spacing }: Theme) => createStyles({    // TODO RH: coordinate styles!!!
+    root: {
+        ...mixins.gutters(),
+        paddingTop: spacing(1),
+        paddingBottom: spacing(1),
+    },
+    stepper: {
+            width: '90%',
+        },
+    button: {
+        marginRight: spacing(1),
+        marginTop: spacing(2),
+        marginBottom: spacing(2),
+    },
+    instructions: {
+        marginLeft: spacing(4),
+        marginTop: spacing(1),
+        marginBottom: spacing(4),
+    },
+    paper: {
+        paddingTop: spacing(1),
+        paddingBottom: spacing(1),
+    },
+    select: {
+        minWidth: 300
+    },
+    textField: {
+        marginTop: spacing(1),
+        marginLeft: spacing(1),
+        marginBottom: spacing(1),
+        width: inputWidth,
+      },
+
+});
